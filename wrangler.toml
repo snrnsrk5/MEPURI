@@ -1,0 +1,10 @@
+# 나중에 GitHub 저장소로 옮겨서 자동 배포할 때 쓰는 설정 (대시보드에 붙여넣기만 할 땐 필요 없음)
+name = "mepuri-api"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# 허용할 사이트 주소 (쉼표로 구분). 비워두면 모든 사이트 허용
+ALLOWED_ORIGINS = ""
+
+# API 키는 여기 적지 말고 비밀값으로 넣기:  npx wrangler secret put NEXON_API_KEY
