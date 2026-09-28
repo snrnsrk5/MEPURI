@@ -6,7 +6,10 @@
  *   NEXON_API_KEY   (비밀, 필수)  openapi.nexon.com에서 받은 API 키
  *   ALLOWED_ORIGINS (선택)        허용할 사이트 주소, 쉼표로 구분. 비워두면 모든 사이트 허용(테스트용)
  *
+ * 사이트(public 폴더)도 같이 올리면 이 Worker가 사이트와 API를 한 주소에서 같이 보여줌.
+ *
  * 주소
+ *   GET /api/health                    서버 확인
  *   GET /api/character?name=캐릭터명   이름 → 월드·레벨·직업·외형 이미지
  *   GET /api/character/basic?ocid=…    저장해 둔 ocid로 다시 불러오기(새로고침)
  *   GET /api/scheduler?ocid=…          인게임 스케줄러(보스 완료 여부) 원본 그대로
@@ -23,9 +26,16 @@ export default {
     const url = new URL(req.url);
     const cors = corsHeaders(req, env);
 
+    // /api/ 가 아닌 주소는 사이트 파일(public 폴더)로 넘김
+    if (!url.pathname.startsWith('/api/')) {
+      if (env.ASSETS) return env.ASSETS.fetch(req);
+      if (url.pathname === '/') return json({ ok: true, service: 'mepuri-api' }, 200, cors);
+      return fail(404, 'NOT_FOUND', '없는 주소예요', cors);
+    }
+
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (req.method !== 'GET') return fail(405, 'METHOD', 'GET 요청만 받아요', cors);
-    if (url.pathname === '/') return json({ ok: true, service: 'mepuri-api' }, 200, cors);
+    if (url.pathname === '/api/health') return json({ ok: true, service: 'mepuri-api' }, 200, cors);
     if (!env.NEXON_API_KEY) return fail(500, 'NO_KEY', '서버에 NEXON_API_KEY가 설정되지 않았어요', cors);
 
     try {

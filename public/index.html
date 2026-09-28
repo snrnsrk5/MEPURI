@@ -976,7 +976,10 @@ async function nx(path,params){
 }
 /* 메푸리 API 서버(Cloudflare Worker) 주소가 있으면 그쪽으로 — 키 없이 이름만 보냄 */
 const APIKEY='mepuri-api-base';
-const apiBase=()=>{try{return (localStorage.getItem(APIKEY)||'').trim().replace(/\/+$/,'')}catch(e){return ''}};
+let SAME_API=false; // 이 사이트를 메푸리 Worker가 보여주는 중이면 같은 주소의 /api 를 자동으로 씀
+const savedBase=()=>{try{return (localStorage.getItem(APIKEY)||'').trim().replace(/\/+$/,'')}catch(e){return ''}};
+const apiBase=()=>savedBase()||(SAME_API?location.origin:'');
+if(/^https?:$/.test(location.protocol))fetch('/api/health').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.service==='mepuri-api'){SAME_API=true;if(ui.modal)renderLayer()}}).catch(()=>{});
 const setApiBase=v=>{try{v?localStorage.setItem(APIKEY,v.trim().replace(/\/+$/,'')):localStorage.removeItem(APIKEY)}catch(e){}};
 const apiOn=()=>!!(apiBase()||nxKey());
 async function srv(path,params){
@@ -1018,7 +1021,11 @@ function renderLayer(){
         <div class="m-btns"><button class="btn out" type="button" id="m-cancel">취소</button><button class="btn pri" type="button" id="m-save" ${fo&&!fo.dup?'':'disabled'}>이 캐릭터 저장하기</button></div>
       </form></div></div>`;
   }
-  if(m&&m.kind==='dev'){const k=nxKey(),a=apiBase();
+  if(m&&m.kind==='dev'){const k=nxKey(),a=savedBase();
+    if(SAME_API&&!a){h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="d-title"><div class="m-head"><span id="d-title">테스트 설정</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
+      <div class="m-body"><div class="keyrow on" style="font-size:13px"><span class="kdot"></span>이 사이트의 메푸리 API 서버에 자동으로 연결됐어요.</div>
+      <p style="margin:0;font-size:13px;line-height:20px;color:var(--sub)">캐릭터 추가에서 이름만 넣으면 넥슨 Open API로 조회돼요. 따로 설정할 건 없어요.</p>
+      <div class="m-btns"><button class="btn dark" type="button" id="m-cancel">닫기</button></div></div></div></div>`}else{
     h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="d-title"><div class="m-head"><span id="d-title">테스트 설정</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
       <div class="m-body"><p style="margin:0;font-size:13px;line-height:20px;color:var(--sub)">넥슨 API 키는 메푸리 API 서버에만 두고, 사이트는 서버 주소로 캐릭터 이름만 보내서 조회해요.</p>
       <div class="keybox"><div class="keyrow"><span>메푸리 API 서버 주소</span>${a?`<span class="keyrow on" style="padding:0"><span class="kdot"></span>연결됨</span>`:''}</div>
@@ -1028,7 +1035,7 @@ function renderLayer(){
         <div class="m-search" style="margin-top:6px"><label class="search"><input id="k-in" type="password" placeholder="${k?'새 키로 바꾸려면 입력':'openapi.nexon.com에서 받은 API 키'}" autocomplete="off" spellcheck="false"></label><button class="btn out" type="button" id="k-save">저장</button></div>
         <small class="khint">이 브라우저에만 저장돼요. 내 컴퓨터에서 확인할 때만 쓰세요.</small></details>`}
       <div class="m-btns">${a?`<button class="btn out" type="button" id="a-del">서버 연결 끊기</button>`:k?`<button class="btn out" type="button" id="k-del">키 지우기</button>`:''}<button class="btn dark" type="button" id="m-cancel">닫기</button></div></div></div></div>`;
-  }
+  }}
   if(m&&m.kind==='reset'){
     h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="r-title"><div class="m-head"><span id="r-title">예시 데이터로 초기화</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
       <div class="m-body"><p style="margin:0;font-size:13px;line-height:20px;color:var(--sub)">추가한 캐릭터, 보스 목록, 클리어·물욕 기록이 모두 처음 예시 상태로 돌아가요.</p>
