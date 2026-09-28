@@ -13,6 +13,7 @@
  *   GET /api/character?name=캐릭터명   이름 → 월드·레벨·직업·외형 이미지
  *   GET /api/character/basic?ocid=…    저장해 둔 ocid로 다시 불러오기(새로고침)
  *   GET /api/scheduler?ocid=…          인게임 스케줄러(보스 완료 여부) 원본 그대로
+ *   GET /api/look?u=외형이미지주소     넥슨 외형 이미지를 같은 주소로 전달 (사이트가 캐릭터 부분만 잘라 쓰려고)
  */
 
 const NEXON = 'https://open.api.nexon.com/maplestory/v1/';
@@ -36,6 +37,18 @@ export default {
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     if (req.method !== 'GET') return fail(405, 'METHOD', 'GET 요청만 받아요', cors);
     if (url.pathname === '/api/health') return json({ ok: true, service: 'mepuri-api' }, 200, cors);
+
+    // 외형 이미지는 키가 필요 없음. 넥슨 외형 이미지 주소만 받아서 그대로 전달
+    if (url.pathname === '/api/look') {
+      const u = url.searchParams.get('u') || '';
+      if (!u.startsWith('https://open.api.nexon.com/static/maplestory/character/look/')) return fail(400, 'BAD_URL', '외형 이미지 주소가 아니에요', cors);
+      const r = await fetch(u);
+      if (!r.ok) return fail(r.status, 'LOOK', '외형 이미지를 불러오지 못했어요', cors);
+      return new Response(r.body, {
+        status: 200,
+        headers: { ...cors, 'content-type': r.headers.get('content-type') || 'image/png', 'cache-control': 'public, max-age=86400' },
+      });
+    }
     if (!env.NEXON_API_KEY) return fail(500, 'NO_KEY', '서버에 NEXON_API_KEY가 설정되지 않았어요', cors);
 
     try {
