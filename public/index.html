@@ -1136,7 +1136,7 @@ function statusView(){
         <p>• 이번 주 수익 <b>${meso(k.earned)||'0'}</b> = 주간 ${meso(k.eW)||'0'} + 일간 ${meso(k.eD)||'0'}${k.eM?` + 월간 ${meso(k.eM)}`:''}</p>
         <p>• 주간 보스를 모두 잡으면 <b class="acc">${meso(k.left)||'0'}</b> 메소를 더 벌 수 있어요.</p>
         <small>결정석 가격 · 일간·주간 ${tblLabel(TODAY,'W')} · 월간 ${tblLabel(TODAY,'M')} 표 기준</small></div>
-      <div class="foot"><span>Data based on NEXON Open API</span><button class="linkish" type="button" id="reset">${EMPTY_START?'초기화':'예시 데이터로 초기화'}</button></div>
+      <div class="foot"><span>Data based on NEXON Open API${SAME_API?' · <a class="linkish" href="/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>':''}</span><button class="linkish" type="button" id="reset">${EMPTY_START?'초기화':'예시 데이터로 초기화'}</button></div>
     </aside>
     <section class="col-r">
       <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}" type="button" role="tab" aria-selected="${f===v}" data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
@@ -1716,7 +1716,7 @@ function renderLayer(){
     h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="g-title" style="max-width:380px"><div class="m-head"><span id="g-title">로그인</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
       <div class="m-body g-body"><b class="g-t">구글 계정으로 기록 저장하기</b><p class="g-d">로그인하면 캐릭터·보스 설정·클리어 기록이 계정에 저장돼서, 다른 기기에서도 그대로 이어서 쓸 수 있어요.</p>
       <div id="gbtn" class="g-btn"><span class="g-wait">불러오는 중…</span></div>
-      <p class="g-s">메푸리는 이름·이메일·프로필 사진만 받아요. 넥슨 계정과는 상관없어요.</p></div></div></div>`;
+      <p class="g-s">메푸리는 이름·이메일·프로필 사진만 받아요. 넥슨 계정과는 상관없어요. <a href="/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p></div></div></div>`;
   }
   if(m&&m.kind==='cloud'){const srv=m.srv,sd=srv.data||{},n=(sd.chars||[]).length,at=srv.updatedAt?new Date(srv.updatedAt):null;
     const when=at?`${at.getMonth()+1}.${String(at.getDate()).padStart(2,'0')} ${String(at.getHours()).padStart(2,'0')}:${String(at.getMinutes()).padStart(2,'0')}`:'';
