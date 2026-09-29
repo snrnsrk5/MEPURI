@@ -622,8 +622,8 @@ html.theme-fade,html.theme-fade *{transition:background-color .32s ease,color .3
 .acct-btn.me{position:relative;padding:0 10px 0 2px}.acct-btn.me img,.acct-btn .ph{width:20px;height:20px;border-radius:50%;object-fit:cover}
 .acct-btn .ph{display:grid;place-items:center;background:#566282;font-size:11px}
 .acct-btn .nm{max-width:110px;overflow:hidden;text-overflow:ellipsis}
-.dot{flex-shrink:0;display:inline-block;width:7px;height:7px;border-radius:50%;background:#4CC38A}.dot.busy{background:#F6B400;animation:dotp 1s ease-in-out infinite}.dot.err{background:#FF5A5A}
-.acct-btn.me .dot{position:absolute;left:16px;top:14px;box-shadow:0 0 0 2px var(--top)}
+.sdot{flex-shrink:0;display:inline-block;width:7px;height:7px;border-radius:50%;background:#4CC38A}.sdot.busy{background:#F6B400;animation:dotp 1s ease-in-out infinite}.sdot.err{background:#FF5A5A}
+.acct-btn.me .sdot{position:absolute;left:16px;top:14px;box-shadow:0 0 0 2px var(--top)}
 @keyframes dotp{50%{opacity:.35}}
 .acct-menu{position:absolute;top:32px;right:0;z-index:70;display:flex;flex-direction:column;width:230px;padding:6px;border-radius:10px;border:1px solid var(--border);background:var(--card);box-shadow:var(--pop-shadow)}
 .am-hd{display:flex;flex-direction:column;gap:2px;padding:8px 10px 10px;border-bottom:1px solid var(--border)}.am-hd b{font-size:13px;color:var(--text)}.am-hd span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
@@ -1617,9 +1617,9 @@ function paintAcct(){const el=document.getElementById('acct');if(!el)return;
   el.classList.add('on');const u=cloud.user;
   if(!u){el.innerHTML=`<button class="acct-btn" type="button" id="acct-login">${GLOGO}<span>로그인</span></button>`;document.getElementById('acct-login').onclick=e=>{e.stopPropagation();openLogin()};return}
   const stt=cloud.state==='saving'||(cloud.dirty&&cloud.state!=='error'&&cloud.state!=='conflict')?['busy','저장하는 중']:cloud.state==='error'?['err','저장 실패 · 다시 시도할게요']:cloud.state==='conflict'?['err','다른 기기 기록과 겹침']:['ok',cloud.at?`저장됨 · ${String(cloud.at.getHours()).padStart(2,'0')}:${String(cloud.at.getMinutes()).padStart(2,'0')}`:'저장됨'];
-  el.innerHTML=`<button class="acct-btn me" type="button" id="acct-me" aria-haspopup="menu" aria-expanded="${!!ui.acct}" title="${esc(stt[1])}">${u.picture?`<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`:`<span class="ph">${esc((u.name||'?')[0])}</span>`}<i class="dot ${stt[0]}"></i><span class="nm">${esc(u.name||u.email)}</span></button>
+  el.innerHTML=`<button class="acct-btn me" type="button" id="acct-me" aria-haspopup="menu" aria-expanded="${!!ui.acct}" title="${esc(stt[1])}">${u.picture?`<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`:`<span class="ph">${esc((u.name||'?')[0])}</span>`}<i class="sdot ${stt[0]}"></i><span class="nm">${esc(u.name||u.email)}</span></button>
     ${ui.acct?`<div class="acct-menu" role="menu"><div class="am-hd"><b>${esc(u.name||'')}</b><span>${esc(u.email)}</span></div>
-      <div class="am-st"><i class="dot ${stt[0]}"></i>${esc(stt[1])}</div>
+      <div class="am-st"><i class="sdot ${stt[0]}"></i>${esc(stt[1])}</div>
       ${cloud.dirty||cloud.state==='error'?`<button type="button" role="menuitem" id="am-save">지금 저장하기</button>`:''}
       <button type="button" role="menuitem" id="am-out">로그아웃</button>
       <button type="button" role="menuitem" class="danger" id="am-del">계정 삭제</button></div>`:''}`;
