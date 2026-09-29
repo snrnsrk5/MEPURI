@@ -8,9 +8,10 @@ Cloudflare Worker 하나가 사이트(`public/`)와 캐릭터 조회 API(`/api/�
 ## 파일 구성
 
 ```
-public/index.html   메푸리 화면 (테스트 웹)
-worker.js           /api/ 주소 처리 — 넥슨 Open API 대신 불러주기
-wrangler.toml       Cloudflare 배포 설정 (Worker 이름: mepuri)
+public/index.html   메푸리 화면
+worker.js           /api/ 주소 처리 — 넥슨 Open API 대신 불러주기 + 구글 로그인 + 기록 저장
+wrangler.toml       Cloudflare 배포 설정 (Worker 이름: mepuri, D1 데이터베이스 연결)
+schema.sql          데이터베이스 표 구조 (참고용, Worker가 자동으로 만듦)
 ```
 
 ## Cloudflare에 올리기 (처음 한 번)
@@ -27,6 +28,42 @@ wrangler.toml       Cloudflare 배포 설정 (Worker 이름: mepuri)
 
 이후로는 GitHub에 파일을 올릴(커밋할) 때마다 자동으로 다시 배포돼요.
 
+## 구글 로그인 + 기록 저장 켜기 (처음 한 번)
+
+로그인하면 캐릭터·보스 설정·클리어 기록이 계정에 저장돼서 다른 기기에서도 이어서 쓸 수 있어요.
+아래 설정을 안 하면 로그인 버튼만 안 보이고, 나머지는 전처럼 이 브라우저에만 저장돼요.
+
+**1. D1 데이터베이스 만들기 (Cloudflare)**
+1. Cloudflare 대시보드 → **Storage & Databases → D1 SQL Database** → **Create** → 이름 `mepuri` → 만들기.
+2. 만든 데이터베이스 화면에 보이는 **Database ID**(긴 영문·숫자)를 복사해요.
+3. `wrangler.toml` 맨 아래 `database_id = "…"` 따옴표 안에 붙여넣어요. (표는 Worker가 알아서 만들어요)
+
+**2. 구글 로그인 클라이언트 ID 만들기 (Google Cloud)**
+1. https://console.cloud.google.com 에서 새 프로젝트를 만들어요 (이름 예: mepuri).
+2. **API 및 서비스 → OAuth 동의 화면**: 외부(External) 선택 → 앱 이름 `메푸리`, 지원 이메일, 개발자 연락처 입력 → 저장.
+   범위(Scopes)는 따로 추가하지 않아도 돼요 (이름·이메일·프로필 사진만 씀).
+3. 동의 화면의 **게시 상태**를 **프로덕션으로 게시(Publish app)** 로 바꿔요.
+   테스트 상태로 두면 테스트 사용자로 등록한 계정만 로그인돼요. (이름·이메일만 쓰면 구글 심사는 필요 없어요)
+4. **API 및 서비스 → 사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID**
+   - 애플리케이션 유형: **웹 애플리케이션**
+   - **승인된 JavaScript 원본**: `https://mepuri.ut0101ut-8fb.workers.dev` (내 도메인을 붙이면 그 주소도 추가)
+   - 리디렉션 URI는 비워둬도 돼요.
+5. 만들어진 **클라이언트 ID**(`…apps.googleusercontent.com`)를 복사해요.
+
+**3. Worker에 넣기**
+- Worker → **설정 → 변수 및 비밀** → 비밀(Secret) 추가: 이름 `GOOGLE_CLIENT_ID`, 값 = 위에서 복사한 클라이언트 ID.
+  (클라이언트 ID는 공개돼도 괜찮은 값이지만, 비밀로 넣어야 배포할 때 지워지지 않아요)
+
+**4. 확인**
+- 주소 뒤에 `/api/config` → `{"auth":true, ...}` 가 나오면 준비 끝. 사이트 오른쪽 위에 **로그인** 버튼이 생겨요.
+
+### 저장 방식
+- 로그인 쿠키는 스크립트가 읽을 수 없는 방식(HttpOnly)이고 30일 유지돼요. 데이터베이스에는 쿠키 값 대신 해시만 저장해요.
+- 기록은 고친 뒤 1초쯤 지나 자동으로 계정에 저장돼요. 오른쪽 위 프로필 옆 점: 초록 = 저장됨, 노랑 = 저장 중, 빨강 = 실패·겹침.
+- 두 기기에서 동시에 고치면 "다른 기기에서 저장한 기록이 있어요" 창이 떠서 어느 쪽을 쓸지 골라요 (몰래 덮어쓰지 않음).
+- 캐릭터 외형 그림은 저장하지 않고, 불러올 때 외형 주소로 다시 만들어서 용량을 아껴요.
+- 프로필 메뉴의 **계정 삭제**를 누르면 계정과 저장된 기록이 데이터베이스에서 모두 지워져요.
+
 ## API 주소
 
 | 주소 | 하는 일 |
@@ -35,6 +72,11 @@ wrangler.toml       Cloudflare 배포 설정 (Worker 이름: mepuri)
 | `GET /api/character?name=캐릭터명` | 이름 → ocid → 월드·레벨·직업·외형 이미지 |
 | `GET /api/character/basic?ocid=…` | 저장해 둔 ocid로 다시 불러오기 (새로고침) |
 | `GET /api/scheduler?ocid=…` | 인게임 스케줄러(보스 완료 여부). 나중에 자동 클리어 체크용 |
+| `GET /api/config` | 로그인 사용 가능 여부 |
+| `POST /api/auth/google` · `POST /api/auth/logout` | 구글 로그인 · 로그아웃 |
+| `GET /api/me` | 지금 로그인한 계정 |
+| `GET /api/state` · `PUT /api/state` | 내 기록 불러오기 · 저장하기 (겹치면 409) |
+| `DELETE /api/account` | 계정과 기록 삭제 |
 
 응답 예시 (`/api/character`):
 

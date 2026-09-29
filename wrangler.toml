@@ -15,3 +15,12 @@ binding = "ASSETS"
 ALLOWED_ORIGINS = ""
 
 # API 키는 여기 적지 말고 대시보드의 비밀값(Secret) NEXON_API_KEY로 넣기
+# 구글 로그인 클라이언트 ID도 대시보드 비밀값(Secret) GOOGLE_CLIENT_ID로 넣기
+
+# 로그인·기록 저장용 데이터베이스 (Cloudflare D1)
+# 대시보드에서 D1 데이터베이스 'mepuri'를 만든 뒤, 그 ID를 아래 database_id에 붙여넣기
+[[d1_databases]]
+binding = "DB"
+database_name = "mepuri"
+database_id = "여기에-D1-데이터베이스-ID-붙여넣기"
+
