@@ -194,7 +194,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .bk-h{display:flex;flex-direction:column;align-items:center;gap:0;min-width:40px;padding:3px 4px;border-radius:6px;color:var(--sub);font-weight:700;line-height:15px}
 .bk-h small{font-size:10px;font-weight:500;color:var(--muted)}
 .bk-h:hover,.bk-rh:hover{background:var(--soft)}
-.bk-h.cur{color:var(--accent)}
+.bk-h.cur{color:var(--accent)}.bk-h.at{background:var(--accent-bg);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent-soft)}
 .bk-rh{display:flex;align-items:center;gap:6px;width:100%;min-width:150px;padding:3px 6px;border-radius:6px;color:var(--text);font-weight:600;text-align:left}
 .bk-rh img{width:22px;height:22px;border-radius:5px;object-fit:cover;flex-shrink:0}
 .bk-rh .nm{overflow:hidden;text-overflow:ellipsis;max-width:110px}
@@ -206,6 +206,13 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .bk-c.add{border-style:dashed;background:none;color:var(--muted);font-size:15px;font-weight:500}
 .bk-c.add:hover{color:var(--accent)}
 .bk-lg{display:inline-flex;align-items:center;gap:4px;margin-right:10px}.bk-lg i{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:4px;border:1px solid var(--border2);font-style:normal;font-size:10px;line-height:1}
+.bk-rh .nm small{display:block;font-size:10px;font-weight:500;color:var(--muted);line-height:12px}
+.bk-dsel{display:flex;gap:2px;margin-top:2px}.bk-dsel button{height:16px;padding:0 5px;border-radius:4px;font-size:10px;font-weight:600;color:var(--muted);background:var(--soft)}.bk-dsel button.on{background:var(--accent);color:#fff}
+.bk-via{color:var(--faint);font-size:12px;margin-left:2px}
+.bk-more{color:var(--sub);font-weight:600}.bk-more:hover{color:var(--accent)}
+.bk-opts{display:flex;flex-wrap:wrap;gap:4px;padding:4px}
+.bk-opts button{display:flex;align-items:center;gap:5px;height:28px;padding:0 10px 0 4px;border-radius:999px;border:1px solid var(--card-bd);background:var(--bg);font-size:12px;font-weight:600;color:var(--text)}
+.bk-opts button:hover{border-color:var(--accent);color:var(--accent)}.bk-opts img{width:20px;height:20px;border-radius:50%;object-fit:cover}
 .bk-c.no{border:0;background:none;color:var(--faint);cursor:default}
 .bk-c .df{position:absolute}
 .bk-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
@@ -213,6 +220,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 @media(max-width:560px){.bk-rh{min-width:0;gap:4px;padding:3px 4px}.bk-rh .dk{display:none}.bk-rh .nm{max-width:64px;font-size:11px}.bk-h{min-width:32px}.bk-c{width:28px;height:28px}.bk-t th,.bk-t td{padding:3px 2px}.bk-foot .btn{width:100%}}
 .dpast{display:flex;align-items:center;gap:8px;width:100%;padding:4px 4px 2px;border-top:1px dashed var(--accent-soft)}
 .dhint{flex:1;font-size:12px;color:var(--accent)}
+.datebar .dbulk{border:1px solid var(--accent-soft);background:var(--card);color:var(--accent)}.datebar .dbulk:hover{border-color:var(--accent)!important;color:var(--accent)!important}
 .datebar .dtoday{background:var(--accent);color:#fff}.datebar .dtoday:hover{background:var(--accent-hover)!important;color:#fff!important}
 .rscroll{display:flex;flex-direction:column;gap:8px}
 .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;font-size:12px;color:var(--muted)}
@@ -309,6 +317,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .span2 button{padding:0 10px;border-radius:4px;font-size:12px;font-weight:600;color:var(--sub);white-space:nowrap}
 .span2 button.on{background:var(--card);box-shadow:var(--seg-shadow);color:var(--text)}
 .span2 button[data-span="once"].on,.span2 button[data-cspan="once"].on{color:var(--info-fg)}
+.cp-span button[data-cspan="hist"].on{background:var(--accent-bg);box-shadow:inset 0 0 0 1px var(--accent-soft);color:var(--accent)}
 .tmp.from{border-color:var(--accent-soft);background:var(--accent-bg);color:var(--accent)}
 .pop.cfgp{width:320px;gap:12px;padding:14px 14px 12px}
 .cp-hd{display:flex;align-items:flex-start;gap:8px}.cp-tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
@@ -1381,7 +1390,7 @@ function charStats(c){
   const cnt=t=>{const a=L.filter(s=>tOf(s)===t);return{all:a.length,done:a.filter(s=>isDone(c,s)).length}};
   return{earned:eD+eW+eM,eD,eW,eM,left,D:cnt('D'),W:cnt('W'),M:cnt('M')};
 }
-const tmpTag=s=>{const t=tOf(s);if(!s._tmp&&!s._only)return '';
+const tmpTag=s=>{const t=tOf(s);if(!s._tmp&&!s._only)return '';if(pastP(t))return ''; // 지난 주·달은 그때 잡은 그대로 보여 줌 (그 주만/원래 표시 없음)
   let was='';if(s.swap&&(s._only||(s._from&&s._base&&s._base.boss)))was=`원래 ${BY[s.swap].name}`;else if(s._tmp||s._from){const b=s._base;was=b.diff!==s.diff?`원래 ${dk(b.diff)}`:b.party!==s.party?`원래 ${b.party>1?b.party+'인':'솔로'}`:'원래 설정 따로 있음'}
   return `<span class="tmp${s._from?' from':''}">${s._from?FROMP[t]:PERIOD[t]}</span>${was?`<span class="was">${was}</span>`:''}`};
 
@@ -1461,7 +1470,9 @@ function cfgPop(c,s,ctx){const t=tOf(s),b=BY[s.boss],base=s._tmp||(s._from&&!s.s
   const taken=new Set(live(c).map(x=>x.boss));const bopts=bossesOf(t).filter(x=>x.id===s.boss||!taken.has(x.id));
   const canUndo=s._tmp||(s.swap&&(s._only||s._from));
   const what=swapped?`${nb.name} ${DKO[d.diff]}`:DKO[d.diff];
-  const hint=swapped?(once?`${PERIOD[t]}만 ${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요. ${NEXTP[t]}엔 다시 ${esc(jo(b.name,'이에요'))}.`
+  const hd=d.span==='hist'?histDates(c,s.boss,t,d.boss):null;
+  const hint=hd?`${histSpan(hd,t)} 동안 ${swapped?`${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))}`:esc(jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요.${hd.length>1?'':' (그다음 주는 이미 다르게 되어 있어요)'} 이번 주 설정은 그대로예요.`
+    :swapped?(once?`${PERIOD[t]}만 ${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요. ${NEXTP[t]}엔 다시 ${esc(jo(b.name,'이에요'))}.`
       :`앞으로 ${esc(b.name)} 대신 ${esc(jo(nb.name,'을'))} 잡아요. 보스 설정도 같이 바뀌고, 지난 기록은 그대로 둬요.`)
     :once?`${PERIOD[t]} ${jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'로')} 기록하고 ${NEXTP[t]}엔 원래대로(${DKO[base.diff]}) 돌아가요.`
     :`앞으로 계속 ${jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'로')} 잡아요. 보스 설정도 같이 바뀌고, 지난 기록은 그대로 둬요.`;
@@ -1474,6 +1485,7 @@ function cfgPop(c,s,ctx){const t=tOf(s),b=BY[s.boss],base=s._tmp||(s._from&&!s.s
       <span class="cp-l">보스</span>${bossPicker('cfg',d.boss,bopts)}
       <span class="cp-l">난이도</span><div class="seg cp-seg" role="radiogroup" aria-label="난이도">${ds.map(x=>`<button type="button" role="radio" aria-checked="${d.diff===x}" data-cdiff="${x}" class="${d.diff===x?'sd-'+x:''}">${DKO[x]}</button>`).join('')}</div>
       <span class="cp-l">인원</span><div class="cp-step"><button type="button" data-cparty="-1" aria-label="파티 인원 줄이기" ${d.party<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${d.party}</b>${d.party>1?'인 파티':' 솔로'}</span><button type="button" data-cparty="1" aria-label="파티 인원 늘리기" ${d.party>=6?'disabled':''}>${I.plus()}</button></div>
+      ${t!=='D'&&pastP(t)?`<span class="cp-l">기간</span><div class="span2 cp-span" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${d.span==='hist'}" class="${d.span==='hist'?'on':''}" data-cspan="hist">${t==='W'?'그 주부터':'그 달부터'}</button><button type="button" role="radio" aria-checked="${once}" class="${once?'on':''}" data-cspan="once">${PERIOD[t]}</button></div>`:''}
       ${pastP(t)||t==='D'?'':`<span class="cp-l">기간</span><div class="span2 cp-span" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${once}" class="${once?'on':''}" data-cspan="once">${PERIOD[t]}</button><button type="button" role="radio" aria-checked="${!once}" class="${once?'':'on'}" data-cspan="keep">${FROMP[t]}</button></div>`}
     </div>
     <div class="cp-prev${same?' none':''}">${same?'<span class="cp-pl">바꿀 내용을 골라 주세요</span>'
@@ -1560,7 +1572,7 @@ function statusView(){
         <button type="button" data-dnav="-7" aria-label="1주 전으로" class="${VIEW_OFF<=minOff()?'dim':''}">«<span>1주</span></button><button type="button" data-dnav="-1" aria-label="하루 전으로" class="${VIEW_OFF<=minOff()?'dim':''}">‹<span>1일</span></button>
         <span class="dwrap"><button type="button" class="dnow" id="cal-btn" aria-haspopup="dialog" aria-expanded="${!!ui.cal}"><b class="num">${md(TODAY)}</b> (${DOW[VIEW_DOW]})${VIEW_OFF?`<small>${-VIEW_OFF}일 전</small>`:'<small>오늘</small>'}${I.caret('var(--muted)',8)}</button>${ui.cal?calendar(cur()):''}</span>
         <button type="button" data-dnav="1" aria-label="하루 뒤로" class="${VIEW_OFF>=0?'dim':''}"><span>1일</span>›</button><button type="button" data-dnav="7" aria-label="1주 뒤로" class="${VIEW_OFF>=0?'dim':''}"><span>1주</span>»</button>
-        ${VIEW_OFF?`<div class="dpast"><span class="dhint">클리어하면 ${md(TODAY)}에 기록돼요</span><button type="button" class="dtoday" data-dnav="0">오늘로</button></div>`:''}
+        ${VIEW_OFF?`<div class="dpast"><span class="dhint">클리어하면 ${md(TODAY)}에 기록돼요</span><button type="button" class="dbulk" data-bulk>몰아서 입력</button><button type="button" class="dtoday" data-dnav="0">오늘로</button></div>`:''}
       </div>
       ${charList()}
       <div class="note"><h3>${I.info}${esc(c.name)} 남은 보스</h3>
@@ -1602,17 +1614,37 @@ function bkCols(t){const s0=minDay(),out=[];
   else for(let w=wStart(s0);w<=REALW;w=addD(w,7)){const days=Array.from({length:7},(_,i)=>addD(w,i)).filter(d=>d>=s0&&d<=REAL);
     out.push({k:'W'+w,d0:days[0],days,top:md(w).replace(/^0/,'').replace('.','/'),sub:w===REALW?'이번 주':'',cur:w===REALW})}
   return out}
-function bkGrid(c,t){const cols=bkCols(t),T=t==='D'?'D':t;
-  cols.forEach(col=>{col.sl={};atDay(col.d0,()=>live(c).filter(s=>tOf(s)===T).forEach(s=>col.sl[s.boss]={diff:s.diff}))});
+function bkGrid(c,t,extra){const cols=bkCols(t),T=t==='D'?'D':t;
+  const tpl={}; // 보스마다 가장 최근에 잡던 설정 (빈 주에 넣을 때 씀)
+  cols.forEach(col=>{col.sl={};atDay(col.d0,()=>live(c).filter(s=>tOf(s)===T).forEach(s=>{col.sl[s.boss]={diff:s.diff};tpl[s.boss]={diff:s.diff,party:s.party,cshare:s.cshare??null,lmode:s.lmode||'sell',lshare:s.lshare??null,memo:s.memo||''}}))});
   const ids=[];atDay(REAL,()=>live(c).filter(s=>tOf(s)===T).forEach(s=>ids.push(s.boss)));
   [...cols].reverse().forEach(col=>Object.keys(col.sl).forEach(id=>{if(!ids.includes(id))ids.push(id)}));
+  // 표에서 직접 추가한 보스 줄 (아직 한 번도 안 잡은 보스)
+  (extra||[]).filter(x=>x.t===T&&BY[x.id]).forEach(x=>{if(!ids.includes(x.id))ids.push(x.id);if(!tpl[x.id])tpl[x.id]={diff:x.diff,party:1,cshare:null,lmode:'sell',lshare:null,memo:''}});
+  // 대신 잡은 보스는 원래 보스 바로 아래로
+  const via={};c.slots.forEach(s=>{if(s.swap&&tOf(s)===T&&s.boss!==s.swap)via[s.boss]=s.swap});
+  const order=[];ids.forEach(id=>{if(via[id]&&ids.includes(via[id]))return;order.push(id);const put=x=>ids.forEach(y=>{if(via[y]===x&&!order.includes(y)){order.push(y);put(y)}});put(id)});
+  ids.splice(0,ids.length,...order);
   const lim=SLOTN[T];
   cols.forEach(col=>{col.add={};const ck=T==='D'?'D'+col.d0:col.k,full=lim&&Object.keys(col.sl).length>=lim;
-    c.slots.forEach((s,i)=>{if(tOf(s)!==T||col.sl[s.boss]||s.swap||s.only||!s.start||s.start<=ck||full)return;if(s.end&&s.end<=ck)return;col.add[s.boss]=i}) });
-  const rows=ids.map(id=>{const last=[...cols].reverse().find(col=>col.sl[id]);return {id,diff:last?last.sl[id].diff:null}});
-  return {cols,rows}}
+    if(full)return;
+    // 1) 나중에 추가한 칸이면 시작 주를 앞당길 수 있음 (그 사이 주도 같이 생김)
+    c.slots.forEach((s,i)=>{if(tOf(s)!==T||col.sl[s.boss]||s.only||!s.start||s.start<=ck)return;if(s.end&&s.end<=ck)return;if(col.add[s.boss]===undefined)col.add[s.boss]=i});
+    // 2) 그 밖에 (이번 주만 넣은 칸 등) 표에 있는 보스는 그 주에만 넣음
+    if(T!=='D')ids.forEach(id=>{if(!col.sl[id]&&col.add[id]===undefined&&tpl[id])col.add[id]=-1}) });
+  const rows=ids.map(id=>{const last=[...cols].reverse().find(col=>col.sl[id]);return {id,diff:last?last.sl[id].diff:tpl[id]?tpl[id].diff:null,via:via[id]&&ids.includes(via[id])?via[id]:null,fresh:!last&&(extra||[]).some(x=>x.id===id&&x.t===T)}});
+  return {cols,rows,tpl}}
 // '이때도 잡았어요': 나중에 추가한 보스의 시작 주를 그 칸까지 앞당김
-function bkPull(c,col,t,i){const s=c.slots[i];if(!s)return;const ck=t==='D'?'D'+col.d0:col.k;if(s.start>ck)s.start=ck}
+// (프리셋 적용·보스 교체로 들어온 칸은 '대신' 표시가 있어도 똑같이 앞당김. 그 주 칸이 꽉 찼으면 안 함)
+function bkPull(c,col,t,i,id,tpl){const T=t==='D'?'D':t,ck=T==='D'?'D'+col.d0:col.k;
+  if(SLOTN[T]&&atDay(col.d0,()=>live(c).filter(x=>tOf(x)===T).length)>=SLOTN[T])return;
+  if(i<0){if(tpl&&tpl[id])atDay(col.d0,()=>putSlot(c,id,{...tpl[id]},true,pkey(T),T));return}
+  const s=c.slots[i];if(!s||!(s.start>ck))return;
+  // 앞당기면 그 사이 주들에도 생기니까: 그 주들이 다 자리가 있고, '대신'한 원래 보스가 없어야 앞당김. 아니면 그 주에만 넣음
+  const lim=SLOTN[T],step=d=>T==='W'?addD(d,7):T==='M'?(()=>{let y=+d.slice(0,4),m=+d.slice(5,7)+1;if(m>12){m=1;y++}return y+'.'+String(m).padStart(2,'0')+'.01'})():addD(d,1);
+  let ok=true;for(let d=col.d0,n=0;n<400;n++,d=step(d)){const k=T==='W'?'W'+wStart(d):T==='M'?'M'+d.slice(0,7):'D'+d;if(k>=s.start)break;
+    if(!atDay(d,()=>{const L=live(c);return (!lim||L.filter(x=>tOf(x)===T).length<lim)&&!(s.swap&&L.some(x=>x.boss===s.swap))})){ok=false;break}}
+  if(ok)s.start=ck;else if(T!=='D'&&tpl&&tpl[id])atDay(col.d0,()=>putSlot(c,id,{...tpl[id]},true,pkey(T),T))}
 function bkCell(c,id,col,t){const a=clearsOf(c,id);
   if(t==='D'){const n=col.days.filter(d=>a.includes(d)).length;return {n,all:col.days.length,on:n===col.days.length&&n>0}}
   const on=a.some(d=>col.days.includes(d)||(t==='W'&&d>=col.k.slice(1)&&d<=addD(col.k.slice(1),6)));
@@ -1626,11 +1658,24 @@ function bkSet(c,id,col,t,want){let kept=0;
   if(want){if(!bkCell(c,id,col,t).on)put(col.d0);return 0}
   if((c.loot[id+'|'+col.k]||[]).length)return 1;
   const w=col.k.slice(1),all=t==='W'?Array.from({length:7},(_,i)=>addD(w,i)):col.days;drop(all);return 0}
-function openBulk(){const c=cur();if(!c)return;ui.modal={kind:'bulk',cid:c.id,t:'W'};renderLayer()}
-function bulkView(m){const c=st.chars.find(x=>x.id===m.cid)||cur(),t=m.t,{cols,rows}=bkGrid(c,t);let cnt=0;
+/* 지난 기록 '그 주부터': 보는 주(달)부터 이번 주 전까지, 그 보스 상태가 보는 주와 같은 주들에 똑같이 적용
+   (중간에 따로 바꿔 둔 주가 나오면 거기서 멈춤 · 이번 주 설정은 안 건드림) */
+function histDates(c,id,t,tgt){if(t==='D'||!pastP(t))return null;
+  const nm=d=>{let y=+d.slice(0,4),m=+d.slice(5,7)+1;if(m>12){m=1;y++}return y+'.'+String(m).padStart(2,'0')+'.01'};
+  const start=t==='W'?WEEK[0]:MONTH+'.01',end=t==='W'?REALW:REAL.slice(0,7)+'.01';
+  const sig=()=>{const s=live(c).find(x=>x.boss===id);return (s?s.diff+'|'+s.party+'|'+(s.swap||''):'-')+'|'+(!!tgt&&tgt!==id&&live(c).some(x=>x.boss===tgt))};
+  const s0=sig(),out=[start];let d=start;
+  for(let i=0;i<60;i++){d=t==='W'?addD(d,7):nm(d);if(d>=end)break;if(atDay(d,sig)!==s0)break;out.push(d)}
+  return out}
+const histSpan=(dates,t)=>dates.length>1?`${md(dates[0])}~${md(t==='W'?addD(dates[dates.length-1],6):dates[dates.length-1])} ${dates.length}${t==='W'?'주':'달'}`:(t==='W'?'그 주':'그 달');
+function openBulk(){const c=cur();if(!c)return;ui.modal={kind:'bulk',cid:c.id,t:'W',at:{W:'W'+WEEK[0],M:'M'+MONTH,D:'W'+WEEK[0]}};renderLayer();
+  const w=document.querySelector('#layer .bk-wrap'),h=document.querySelector('#layer .bk-h.at');if(w&&h){const n=w.querySelector('.bk-n'),wr=w.getBoundingClientRect(),hr=h.getBoundingClientRect(),nw=n?n.offsetWidth:0;if(hr.right>wr.right||hr.left<wr.left+nw)w.scrollLeft+=hr.left-wr.left-nw-8}}
+function bulkView(m){const c=st.chars.find(x=>x.id===m.cid)||cur(),t=m.t,{cols,rows}=bkGrid(c,t,m.extra);let cnt=0;
+  const noWhy=col=>SLOTN[t]&&Object.keys(col.sl).length>=SLOTN[t]?`${col.top}${t==='W'?' 주':''}는 ${TKO[t]} 칸이 꽉 찼어요`:'이때는 넣을 수 없어요';
   const body=rows.map(r=>{const b=BY[r.id];
-    return `<tr><td class="bk-n"><button type="button" class="bk-rh" data-bkrow="${r.id}" title="${esc(b.name)} 전체 켜기/끄기"><img src="${b.img}" alt="">${r.diff?dk(r.diff):''}<span class="nm">${esc(b.name)}</span></button></td>${cols.map((col,j)=>{
-      const sl=col.sl[r.id];if(!sl)return col.add[r.id]!==undefined?`<td><button type="button" class="bk-c add" data-bkc="${r.id}::${j}" title="${col.top}${t==='W'?' 주':''}에도 잡았으면 눌러 주세요" aria-label="${esc(b.name)} ${col.top} 추가">+</button></td>`:`<td><span class="bk-c no" title="이때는 안 잡는 보스">·</span></td>`;
+    if(r.fresh){const ds=diffsOf(r.id,t);return `<tr><td class="bk-n"><div class="bk-rh"><img src="${b.img}" alt=""><span class="nm">${esc(b.name)}${ds.length>1?`<span class="bk-dsel">${ds.map(d=>`<button type="button" class="${d===r.diff?'on':''}" data-bkxd="${r.id}:${d}">${DKO[d]}</button>`).join('')}</span>`:`<small>${DKO[r.diff]}</small>`}</span></div></td>${cols.map((col,j)=>col.add[r.id]!==undefined?`<td><button type="button" class="bk-c add" data-bkc="${r.id}::${j}" aria-label="${esc(b.name)} ${col.top} 추가">+</button></td>`:`<td><span class="bk-c no" title="${noWhy(col)}">·</span></td>`).join('')}</tr>`}
+    return `<tr><td class="bk-n"><button type="button" class="bk-rh" data-bkrow="${r.id}" title="${esc(b.name)} 전체 켜기/끄기">${r.via?'<span class="bk-via" aria-hidden="true">↳</span>':''}<img src="${b.img}" alt="">${r.diff?dk(r.diff):''}<span class="nm">${esc(b.name)}${r.via?`<small>${esc(BY[r.via].name)} 대신</small>`:''}</span></button></td>${cols.map((col,j)=>{
+      const sl=col.sl[r.id];if(!sl)return col.add[r.id]!==undefined?`<td><button type="button" class="bk-c add" data-bkc="${r.id}::${j}" title="${col.top}${t==='W'?' 주':''}에 이 보스를 잡았으면 눌러 주세요" aria-label="${esc(b.name)} ${col.top} 추가">+</button></td>`:`<td><span class="bk-c no" title="${noWhy(col)}">·</span></td>`;
       const x=bkCell(c,r.id,col,t);if(x.on)cnt++;
       const lab=t==='D'?(x.on?I.check(12):x.n?x.n:''):x.on?I.check(12):'';
       const ttl=`${col.top}${t==='W'?' 주':''} · ${DKO[sl.diff]}${sl.diff!==r.diff?' (그때 난이도)':''}${x.loot?' · 물욕템 기록 있음':''}`;
@@ -1640,10 +1685,11 @@ function bulkView(m){const c=st.chars.find(x=>x.id===m.cid)||cur(),t=m.t,{cols,r
     <div class="m-body">
       <div class="bk-top"><div class="bk-chars" role="tablist" aria-label="캐릭터">${st.chars.map(x=>`<button type="button" role="tab" aria-selected="${x.id===c.id}" class="${x.id===c.id?'on':''}" data-bkch="${x.id}">${esc(x.name)}</button>`).join('')}</div>
         <div class="bk-seg" role="tablist" aria-label="종류">${[['W','주간'],['M','월간'],['D','일간']].map(([v,l])=>`<button type="button" role="tab" aria-selected="${t===v}" class="${t===v?'on':''}" data-bkt="${v}">${l}</button>`).join('')}</div></div>
-      <p class="bk-hint">칸을 누르면 바로 기록돼요. ${t==='D'?'일간은 한 칸이 그 주 7일이에요 (숫자 = 잡은 날 수). ':''}날짜를 누르면 그 ${t==='M'?'달':'주'} 전체, 보스 이름을 누르면 그 보스 전체를 켜고 꺼요.<br>난이도·보스를 그때만 다르게 잡았다면 먼저 현황 탭에서 그 날짜로 가서 ⚙로 바꿔 주세요.</p>
-      ${rows.length?`<div class="bk-wrap"><table class="bk-t"><thead><tr><th class="bk-n"><button type="button" class="bk-rh" data-bkall style="justify-content:center;color:var(--sub)">전체</button></th>${cols.map((col,j)=>`<th><button type="button" class="bk-h${col.cur?' cur':''}" data-bkcol="${j}" title="${col.top} 전체 켜기/끄기">${col.top}<small>${col.sub||'&nbsp;'}</small></button></th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`
+      <p class="bk-hint">칸을 누르면 바로 기록돼요. 빈 칸(+)은 앞 주든 뒤 주든 그 주에 그 보스를 넣고 클리어로 기록해요. ${t==='D'?'일간은 한 칸이 그 주 7일이에요 (숫자 = 잡은 날 수). ':''}날짜를 누르면 그 ${t==='M'?'달':'주'} 전체, 보스 이름을 누르면 그 보스 전체를 켜고 꺼요.${t!=='D'?'<br>목록에 없던 보스는 맨 아래 \'다른 보스 불러오기\'로 줄을 추가해요. 난이도가 달랐던 주는 보스 현황에서 그 주로 가서 ⚙로 바꿔 주세요.':''}</p>
+      ${rows.length?`<div class="bk-wrap"><table class="bk-t"><thead><tr><th class="bk-n"><button type="button" class="bk-rh" data-bkall style="justify-content:center;color:var(--sub)">전체</button></th>${cols.map((col,j)=>`<th><button type="button" class="bk-h${col.cur?' cur':''}${m.at&&m.at[t]===col.k&&!col.cur?' at':''}" data-bkcol="${j}" title="${col.top} 전체 켜기/끄기">${col.top}<small>${col.sub||'&nbsp;'}</small></button></th>`).join('')}</tr></thead><tbody>${body}${t!=='D'?(()=>{const have=new Set(rows.map(r=>r.id)),opts=bossesOf(t).filter(x=>!have.has(x.id));if(!opts.length)return '';
+          return `<tr><td class="bk-n"><button type="button" class="bk-rh bk-more" data-bkpick aria-expanded="${!!m.pick}">${I.plus()}<span class="nm">다른 보스 불러오기</span></button></td><td colspan="${cols.length}" style="text-align:left">${m.pick?`<div class="bk-opts">${opts.map(x=>`<button type="button" data-bkx="${x.id}"><img src="${x.img}" alt="">${esc(x.name)}</button>`).join('')}</div>`:''}</td></tr>`})():''}</tbody></table></div>`
         :`<div class="empty"><b>${TKO[t]} 보스가 없어요</b><span>보스 설정에서 먼저 보스를 추가해 주세요.</span></div>`}
-      <div class="bk-foot"><span><span class="bk-lg"><i style="background:var(--accent);border-color:var(--accent);color:#fff">✓</i>클리어</span><span class="bk-lg"><i style="box-shadow:inset 0 0 0 2px var(--accent-soft);border-color:var(--accent)"></i>물욕템 있음</span><span class="bk-lg"><i style="border-style:dashed">+</i>나중에 넣은 보스</span></span><span>${esc(c.name)} · ${TKO[t]} <b>${cnt}칸</b> · ${md(minDay())}부터 입력 가능</span><button class="btn pri" type="button" id="m-cancel">다 했어요</button></div>
+      <div class="bk-foot"><span><span class="bk-lg"><i style="background:var(--accent);border-color:var(--accent);color:#fff">✓</i>클리어</span><span class="bk-lg"><i style="box-shadow:inset 0 0 0 2px var(--accent-soft);border-color:var(--accent)"></i>물욕템 있음</span><span class="bk-lg"><i style="border-style:dashed">+</i>그 주에 넣기</span></span><span>${esc(c.name)} · ${TKO[t]} <b>${cnt}칸</b> · ${md(minDay())}부터 입력 가능</span><button class="btn pri" type="button" id="m-cancel">다 했어요</button></div>
     </div></div></div>`}
 function bindBulk(){const m=ui.modal;if(!m||m.kind!=='bulk')return;const L=document.getElementById('layer');
   const c=()=>st.chars.find(x=>x.id===m.cid)||cur();
@@ -1651,26 +1697,29 @@ function bindBulk(){const m=ui.modal;if(!m||m.kind!=='bulk')return;const L=docum
     if(kept)toast('물욕템 기록이 있는 칸은 그대로 뒀어요 (현황 탭에서 취소할 수 있어요)')};
   L.querySelectorAll('[data-bkch]').forEach(b=>b.onclick=()=>{m.cid=b.dataset.bkch;renderLayer()});
   L.querySelectorAll('[data-bkt]').forEach(b=>b.onclick=()=>{m.t=b.dataset.bkt;renderLayer()});
-  const G=()=>bkGrid(c(),m.t);
-  L.querySelectorAll('[data-bkc]').forEach(b=>b.onclick=()=>{const [id,j]=b.dataset.bkc.split('::'),{cols}=G(),col=cols[+j],ch=c();
-    if(!col.sl[id]&&col.add[id]!==undefined){bkPull(ch,col,m.t,col.add[id]);redo(bkSet(ch,id,col,m.t,true));return}
+  const G=()=>bkGrid(c(),m.t,m.extra);let TPL=null;
+  const pk=L.querySelector('[data-bkpick]');if(pk)pk.onclick=()=>{m.pick=!m.pick;const sc=L.querySelector('.bk-wrap'),y=sc?sc.scrollTop:0,x=sc?sc.scrollLeft:0;renderLayer();const n=L.querySelector('.bk-wrap');if(n){n.scrollLeft=x;n.scrollTop=m.pick?n.scrollHeight:y}};
+  L.querySelectorAll('[data-bkxd]').forEach(b=>b.onclick=()=>{const [id,d]=b.dataset.bkxd.split(':');(m.extra||[]).forEach(x=>{if(x.id===id&&x.t===m.t)x.diff=d});const sc=L.querySelector('.bk-wrap'),x=sc?sc.scrollLeft:0,y=sc?sc.scrollTop:0;renderLayer();const n=L.querySelector('.bk-wrap');if(n){n.scrollLeft=x;n.scrollTop=y}});
+  L.querySelectorAll('[data-bkx]').forEach(b=>b.onclick=()=>{const id=b.dataset.bkx,ds=diffsOf(id,m.t);m.extra=(m.extra||[]).concat({id,t:m.t,diff:ds[ds.length-1]});m.pick=false;const sc=L.querySelector('.bk-wrap'),x=sc?sc.scrollLeft:0;renderLayer();const n=L.querySelector('.bk-wrap');if(n){n.scrollLeft=x;n.scrollTop=n.scrollHeight}});
+  L.querySelectorAll('[data-bkc]').forEach(b=>b.onclick=()=>{const [id,j]=b.dataset.bkc.split('::'),{cols,tpl}=G(),col=cols[+j],ch=c();
+    if(!col.sl[id]&&col.add[id]!==undefined){bkPull(ch,col,m.t,col.add[id],id,tpl);redo(bkSet(ch,id,col,m.t,true));return}
     const x=bkCell(ch,id,col,m.t);redo(bkSet(ch,id,col,m.t,!x.on))});
   // 여러 칸: 하나라도 비어 있으면 전부 켜고, 다 켜져 있으면 전부 끔. '+' 칸은 켤 때만 같이 채움
   const many=cells=>{const ch=c(),live0=cells.filter(([id,col])=>col.sl[id]),adds=cells.filter(([id,col])=>!col.sl[id]&&col.add[id]!==undefined);
     const want=adds.length>0||live0.some(([id,col])=>!bkCell(ch,id,col,m.t).on);let kept=0;
-    if(want)adds.forEach(([id,col])=>bkPull(ch,col,m.t,col.add[id]));
+    if(want)adds.forEach(([id,col])=>bkPull(ch,col,m.t,col.add[id],id,TPL));
     [...live0,...(want?adds:[])].forEach(([id,col])=>kept+=bkSet(ch,id,col,m.t,want));redo(kept)};
   const inCol=(col,id)=>col.sl[id]||col.add[id]!==undefined;
-  L.querySelectorAll('[data-bkcol]').forEach(b=>b.onclick=()=>{const {cols,rows}=G(),col=cols[+b.dataset.bkcol];many(rows.filter(r=>inCol(col,r.id)).map(r=>[r.id,col]))});
-  L.querySelectorAll('[data-bkrow]').forEach(b=>b.onclick=()=>{const {cols}=G(),id=b.dataset.bkrow;many(cols.filter(col=>inCol(col,id)).map(col=>[id,col]))});
-  const all=L.querySelector('[data-bkall]');if(all)all.onclick=()=>{const {cols,rows}=G();many(rows.flatMap(r=>cols.filter(col=>inCol(col,r.id)).map(col=>[r.id,col])))};
+  L.querySelectorAll('[data-bkcol]').forEach(b=>b.onclick=()=>{const {cols,rows,tpl}=G();TPL=tpl;const col=cols[+b.dataset.bkcol];many(rows.filter(r=>inCol(col,r.id)).map(r=>[r.id,col]))});
+  L.querySelectorAll('[data-bkrow]').forEach(b=>b.onclick=()=>{const {cols,tpl}=G();TPL=tpl;const id=b.dataset.bkrow;many(cols.filter(col=>inCol(col,id)).map(col=>[id,col]))});
+  const all=L.querySelector('[data-bkall]');if(all)all.onclick=()=>{const {cols,rows,tpl}=G();TPL=tpl;many(rows.flatMap(r=>cols.filter(col=>inCol(col,r.id)).map(col=>[r.id,col])))};
 }
 /* 카드·보스 설정 표 공통: '다르게 잡았어요' 창 */
 function bindCfg(v){
   v.querySelectorAll('.cfgp').forEach(p=>p.onclick=e=>e.stopPropagation());
   v.querySelectorAll('[data-cfg]').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=b.dataset.cfg;ui.pop=null;
     if(ui.cfg===id){ui.cfg=null;render();return}
-    const sl=live(cur()).find(x=>x.boss===id);ui.cfg=id;ui.cfgd={boss:id,diff:sl.diff,party:sl.party,span:tOf(sl)==='D'?'keep':'once'};ui.bdd=null;render()});
+    const sl=live(cur()).find(x=>x.boss===id);ui.cfg=id;ui.cfgd={boss:id,diff:sl.diff,party:sl.party,span:tOf(sl)==='D'?'keep':pastP(tOf(sl))?'hist':'once'};ui.bdd=null;render()});
   v.querySelectorAll('.cfgp [data-bdd]').forEach(b=>b.onclick=e=>{e.stopPropagation();ui.bdd=ui.bdd==='cfg'?null:'cfg';render()});
   v.querySelectorAll('.cfgp .bdd').forEach(d=>d.onclick=e=>e.stopPropagation());
   v.querySelectorAll('.cfgp [data-bpick]').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=b.dataset.bpick.split(':')[1],d=ui.cfgd,sl=live(cur()).find(x=>x.boss===ui.cfg);
@@ -1679,25 +1728,29 @@ function bindCfg(v){
   v.querySelectorAll('[data-cdiff]').forEach(b=>b.onclick=()=>{ui.cfgd.diff=b.dataset.cdiff;render()});
   v.querySelectorAll('[data-cparty]').forEach(b=>b.onclick=()=>{ui.cfgd.party=Math.max(1,Math.min(6,ui.cfgd.party+ +b.dataset.cparty));render()});
   v.querySelectorAll('[data-cspan]').forEach(b=>b.onclick=()=>{ui.cfgd.span=b.dataset.cspan;render()});
-  v.querySelectorAll('[data-cundo]').forEach(b=>b.onclick=()=>{const id=ui.cfg;ui.cfg=null;let back=id;
-    set(()=>{const c=cur(),lv=live(c).find(x=>x.boss===id),sl=lv?c.slots[lv._i]:c.slots.find(x=>x.boss===id);if(sl.swap&&(sl.only||sl.start)){back=sl.swap;unswap(c,sl)}else{if(lv&&lv._tmp)setTmp(sl,lv.key,null);fixClear(c,id)}});toast(`${BY[back].name} 원래대로 돌렸어요`)});
+  v.querySelectorAll('[data-cundo]').forEach(b=>b.onclick=()=>{const id=ui.cfg,d=ui.cfgd;ui.cfg=null;let back=id;
+    const l0=live(cur()).find(x=>x.boss===id),hd=d&&d.span==='hist'&&l0?histDates(cur(),id,tOf(l0),null):null; // '그 주부터'면 같은 상태인 뒤 주들도 같이 되돌림
+    const undo=()=>{const c=cur(),lv=live(c).find(x=>x.boss===id);if(!lv)return;const sl=c.slots[lv._i];if(sl.swap&&(sl.only||sl.start)){back=sl.swap;unswap(c,sl)}else{if(lv._tmp)setTmp(sl,lv.key,null);fixClear(c,id)}};
+    set(()=>hd?hd.forEach(x=>atDay(x,undo)):undo());toast(`${BY[back].name} 원래대로 돌렸어요${hd&&hd.length>1?` (${histSpan(hd,tOf(l0))})`:''}`)});
   v.querySelectorAll('[data-cok]').forEach(b=>b.onclick=()=>{const id=ui.cfg,d=ui.cfgd;ui.cfg=null;
-    if(d.boss!==id){const c0=cur();set(()=>{const c=cur(),lv=live(c).find(x=>x.boss===id),sl=lv?c.slots[lv._i]:c.slots.find(x=>x.boss===id);
-        swapBoss(c,sl,d.boss,{diff:d.diff,party:d.party},d.span);const nl=live(c).find(x=>x.boss===d.boss);if(nl)moveClears(c,id,d.boss,nl)});
-      toast(`${BY[id].name} 대신 ${BY[d.boss].name} ${DKO[d.diff]} · ${(d.span==='once'?PERIOD:FROMP)[BY[d.boss].diffs[d.diff]]} 적용했어요`);return}
-    set(()=>{const c=cur(),lv0=live(c).find(x=>x.boss===id),sl=lv0?c.slots[lv0._i]:c.slots.find(x=>x.boss===id),t=BY[id].diffs[d.diff],key=pkey(t);
+    const l0=live(cur()).find(x=>x.boss===id),tt0=l0?tOf(l0):BY[d.boss].diffs[d.diff],hd=d.span==='hist'?histDates(cur(),id,tt0,d.boss):null,span=d.span==='hist'?'once':d.span;
+    const each=fn=>hd?hd.forEach(x=>atDay(x,fn)):fn(),when=hd?histSpan(hd,tt0):(span==='once'?PERIOD:FROMP)[tt0];
+    if(d.boss!==id){set(()=>each(()=>{const c=cur(),lv=live(c).find(x=>x.boss===id),sl=lv?c.slots[lv._i]:c.slots.find(x=>x.boss===id);if(!sl)return;
+        swapBoss(c,sl,d.boss,{diff:d.diff,party:d.party},span);const nl=live(c).find(x=>x.boss===d.boss);if(nl)moveClears(c,id,d.boss,nl)}));
+      toast(`${BY[id].name} 대신 ${BY[d.boss].name} ${DKO[d.diff]} · ${when} 적용했어요`);return}
+    set(()=>each(()=>{const c=cur(),lv0=live(c).find(x=>x.boss===id),sl=lv0?c.slots[lv0._i]:c.slots.find(x=>x.boss===id),t=BY[id].diffs[d.diff],key=pkey(t);if(!sl)return;
       const val={diff:d.diff,party:d.party};if(d.party!==sl.party){val.cshare=null;val.lshare=null}
-      if(sl.only){Object.assign(sl,val);if(d.span==='keep')delete sl.only}
-      else if(d.span==='once'){if(sl.diff===val.diff&&sl.party===val.party)setTmp(sl,key,null);else setTmp(sl,key,{diff:sl.diff,party:sl.party,cshare:sl.cshare,lmode:sl.lmode,lshare:sl.lshare,memo:sl.memo,...val})}
+      if(sl.only){Object.assign(sl,val);if(span==='keep')delete sl.only}
+      else if(span==='once'){if(sl.diff===val.diff&&sl.party===val.party)setTmp(sl,key,null);else setTmp(sl,key,{diff:sl.diff,party:sl.party,cshare:sl.cshare,lmode:sl.lmode,lshare:sl.lshare,memo:sl.memo,...val})}
       else applyFrom(sl,val,key);
-      fixClear(c,id)});
-    const tt=BY[id].diffs[d.diff];toast(`${BY[id].name} ${DKO[d.diff]}${d.party>1?` ${d.party}인`:''} · ${(d.span==='once'?PERIOD:FROMP)[tt]} 적용했어요`)});
+      fixClear(c,id)}));
+    toast(`${BY[id].name} ${DKO[d.diff]}${d.party>1?` ${d.party}인`:''} · ${when} 적용했어요`)});
 }
 function bindStatus(){
   const v=document.getElementById('view');
   v.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{ui.pop=null;set(()=>{st.sel=b.dataset.sel;st.form.targets=[st.sel]})});
   v.querySelectorAll('[data-add]').forEach(b=>b.onclick=openAdd);
-  const bko=document.getElementById('bk-open');if(bko)bko.onclick=openBulk;
+  v.querySelectorAll('#bk-open,[data-bulk]').forEach(b=>b.onclick=e=>{e.stopPropagation();openBulk()});
   const cb=document.getElementById('cal-btn');if(cb)cb.onclick=e=>{e.stopPropagation();ui.cal=ui.cal?null:{y:+TODAY.slice(0,4),m:+TODAY.slice(5,7)-1};render()};
   v.querySelectorAll('.cal').forEach(x=>x.onclick=e=>e.stopPropagation());
   v.querySelectorAll('[data-cmon]').forEach(b=>b.onclick=()=>{const t=ui.cal.y*12+ui.cal.m+ +b.dataset.cmon;ui.cal={y:Math.floor(t/12),m:t%12};render()});
@@ -1736,7 +1789,7 @@ const SLOTN={W:12,M:1}; // 주간 결정석 12칸, 월간 1칸
 function fixForm(){const f=st.form;if(f.leq===undefined)f.leq=true;if(st.sel)f.targets=[st.sel]; // 보스 설정은 위에서 고른 캐릭터에만
 const list=bossesOf(f.type);if(!list.find(b=>b.id===f.boss))f.boss=list[0].id;
   if(f.type==='D'){f.span='keep';f.forced=false} // 일간은 기간 설정 없음
-  else if(pastP(f.type)){if(f.span!=='once'){f.span='once';f.forced=true}}else if(f.forced){f.span='keep';f.forced=false} // 지난 주·지난 달을 고칠 땐 그 기간에만, 돌아오면 원래대로
+  else if(pastP(f.type)){if(f.span==='keep'){f.span='hist';f.forced=true}}else if(f.forced||f.span==='hist'){f.span='keep';f.forced=false} // 지난 주·지난 달을 고칠 땐 그 기간에만, 돌아오면 원래대로
   if(f.type==='D')f.slot=null;else{const c=cur();if(c){const taken=new Set(live(c).map(x=>x.boss));if(f.slot&&!taken.has(f.slot))f.slot=null;
     if(!f.slot){f.targets=f.targets.length?f.targets:[c.id];if(taken.has(f.boss)){const nb=list.find(b=>!taken.has(b.id));if(nb)f.boss=nb.id}}}}const ds=diffsOf(f.boss,f.type);if(!ds.includes(f.diff))f.diff=ds[ds.length>1?1:0];f.targets=f.targets.filter(id=>st.chars.find(c=>c.id===id));if(!f.targets.length&&st.sel)f.targets=[st.sel]}
 // 보스 고르기: 이름 옆에 보스 그림이 보이는 목록 (보스 설정·보상 탭 공용)
@@ -1763,8 +1816,8 @@ function formPanel(){
     :`${PERIOD[f.type]} 목록에 넣고, ${NEXTP[f.type]} 초기화 때 저절로 빠져요.`;
   const ddList=st.chars.filter(c=>!ui.ddq||c.name.includes(ui.ddq));
   return `<div class="fbody" data-scroll="fb-form">
-    ${f.type==='D'?'':`<div class="ftop"><button type="button" class="ckl" role="checkbox" aria-checked="${once}" data-once ${pastP(f.type)?'disabled':''}><span class="cb${once?' on':''}">${once?I.check():''}</span>${PERIOD[f.type]}</button><span class="ftop-s">${once?`${NEXTP[f.type]}엔 원래대로 돌아가요`:`체크 안 하면 ${FROMW[f.type]} 계속 적용돼요`}</span></div>`}
-    ${pastP(f.type)?`<div class="once-note">${I.info}<span>${f.type==='W'?`${md(WEEK[0])}~${md(WEEK[6])} 주`:`${+MONTH.slice(5)}월`} 기록을 보는 중이라 ${PERIOD[f.type]} 바뀌어요. 계속 바꾸려면 오늘로 돌아와 주세요.</span></div>`:''}
+    ${f.type==='D'?'':`<div class="ftop"><button type="button" class="ckl" role="checkbox" aria-checked="${once}" data-once><span class="cb${once?' on':''}">${once?I.check():''}</span>${PERIOD[f.type]}</button><span class="ftop-s">${once?`${NEXTP[f.type]}엔 원래대로 돌아가요`:pastP(f.type)?`체크 안 하면 ${f.type==='W'?'그 주':'그 달'}부터 이번 ${f.type==='W'?'주':'달'} 전까지 같이 바뀌어요`:`체크 안 하면 ${FROMW[f.type]} 계속 적용돼요`}</span></div>`}
+    ${pastP(f.type)?`<div class="once-note">${I.info}<span>${f.type==='W'?`${md(WEEK[0])}~${md(WEEK[6])} 주`:`${+MONTH.slice(5)}월`} 기록을 보는 중이에요. ${once?`${PERIOD[f.type]} 바뀌어요`:`여기서부터 따로 바꿔 둔 ${f.type==='W'?'주':'달'} 전까지 같이 바뀌어요`}. 이번 ${f.type==='W'?'주':'달'} 설정은 그대로예요.</span></div>`:''}
     <div class="seg" role="tablist">${['D','W','M'].map(t=>`<button type="button" class="${f.type===t?'on':''}" data-type="${t}" role="tab" aria-selected="${f.type===t}">${mini(t)}${TKO[t]}</button>`).join('')}</div>
     ${slotMode?`<div class="slot-hd${editing?' ed':''}">${editing?`<img class="hd-img" src="${BY[f.slot].img}" alt=""><span><b>${esc(BY[f.slot].name)}${dk(exS.diff)}</b><em>${TKO[f.type]} ${slotNo}번 슬롯 · ${exS.party>1?exS.party+'인':'솔로'}${exS._tmp?` · <span class="tmp">${PERIOD[f.type]}</span>${exS._base.diff!==exS.diff?`<span class="was">원래 ${dk(exS._base.diff)}</span>`:''}`:''}</em></span>`:`<span class="ph">${I.plus()}</span><span><b>빈 슬롯</b><em>보스를 골라 채워요</em></span>`}</div>`:''}
     <div class="fsec">
@@ -1781,14 +1834,16 @@ function formPanel(){
     </div>`:''}
     <div class="fsec"><div class="frow"><span class="flbl">메모</span><input class="inp" id="memo" type="text" placeholder="예) 토요일 21시 고정 파티" value="${esc(f.memo)}" style="flex:1"></div></div>
     ${slotMode?(()=>{const to={boss:f.boss,diff:f.diff,party:f.party},t=f.type,key=pkey(t);
+      const hd=f.span==='hist'&&pastP(t)?histDates(C,editing?f.slot:f.boss,t,swapping?f.boss:null):null,hs=hd?histSpan(hd,t):'',keepNow=' 이번 '+(t==='W'?'주':'달')+' 설정은 그대로예요.';
       if(editing){const same=!swapping&&f.diff===exS.diff&&f.party===exS.party;if(same&&!once)return `<div class="cp-prev none"><span class="cp-pl">바꿀 내용을 골라 주세요</span></div>`;
         const base=exS._tmp?exS._base:exS,dd=jo(DKO[f.diff]+(f.party>1?` ${f.party}인`:''),'로');
-        const h=swapping?(once?spanHint:`${FROMW[t]} ${esc(BY[f.slot].name)} 대신 ${esc(jo(b.name,'을'))} 잡아요. 지난 기록은 그대로 둬요.`)
+        const h=hd?(swapping?`${hs} 동안 ${esc(BY[f.slot].name)} 대신 ${esc(jo(b.name+' '+DKO[f.diff],'을'))} 잡은 걸로 기록해요.${keepNow}`:`${hs} 동안 ${jo(DKO[f.diff]+(f.party>1?` ${f.party}인`:''),'로')} 잡은 걸로 기록해요.${keepNow}`)
+          :swapping?(once?spanHint:`${FROMW[t]} ${esc(BY[f.slot].name)} 대신 ${esc(jo(b.name,'을'))} 잡아요. 지난 기록은 그대로 둬요.`)
           :once?`${PERIOD[t]} ${dd} 기록하고 ${NEXTP[t]}엔 원래대로(${DKO[base.diff]}) 돌아가요.`:`${FROMW[t]} 계속 ${dd} 잡아요. 지난 기록은 그대로 둬요.`;
         return chgBox({boss:exS.boss,diff:exS.diff,party:exS.party},to,h)}
       const gone=C.slots.find(x=>((x.end===key&&!hasBack(x,key))||(once&&hasSkip(x,key)))&&tOf(x)===t&&x.boss!==f.boss&&!C.slots.some(y=>y.swap===x.boss&&(y.start===key||y.only===key)));
       if(gone)return chgBox({boss:gone.boss,diff:gone.diff,party:gone.party},to,`${PERIOD[t].replace('만','')}에 뺀 ${esc(BY[gone.boss].name)} 대신 넣은 걸로 기록해요.${once?` ${NEXTP[t]}엔 ${esc(jo(BY[gone.boss].name,'이'))} 돌아와요.`:''}`);
-      return chgBox(null,to,once?`${PERIOD[t]} 넣고 ${NEXTP[t]} 초기화 때 저절로 빠져요.`:`${FROMW[t]} 계속 잡아요.`)})()
+      return chgBox(null,to,hd?`${hs} 동안 목록에 넣어요.${keepNow}`:once?`${PERIOD[t]} 넣고 ${NEXTP[t]} 초기화 때 저절로 빠져요.`:`${FROMW[t]} 계속 잡아요.`)})()
     :once?`<div class="once-note">${I.info}<span>${spanHint}</span></div>`:''}
     ${full.length?`<div class="warn">${I.info}${esc(full.map(c=>c.name).join(', '))}의 주간 슬롯이 가득 찼어요. 하나를 빼 주세요.</div>`:''}
   </div>
@@ -1863,7 +1918,7 @@ function presetTable(pr){const c=cur(),now=live(c).filter(s=>tOf(s)==='W'),past=
   <div class="stable"><div class="sthead"><span style="width:12px"></span><span style="width:40px"></span><span class="c-name" style="font-size:12px;color:var(--muted)">보스</span><span class="c-diff">난이도</span><span class="c-party">인원</span><span class="c-price" style="font-weight:500;color:var(--muted);font-size:12px">결정석 가격</span><span class="c-act"></span></div>
   <div class="stbody" data-scroll="tb-pv-${pr.id}"><div class="stsec">${esc(pr.name)}<span class="c num">한 주 ${meso(presetMeso(pr))} (내 몫)</span></div>${rows}</div>
   </div>
-  <div class="note"><h3>${I.info}적용하면</h3><p>• ${esc(c.name)}의 주간 보스가 이 목록대로 바뀌어요${past?' — 보고 있는 주만 바뀌어요':' — 이번 주부터 적용, 지난 기록은 그대로예요'}.</p>${gone.length?`<p>• 빠지는 보스: ${gone.map(x=>`${esc(BY[x.boss].name)} ${dk(x.diff)}`).join(' · ')}</p>`:''}<p>• 결정석 가격은 한 명이 받는 전체 가격이고, 프리셋 이름 옆 금액은 인원대로 나눈 내 몫(정분배)이에요.</p></div>`}
+  <div class="note"><h3>${I.info}적용하면</h3><p>• ${esc(c.name)}의 주간 보스가 이 목록대로 바뀌어요${past?' — 보고 있는 주부터, 주간 목록이 이 주와 똑같은 주들까지 같이 바뀌어요 (이번 주는 그대로)':' — 이번 주부터 적용, 지난 기록은 그대로예요'}.</p>${gone.length?`<p>• 빠지는 보스: ${gone.map(x=>`${esc(BY[x.boss].name)} ${dk(x.diff)}`).join(' · ')}</p>`:''}<p>• 결정석 가격은 한 명이 받는 전체 가격이고, 프리셋 이름 옆 금액은 인원대로 나눈 내 몫(정분배)이에요.</p></div>`}
 function slotTable(){
   if(st.stab==='preset'){const pr=selPreset();if(pr)return presetTable(pr)}
   const c=cur(),f=st.sfilter||'all';
@@ -1920,23 +1975,29 @@ function bindSettings(){
   v.querySelectorAll('[data-ddboss]').forEach(b=>b.onclick=()=>set(()=>{const ids=st.chars.filter(c=>c.slots.length).map(c=>c.id);f.targets=ids.length?ids:[st.sel]}));
   v.querySelectorAll('[data-ddok]').forEach(b=>b.onclick=()=>{ui.dd=false;render()});
   const add=document.getElementById('add-slot');if(add)add.onclick=()=>{
-    const once=f.span==='once',key=pkey(f.type);
+    const hist=f.span==='hist'&&pastP(f.type),once=f.span==='once'||hist,key=pkey(f.type);
+    const each=(dates,fn)=>dates?dates.forEach(x=>atDay(x,fn)):fn();
     if(f.type!=='D'&&f.slot&&f.boss!==f.slot){const from=f.slot,to=f.boss; // 슬롯의 보스를 다른 보스로 바꾸기
-      set(()=>{const c=cur(),lf=live(c).find(x=>x.boss===from),sl=lf?c.slots[lf._i]:c.slots.find(x=>x.boss===from);swapBoss(c,sl,to,{diff:f.diff,party:f.party},f.span);
+      const hd=hist?histDates(cur(),from,f.type,to):null;
+      set(()=>{each(hd,()=>{const c=cur(),lf=live(c).find(x=>x.boss===from),sl=lf?c.slots[lf._i]:null;if(!sl)return;swapBoss(c,sl,to,{diff:f.diff,party:f.party},once?'once':f.span);
         const nl0=live(c).find(x=>x.boss===to),ns=nl0?c.slots[nl0._i]:c.slots.find(x=>x.boss===to);Object.assign(ns,{cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo});
-        const nl=live(c).find(x=>x.boss===to);if(nl)moveClears(c,from,to,nl);f.slot=to});
-      toast(`${BY[from].name} 대신 ${BY[to].name} ${DKO[f.diff]}${once?` · ${PERIOD[f.type]}`:''} 바꿨어요`);return}
+        const nl=live(c).find(x=>x.boss===to);if(nl)moveClears(c,from,to,nl)});f.slot=to});
+      toast(`${BY[from].name} 대신 ${BY[to].name} ${DKO[f.diff]}${hd?` · ${histSpan(hd,f.type)}`:once?` · ${PERIOD[f.type]}`:''} 바꿨어요`);return}
     const wasEdit=f.type!=='D'&&!!f.slot;
-    const names=[],linked=[];set(()=>{f.targets.forEach(id=>{const c=st.chars.find(x=>x.id===id);
+    let HD=null;const names=[],linked=[];set(()=>{f.targets.forEach(id=>{const c=st.chars.find(x=>x.id===id);
       const val={diff:f.diff,party:f.party,cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo};
+      if(hist){const hd=histDates(c,f.boss,f.type,null);let ok=false;HD=hd;
+        for(const x of hd){const r=atDay(x,()=>putSlot(c,f.boss,val,true,pkey(f.type),f.type));if(r.full)break;ok=true;if(r.linked&&!linked.includes(r.linked))linked.push(r.linked)}
+        if(ok)names.push(c.name);return}
       const r=putSlot(c,f.boss,val,once,key,f.type);if(r.full)return;if(r.linked)linked.push(r.linked);
       names.push(c.name)});
       if(f.type!=='D'&&!wasEdit){const c=cur(),taken=new Set(live(c).map(x=>x.boss)),left=live(c).filter(x=>tOf(x)===f.type).length<SLOTN[f.type];
         if(left){f.slot=null;fixForm()}else f.slot=f.boss} // 빈 칸이 남았으면 다음 빈 칸 채우기로
       if(!wasEdit)f.span='keep';
       if(st.sfilter&&st.sfilter!=='all'&&st.sfilter!==f.type)st.sfilter=f.type});
-    toast(!names.length?'슬롯이 가득 차서 추가하지 못했어요':linked.length?`${BY[linked[0]].name} 대신 ${BY[f.boss].name} ${DKO[f.diff]} · ${once?PERIOD[f.type]:FROMW[f.type]} 바꿨어요`:wasEdit?`${BY[f.boss].name} ${DKO[f.diff]}${once?` · ${PERIOD[f.type]}`:''} 바꿨어요`:once?`${BY[f.boss].name} ${DKO[f.diff]} · ${PERIOD[f.type]} 적용했어요`:`${BY[f.boss].name} ${jo(DKO[f.diff],'을')} 추가했어요`)};
-  v.querySelectorAll('[data-once]').forEach(b=>b.onclick=()=>{if(pastP(f.type)){toast('지난 기록은 그 기간에만 바꿀 수 있어요');return}set(()=>{f.span=f.span==='once'?'keep':'once'})});
+    const pw=HD?histSpan(HD,f.type):PERIOD[f.type];
+    toast(!names.length?'슬롯이 가득 차서 추가하지 못했어요':linked.length?`${BY[linked[0]].name} 대신 ${BY[f.boss].name} ${DKO[f.diff]} · ${once?pw:FROMW[f.type]} 바꿨어요`:wasEdit?`${BY[f.boss].name} ${DKO[f.diff]}${once?` · ${pw}`:''} 바꿨어요`:once?`${BY[f.boss].name} ${DKO[f.diff]} · ${pw} 적용했어요`:`${BY[f.boss].name} ${jo(DKO[f.diff],'을')} 추가했어요`)};
+  v.querySelectorAll('[data-once]').forEach(b=>b.onclick=()=>set(()=>{const past=pastP(f.type);f.span=f.span==='once'?(past?'hist':'keep'):'once';f.forced=false}));
   const tp=document.getElementById('to-preset');if(tp)tp.onclick=()=>{ui.newPreset=`${cur().name} 주간`;set(()=>{st.stab='preset';st.ptab='my'})};
   v.querySelectorAll('[data-psel]').forEach(b=>b.onclick=()=>{set(()=>{st.psel=b.dataset.psel});
     const r=document.querySelector('#view .col-r'),l=document.querySelector('#view .col-l');if(r&&l&&r.getBoundingClientRect().top>=l.getBoundingClientRect().bottom-1)r.scrollIntoView({behavior:'smooth',block:'start'})});
@@ -1950,15 +2011,20 @@ function bindSettings(){
     const id='p'+Date.now();ui.newPreset=null;set(()=>{st.presets.push({id,name,type:'W',slots});st.psel=id;st.ptab='my'});toast(`프리셋 "${name}" 저장했어요`)};
   const pa=document.getElementById('p-apply');if(pa)pa.onclick=()=>{const p=selPreset();if(!p)return;let skipped=0;
     const once=pastP(p.type),key=pkey(p.type); // 지난 기간을 보고 있으면 그 기간만, 아니면 이번 기간부터 계속
-    let dropped=0;
+    let dropped=0,span=null;
     set(()=>{f.targets.forEach(id=>{const c=st.chars.find(x=>x.id===id),want=new Set(p.slots.map(x=>x.boss));
-      // 프리셋에 없는 같은 종류 보스는 빼고 (프리셋 목록 그대로 맞춤)
-      live(c).filter(x=>tOf(x)===p.type&&!want.has(x.boss)).map(x=>x._i).sort((a,b)=>b-a).forEach(i=>{dropSlot(c,i,key,once);dropped++});
-      p.slots.forEach(s0=>{const s=presetSlot(s0);if(!BY[s.boss])return;const{boss,...val}=s;
-        if(putSlot(c,boss,val,once,key,p.type).full)skipped++});
+      // 지난 주면 그 주부터 이번 주 전까지, 주간 목록이 그 주와 똑같은 주들에 같이 적용
+      let dates=null;if(once){const sig=()=>live(c).filter(x=>tOf(x)==='W').map(x=>x.boss+x.diff+x.party).sort().join();const s0=sig();dates=[WEEK[0]];
+        for(let d=addD(WEEK[0],7);d<REALW;d=addD(d,7)){if(atDay(d,sig)!==s0)break;dates.push(d)}if(!span)span=histSpan(dates,'W')}
+      const one=first=>{const key=pkey(p.type);
+        // 프리셋에 없는 같은 종류 보스는 빼고 (프리셋 목록 그대로 맞춤)
+        live(c).filter(x=>tOf(x)===p.type&&!want.has(x.boss)).map(x=>x._i).sort((a,b)=>b-a).forEach(i=>{dropSlot(c,i,key,once);if(first)dropped++});
+        p.slots.forEach(s0=>{const s=presetSlot(s0);if(!BY[s.boss])return;const{boss,...val}=s;
+          if(putSlot(c,boss,val,once,key,p.type).full&&first)skipped++})};
+      if(dates)dates.forEach((d,i)=>atDay(d,()=>one(i===0)));else one(true);
       if(!once){const order=p.slots.map(x=>x.boss),pos=live(c).filter(x=>tOf(x)===p.type).map(x=>x._i),sl=pos.map(i=>c.slots[i]); // 프리셋 순서대로 정렬
         sl.sort((a,b)=>order.indexOf(a.boss)-order.indexOf(b.boss)).forEach((x,n)=>c.slots[pos[n]]=x)}});if(st.sfilter&&st.sfilter!=='all'&&st.sfilter!==p.type)st.sfilter=p.type});
-    toast(`${p.name} ${once?PERIOD[p.type]+' ':''}적용했어요${dropped?` · 프리셋에 없는 보스 ${dropped}개 뺌`:''}${skipped?` (슬롯 부족으로 ${skipped}개 제외)`:''}`)};
+    toast(`${p.name} ${once?(span||PERIOD[p.type])+' ':''}적용했어요${dropped?` · 프리셋에 없는 보스 ${dropped}개 뺌`:''}${skipped?` (슬롯 부족으로 ${skipped}개 제외)`:''}`)};
   const rw=st.rw||{};
   v.querySelectorAll('[data-rwtype]').forEach(b=>b.onclick=()=>{ui.bdd=null;set(()=>{st.rw.type=b.dataset.rwtype;rwSel()})});
   v.querySelectorAll('[data-bdd]:not(.cfgp [data-bdd])').forEach(b=>b.onclick=e=>{e.stopPropagation();ui.dd=false;ui.bdd=ui.bdd===b.dataset.bdd?null:b.dataset.bdd;render()});
