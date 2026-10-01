@@ -1761,13 +1761,16 @@ const regSig=l=>l.map(x=>x.boss+':'+x.diff+':'+x.party).sort().join('|');
 function fillPlan(c,t,ci){if(t==='D'||!pastP(t))return null;
   const key=pkey(t),cap=SLOTN[t]||99,from=t==='W'?WEEK[0]:MONTH+'.01',nowP=t==='W'?REALW:REAL.slice(0,7)+'.01';
   const start=t==='W'?wStart(minDay()):minDay().slice(0,8)+'01',P=[];for(let d=start,g=0;g<80&&dnum(d)<=dnum(nowP);g++,d=nextP(d,t))P.push(d);
-  const info=P.map(d=>atDay(d,()=>({d,k:pkOf(d,t),reg:regAt(c,t),any:live(c).some(x=>tOf(x)===t)})));
+  // 목록 후보는 그 기간에 실제로 보였던 목록 (지난 주에 '그 주부터'로 고친 것도 기간마다 따로 저장돼서, 계속 목록만 보면 안 보였던 목록이 나옴)
+  const shown=()=>live(c).filter(x=>tOf(x)===t).map(x=>({boss:x.boss,diff:x.diff,party:x.party||1,cshare:x.cshare??null,lmode:x.lmode||'sell',lshare:x.lshare??null}));
+  const info=P.map(d=>atDay(d,()=>({d,k:pkOf(d,t),reg:regAt(c,t),cur:shown(),any:live(c).some(x=>tOf(x)===t)})));
   const me=info.find(x=>x.k===key);if(!me)return null;
   const also=[];let to=null;for(const x of info){if(x.k<=key)continue;if(!me.any&&!x.any&&x.d!==nowP)also.push(x.d);else{to=x.d;break}}
   if(!to)to=nextP(also.length?also[also.length-1]:from,t);
-  const toK=pkOf(to,t),prevR=[...info].reverse().find(x=>x.k<key&&x.reg.length),nextR=info.find(x=>x.k>=toK&&x.reg.length),mine=me.reg.length?regSig(me.reg):null;
-  const G=new Map();info.forEach(x=>{if(!x.reg.length)return;const sg=regSig(x.reg);if(sg===mine)return;const g=G.get(sg)||{sig:sg,ps:[]};g.ps.push(x.d);g.list=x.reg;G.set(sg,g)});
-  const sub=(a,b)=>a.length<b.length&&a.every(x=>b.some(y=>y.boss===x.boss&&y.diff===x.diff&&y.party===x.party));
+  const top=Math.max(0,...info.map(x=>x.cur.length)),okL=x=>x.cur.length&&x.cur.length*2>=top; // 반도 안 찬 기간(일부만 넣어 둔 주)은 후보로 안 씀
+  const toK=pkOf(to,t),prevR=[...info].reverse().find(x=>x.k<key&&okL(x)),nextR=info.find(x=>x.k>=toK&&okL(x)),mine=me.cur.length?regSig(me.cur):null;
+  const G=new Map();info.forEach(x=>{if(!okL(x)||x.k===key)return;const sg=regSig(x.cur);if(sg===mine)return;const g=G.get(sg)||{sig:sg,ps:[]};g.ps.push(x.d);g.list=x.cur;G.set(sg,g)});
+  const sub=(a,b)=>a.length<b.length&&a.every(x=>b.some(y=>y.boss===x.boss));
   [...G.values()].forEach(g=>{if([...G.values()].some(h=>h!==g&&sub(g.list,h.list)))G.delete(g.sig)}); // 다른 목록에 다 들어 있는 작은 목록은 뺌
   const cands=[...G.values()].map(g=>({...g,first:g.ps[0],last:g.ps[g.ps.length-1],next:!!nextR&&g.ps.includes(nextR.d),prev:!!prevR&&g.ps.includes(prevR.d)}))
     .sort((a,b)=>(b.next-a.next)||(b.prev-a.prev)||(a.last<b.last?1:-1));
