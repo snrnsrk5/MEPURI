@@ -1800,11 +1800,15 @@ function applyFill(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.map(
     const a=(c.clears[e.boss]||[]).filter(x=>!(t==='W'?inWeek(dOf(x)):inMonth(dOf(x))));if(a.length)c.clears[e.boss]=a;else delete c.clears[e.boss]};
   const place=n=>{const reg=s=>s.boss===n.boss&&!s.only&&tOf(s)===t;
     const s1=c.slots.find(s=>reg(s)&&s.start===toK);
-    if(s1){const i=c.slots.indexOf(s1),cf=atDay(p.to,()=>live(c).find(x=>x._i===i))||s1;s1.start=key;
+    // 앞당기거나 늘린 뒤, 채운 기간에 실제로 보이는 값이 고른 목록과 다르면 맞춰 줌
+    // (뒤 주의 '그 주만' 값이나 예전 설정은 채운 기간에 안 따라오기 때문)
+    const seen=i=>live(c).find(x=>x._i===i);
+    if(s1){const i=c.slots.indexOf(s1);s1.start=key;
       if(s1.swap&&!c.slots.some(o=>o.boss===s1.swap&&o.end===key))delete s1.swap; // 앞당기면 '○○ 대신' 연결은 끊김
-      if(differs(cf,n)){s1.prev=(s1.prev||[]).filter(q=>q.until!==toK);s1.prev.push({until:toK,...vals(n)})}return}
+      s1.prev=(s1.prev||[]).filter(q=>q.until!==toK);if(!s1.prev.length)delete s1.prev;
+      const e=seen(i);if(!e||differs(e,n)){s1.prev=s1.prev||[];s1.prev.push({until:toK,...vals(n)})}return}
     const s2=c.slots.find(s=>reg(s)&&s.end===key);
-    if(s2){s2.end=toK;if(differs(s2,n))keys.forEach(kk=>setTmp(s2,kk,vals(n)));return}
+    if(s2){const i=c.slots.indexOf(s2);s2.end=toK;const e=seen(i);if(!e||differs(e,n))keys.forEach(kk=>setTmp(s2,kk,vals(n)));return}
     c.slots.push({boss:n.boss,...vals(n),memo:'',start:key,end:toK})};
   p.rows.forEach(r=>{if(!fillTake(r))return;k++;
     if(r.k==='diff'){const s=c.slots[r.e._i];if(s.only)Object.assign(s,vals(r.n));else setTmp(s,key,vals(r.n));fix.push(r.n.boss);return}
