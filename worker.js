@@ -12,6 +12,7 @@
  *   GET /api/health                    서버 확인
  *   GET /api/character?name=캐릭터명   이름 → 월드·레벨·직업·외형 이미지
  *   GET /api/character/basic?ocid=…    저장해 둔 ocid로 다시 불러오기(새로고침)
+ *   GET /api/character/basic?ocid=…&date=YYYY-MM-DD   그날 기준 정보 (지난 월드 확인용)
  *   GET /api/scheduler?ocid=…          인게임 스케줄러(보스 완료 여부) 원본 그대로
  *   GET /api/look?u=외형이미지주소     넥슨 외형 이미지를 같은 주소로 전달 (사이트가 캐릭터 부분만 잘라 쓰려고)
  *
@@ -81,7 +82,10 @@ export default {
       if (url.pathname === '/api/character/basic') {
         const ocid = url.searchParams.get('ocid');
         if (!ocid) return fail(400, 'OPENAPI00003', 'ocid가 필요해요', cors);
-        const basic = await nexon(env, ctx, 'character/basic', { ocid }, TTL.basic);
+        // date=YYYY-MM-DD 를 붙이면 그날 기준 정보 (예: 챌린저스 월드에 있던 때의 월드 확인)
+        const date = url.searchParams.get('date') || '';
+        if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return fail(400, 'OPENAPI00004', '날짜는 YYYY-MM-DD 형식이에요', cors);
+        const basic = await nexon(env, ctx, 'character/basic', date ? { ocid, date } : { ocid }, date ? TTL.id : TTL.basic);
         return json(slim(ocid, basic), 200, cors);
       }
 
