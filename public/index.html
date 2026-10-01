@@ -303,8 +303,8 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .span2{display:inline-flex;gap:2px;height:26px;padding:2px;border-radius:6px;background:var(--seg)}
 .span2 button{padding:0 10px;border-radius:4px;font-size:12px;font-weight:600;color:var(--sub);white-space:nowrap}
 .span2 button.on{background:var(--card);box-shadow:var(--seg-shadow);color:var(--text)}
-.span2 button[data-span="once"].on,.span2 button[data-cspan="once"].on{color:var(--info-fg)}
-.cp-span button[data-cspan="hist"].on{background:var(--accent-bg);box-shadow:inset 0 0 0 1px var(--accent-soft);color:var(--accent)}
+.span2 button[data-span="once"].on,.span2 button[data-cspan="once"].on{color:var(--info-fg)}.cp-span button{padding:0 8px}
+.cp-span button[data-cspan="back"].on,.cp-span button[data-cspan="hist"].on{background:var(--accent-bg);box-shadow:inset 0 0 0 1px var(--accent-soft);color:var(--accent)}
 .tmp.from{border-color:var(--accent-soft);background:var(--accent-bg);color:var(--accent)}
 .pop.cfgp{width:320px;gap:12px;padding:14px 14px 12px}
 .rm-arm{height:24px;padding:0 9px;border-radius:6px;background:var(--danger);color:#fff;font-size:12px;font-weight:700;white-space:nowrap;animation:rmin .15s ease-out}.rm-arm:hover{background:var(--danger-hover)}
@@ -1039,6 +1039,11 @@ html.theme-fade,html.theme-fade *{transition:background-color .32s ease,color .3
 .sx-sdone{align-items:center}.sx-sdone>span{font-size:12px;color:var(--muted)}.sx-sdone .tg-lbl{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--sub)}
 .sx-sr:not(:has(> :nth-child(3))){grid-template-columns:1fr auto}
 
+/* 혼자 튀는 막대: 물결로 자름 */
+.sx-stk.cut{position:relative}
+.sx-brk{position:absolute;left:-2px;right:-2px;height:9px;margin-top:-4px;pointer-events:none}
+.sx-brk svg{display:block;width:100%;height:100%}.sx-brk path{fill:var(--card)}
+
 </style>
 
 <header class="top"><div class="wrap">
@@ -1571,13 +1576,14 @@ function chgBox(from,to,hint){ // from/to: {boss,diff,party} (from=null이면 �
   const L=from?`${sw?img(from.boss):''}${dk(from.diff)}<i>${ptyTxt(from.party)}</i>`:'<span class="cp-empty">빈 슬롯</span>';
   return `<div class="cp-prev"><span class="cp-chg">${L}<em>→</em>${sw||!from?img(to.boss):''}${!from?`<b class="cp-bn">${esc(BY[to.boss].name)}</b>`:''}${dk(to.diff)}<i>${ptyTxt(to.party)}</i></span>${hint?`<span class="cp-h">${hint}</span>`:''}</div>`}
 function cfgPop(c,s,ctx){const t=tOf(s),b=BY[s.boss],base=s._tmp||(s._from&&!s.swap)?s._base:s,d=ui.cfgd,nb=BY[d.boss];
-  const ds=diffsOf(d.boss,t),once=d.span==='once',swapped=d.boss!==s.boss;
+  const ds=diffsOf(d.boss,t),once=d.span==='once',back=d.span==='back',swapped=d.boss!==s.boss;
   const same=!swapped&&d.diff===s.diff&&d.party===s.party;
   const taken=new Set(live(c).map(x=>x.boss));const bopts=bossesOf(t).filter(x=>x.id===s.boss||!taken.has(x.id));
   const canUndo=s._tmp||(s.swap&&(s._only||s._from));
   const what=swapped?`${nb.name} ${DKO[d.diff]}`:DKO[d.diff];
-  const hd=d.span==='hist'?histDates(c,s.boss,t,d.boss):null;
-  const hint=hd?`${hRange(hd,t)} 동안 ${swapped?`${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))}`:esc(jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요.${hd.length>1?'':' (그다음 주는 이미 다르게 되어 있어요)'} 이번 ${t==='W'?'주':'달'} 설정은 그대로예요.`
+  const hd=d.span==='hist'?histDates(c,s.boss,t,d.boss):back?histBack(c,s.boss,t,d.boss):null;
+  const hint=hd&&back?`${hRange(hd,t)} 동안 ${swapped?`${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))}`:esc(jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요.${hd.length>1?'':` (그 전 ${t==='W'?'주':'달'}는 이미 다르게 되어 있어요)`} ${pastP(t)?`그다음 ${t==='W'?'주':'달'}부터는 그대로예요.`:`${NEXTP[t]}엔 원래대로 돌아가요.`}`
+    :hd?`${hRange(hd,t)} 동안 ${swapped?`${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))}`:esc(jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요.${hd.length>1?'':' (그다음 주는 이미 다르게 되어 있어요)'} 이번 ${t==='W'?'주':'달'} 설정은 그대로예요.`
     :swapped?(once?`${PERIOD[t]} ${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요. ${NEXTP[t]}엔 다시 ${esc(jo(b.name,'이에요'))}.`
       :`${FROMW[t]} ${esc(b.name)} 대신 ${esc(jo(nb.name,'을'))} 잡아요. 보스 설정도 같이 바뀌고, 지난 기록은 그대로 둬요.`)
     :once?`${PERIOD[t]} ${jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'로')} 기록하고 ${NEXTP[t]}엔 원래대로(${DKO[base.diff]}) 돌아가요.`
@@ -1591,7 +1597,7 @@ function cfgPop(c,s,ctx){const t=tOf(s),b=BY[s.boss],base=s._tmp||(s._from&&!s.s
       <span class="cp-l">보스</span>${bossPicker('cfg',d.boss,bopts)}
       <span class="cp-l">난이도</span><div class="seg cp-seg" role="radiogroup" aria-label="난이도">${ds.map(x=>`<button type="button" role="radio" aria-checked="${d.diff===x}" data-cdiff="${x}" class="${d.diff===x?'sd-'+x:''}">${DKO[x]}</button>`).join('')}</div>
       <span class="cp-l">인원</span><div class="cp-step"><button type="button" data-cparty="-1" aria-label="파티 인원 줄이기" ${d.party<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${d.party}</b>${d.party>1?'인 파티':' 솔로'}</span><button type="button" data-cparty="1" aria-label="파티 인원 늘리기" ${d.party>=6?'disabled':''}>${I.plus()}</button></div>
-      ${t==='D'?'':`<span class="cp-l">기간</span><div class="span2 cp-span" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${!once}" class="${once?'':'on'}" data-cspan="${pastP(t)?'hist':'keep'}">${FROMW[t]}</button><button type="button" role="radio" aria-checked="${once}" class="${once?'on':''}" data-cspan="once">${PERIOD[t]}</button></div>`}
+      ${t==='D'?'':`<span class="cp-l">기간</span><div class="span2 cp-span" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${back}" class="${back?'on':''}" data-cspan="back">${untilW(t)}</button><button type="button" role="radio" aria-checked="${once}" class="${once?'on':''}" data-cspan="once">${PERIOD[t]}</button><button type="button" role="radio" aria-checked="${!once&&!back}" class="${once||back?'':'on'}" data-cspan="${pastP(t)?'hist':'keep'}">${FROMW[t]}</button></div>`}
     </div>
     <div class="cp-prev${same?' none':''}">${same?'<span class="cp-pl">바꿀 내용을 골라 주세요</span>'
       :`<span class="cp-chg">${swapped?`<img src="${b.img}" alt="">`:''}${dk(s.diff)}<i>${pty(s.party)}</i><em>→</em>${swapped?`<img src="${nb.img}" alt="">`:''}${dk(d.diff)}<i>${pty(d.party)}</i></span><span class="cp-h">${hint}</span>`}</div>
@@ -1744,6 +1750,15 @@ function histDates(c,id,t,tgt){if(t==='D'||!pastP(t))return null;
   const s0=sig(),out=[start];let d=start;
   for(let i=0;i<60;i++){d=t==='W'?addD(d,7):nm(d);if(d>=end)break;if(atDay(d,sig)!==s0)break;out.push(d)}
   return out}
+/* '그 주까지'가 닿는 주들: 보고 있는 주부터 거꾸로, 그 보스 설정이 같은 동안 (다르게 기록된 주를 만나면 멈춤) */
+function histBack(c,id,t,tgt){if(t==='D')return null;
+  const pv=d=>{if(t==='W')return addD(d,-7);let y=+d.slice(0,4),m=+d.slice(5,7)-1;if(m<1){m=12;y--}return y+'.'+String(m).padStart(2,'0')+'.01'};
+  const start=t==='W'?WEEK[0]:MONTH+'.01',lo=t==='W'?wStart(minDay()):minDay().slice(0,8)+'01';
+  const sig=()=>{const s=live(c).find(x=>x.boss===id);return (s?s.diff+'|'+s.party+'|'+(s.swap||''):'-')+'|'+(!!tgt&&tgt!==id&&live(c).some(x=>x.boss===tgt))};
+  const s0=sig(),out=[start];let d=start;
+  for(let i=0;i<60;i++){d=pv(d);if(d<lo)break;if(atDay(d,sig)!==s0)break;out.unshift(d)}
+  return out}
+const UNTILW={now:{W:'이번 주까지',M:'이번 달까지'},past:{W:'그 주까지',M:'그 달까지'}},untilW=t=>UNTILW[pastP(t)?'past':'now'][t];
 const hRange=(dates,t)=>{const a=dates[0],z=dates[dates.length-1];
   if(t==='W')return `${md(a)} ~ ${md(addD(z,6))}`;const mo=d=>+d.slice(5,7)+'월';return a===z?mo(a):`${mo(a)} ~ ${mo(z)}`};
 const histSpan=(dates,t)=>`${FROMW[t]} (${hRange(dates,t)})`;
@@ -1837,12 +1852,12 @@ function bindCfg(v){
   v.querySelectorAll('[data-cparty]').forEach(b=>b.onclick=()=>{ui.cfgd.party=Math.max(1,Math.min(6,ui.cfgd.party+ +b.dataset.cparty));render()});
   v.querySelectorAll('[data-cspan]').forEach(b=>b.onclick=()=>{ui.cfgd.span=b.dataset.cspan;render()});
   v.querySelectorAll('[data-cundo]').forEach(b=>b.onclick=()=>{const id=ui.cfg,d=ui.cfgd;ui.cfg=null;let back=id;
-    const l0=live(cur()).find(x=>x.boss===id),hd=d&&d.span==='hist'&&l0?histDates(cur(),id,tOf(l0),null):null; // '그 주부터'면 같은 상태인 뒤 주들도 같이 되돌림
+    const l0=live(cur()).find(x=>x.boss===id),hd=d&&l0?(d.span==='hist'?histDates(cur(),id,tOf(l0),null):d.span==='back'?histBack(cur(),id,tOf(l0),null):null):null; // '그 주부터'면 같은 상태인 뒤 주들도 같이 되돌림
     const undo=()=>{const c=cur(),lv=live(c).find(x=>x.boss===id);if(!lv)return;const sl=c.slots[lv._i];if(sl.swap&&(sl.only||sl.start)){back=sl.swap;unswap(c,sl)}else{if(lv._tmp)setTmp(sl,lv.key,null);fixClear(c,id)}};
     set(()=>hd?hd.forEach(x=>atDay(x,undo)):undo());toast(`${BY[back].name} 원래대로 돌렸어요${hd&&hd.length>1?` (${hRange(hd,tOf(l0))})`:''}`)});
   v.querySelectorAll('[data-cok]').forEach(b=>b.onclick=()=>{const id=ui.cfg,d=ui.cfgd;ui.cfg=null;
-    const l0=live(cur()).find(x=>x.boss===id),tt0=l0?tOf(l0):BY[d.boss].diffs[d.diff],hd=d.span==='hist'?histDates(cur(),id,tt0,d.boss):null,span=d.span==='hist'?'once':d.span;
-    const each=fn=>hd?hd.forEach(x=>atDay(x,fn)):fn(),when=hd?histSpan(hd,tt0):(span==="once"?PERIOD:FROMW)[tt0];
+    const l0=live(cur()).find(x=>x.boss===id),tt0=l0?tOf(l0):BY[d.boss].diffs[d.diff],hd=d.span==='hist'?histDates(cur(),id,tt0,d.boss):d.span==='back'?histBack(cur(),id,tt0,d.boss):null,span=d.span==='hist'||d.span==='back'?'once':d.span;
+    const each=fn=>hd?hd.forEach(x=>atDay(x,fn)):fn(),when=hd?(d.span==='back'?`${untilW(tt0)} (${hRange(hd,tt0)})`:histSpan(hd,tt0)):(span==="once"?PERIOD:FROMW)[tt0];
     if(d.boss!==id){set(()=>each(()=>{const c=cur(),lv=live(c).find(x=>x.boss===id),sl=lv?c.slots[lv._i]:c.slots.find(x=>x.boss===id);if(!sl)return;
         swapBoss(c,sl,d.boss,{diff:d.diff,party:d.party},span);const nl=live(c).find(x=>x.boss===d.boss);if(nl)moveClears(c,id,d.boss,nl)}));
       toast(`${BY[id].name} 대신 ${BY[d.boss].name} ${DKO[d.diff]} · ${when} 적용했어요`);return}
@@ -2386,12 +2401,19 @@ function sxCalendar(x,all){const c=sxCal,rec=new Set([...all.clears.map(e=>e.d),
 const SX_CC=['#6B7BF5','#F5A34A','#1FB38A','#F2663C','#A777F0','#3CC8F0','#F2D94E','#FF6B6B'];
 // 그래프: 쌓기(stack) · 비율(ratio) · 꺾은선(line). series = 아래→위 순서 [{name,c,line,tip,vals}]
 function sxChart(bars,series,form,S){
-  const n=bars.length,tot=bars.map((b,i)=>series.reduce((t,g)=>t+g.vals[i],0)),mx=Math.max(1,...tot),lmx=Math.max(1,...series.flatMap(g=>g.vals));
+  const n=bars.length,tot=bars.map((b,i)=>series.reduce((t,g)=>t+g.vals[i],0)),lmx=Math.max(1,...series.flatMap(g=>g.vals));
+  // 한 주만 혼자 너무 튀면(2등의 2.2배 넘게) 그 막대만 물결로 잘라서 나머지가 잘 보이게
+  const desc=[...tot].sort((a,b)=>b-a),cut=form==='stack'&&desc[1]>0&&desc[0]>desc[1]*2.2?tot.indexOf(desc[0]):-1;
+  const mx=cut>=0?desc[1]*1.3:Math.max(1,...tot);
+  const hOf=i=>form==='ratio'?(tot[i]?100:0):form==='stack'?Math.min(100,tot[i]/mx*100):0;
   const lg=`<div class="sx-lg">${series.map((g,i,a)=>`<span${g.tip?` tabindex="0" data-tip="${esc(g.tip)}"${i>=a.length/2?' class="r"':''}`:''}><i style="background:${form==='line'?g.line:g.c}"></i>${esc(g.name)}</span>`).join('')}</div>`;
-  const cols=bars.map((b,i)=>{const h=form==='ratio'?(tot[i]?100:0):form==='stack'?tot[i]/mx*100:0;
+  const cols=bars.map((b,i)=>{const h=hOf(i);
+    let segs=series.map(g=>g.vals[i]);let brk='';
+    if(i===cut){const top=segs.reduce((k,v,j)=>v?j:k,-1),rest=segs.reduce((t,v,j)=>j===top?t:t+v,0);
+      if(top>=0&&rest<mx*.85){segs=segs.map((v,j)=>j===top?mx-rest:v);const ft=(mx-rest)/mx;brk=`<span class="sx-brk" style="top:${(ft*45).toFixed(1)}%" aria-hidden="true"><svg viewBox="0 0 40 10" preserveAspectRatio="none"><path d="M0 3 Q5 0 10 3 T20 3 T30 3 T40 3 V7 Q35 10 30 7 T20 7 T10 7 T0 7Z"/></svg></span>`}}
     return `<div class="sx-bar${b.on?' on':''}${b.pre?' pre':''}" title="${b.lab}${b.mk?` · ${b.mk.label}`:''}
 ${series.map(g=>g.vals[i]?`${g.name}: ${meso(g.vals[i])}${form==='ratio'&&tot[i]?` (${Math.round(g.vals[i]/tot[i]*100)}%)`:''}
-`:'').join('')}합계: ${meso(tot[i])||0}">${b.mk?`<span class="sx-mk"><em>${b.mk.label}</em></span>`:''}<div class="sx-col"><span class="sx-bv num">${tot[i]?S(tot[i]):''}</span><div class="sx-stk" style="height:${h}%">${series.map(g=>g.vals[i]?`<i style="flex:${g.vals[i]};background:${g.c}"></i>`:'').reverse().join('')}</div></div><span class="sx-bl">${b.lab}</span></div>`}).join('');
+`:'').join('')}합계: ${meso(tot[i])||0}">${b.mk?`<span class="sx-mk"><em>${b.mk.label}</em></span>`:''}<div class="sx-col"><span class="sx-bv num">${tot[i]?S(tot[i]):''}</span><div class="sx-stk${brk?' cut':''}" style="height:${h}%">${series.map((g,j)=>segs[j]?`<i style="flex:${segs[j]};background:${g.c}"></i>`:'').reverse().join('')}${brk}</div></div><span class="sx-bl">${b.lab}</span></div>`}).join('');
   const svg=form!=='line'?'':`<svg class="sx-plot" viewBox="0 0 ${n*10} 100" preserveAspectRatio="none" aria-hidden="true">${series.map(g=>{const pts=g.vals.map((v,i)=>bars[i].pre?null:`${i*10+5},${(100-v/lmx*100).toFixed(2)}`).filter(Boolean);
     return `<polyline points="${pts.join(' ')}" fill="none" stroke="${g.line}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`}).join('')}</svg>
     <div class="sx-dots">${series.map(g=>g.vals.map((v,i)=>v&&!bars[i].pre?`<i style="left:${(i+.5)/n*100}%;bottom:${v/lmx*100}%;background:${g.line}"></i>`:'').join('')).join('')}</div>`;
