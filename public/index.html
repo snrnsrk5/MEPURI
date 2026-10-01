@@ -1845,7 +1845,9 @@ function bindCfg(v){
     set(()=>each(()=>{const c=cur(),lv0=live(c).find(x=>x.boss===id),sl=lv0?c.slots[lv0._i]:c.slots.find(x=>x.boss===id),t=BY[id].diffs[d.diff],key=pkey(t);if(!sl)return;
       const val={diff:d.diff,party:d.party};if(d.party!==sl.party){val.cshare=null;val.lshare=null}
       if(sl.only){Object.assign(sl,val);if(span==='keep')delete sl.only}
-      else if(span==='once'){if(sl.diff===val.diff&&sl.party===val.party)setTmp(sl,key,null);else setTmp(sl,key,{diff:sl.diff,party:sl.party,cshare:sl.cshare,lmode:sl.lmode,lshare:sl.lshare,memo:sl.memo,...val})}
+      else if(span==='once'){ // 그 주에 원래 보이던 값(이전 설정 포함)과 같으면 한시 변경을 지우고, 다르면 남김
+        const i=c.slots.indexOf(sl);setTmp(sl,key,null);const e=live(c).find(x=>x._i===i)||sl;
+        if(!(e.diff===val.diff&&e.party===val.party))setTmp(sl,key,{diff:e.diff,party:e.party,cshare:e.cshare,lmode:e.lmode,lshare:e.lshare,memo:sl.memo,...val})}
       else applyFrom(sl,val,key);
       fixClear(c,id)}));
     toast(`${BY[id].name} ${DKO[d.diff]}${d.party>1?` ${d.party}인`:''} · ${when} 적용했어요`)});
