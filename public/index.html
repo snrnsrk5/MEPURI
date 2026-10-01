@@ -140,7 +140,8 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .col-l{width:380px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
 .col-l>.note,.col-l>.foot{flex-shrink:0}
 .col-r{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding-top:8px}
-.col-r>.bar,.datebar{flex-shrink:0}
+.col-r>.bar,.datebar{flex-shrink:0}.datebar{container:dbar/inline-size}
+@container dbar (max-width:380px){.datebar.datebar>button{padding:0 5px}.datebar.datebar .dnow{min-width:0;padding-inline:4px}.datebar.datebar .dnow small{margin-left:0}}
 .datebar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-height:44px;padding:5px 8px;border-radius:10px;border:1px solid var(--card-bd);background:var(--card)}
 .datebar button{display:flex;align-items:center;justify-content:center;gap:3px;height:32px;line-height:1;padding:0 9px;border-radius:6px;font-size:14px;font-weight:700;color:var(--sub)}
 .datebar button span{font-size:12px;font-weight:500}
@@ -150,11 +151,12 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .dwrap{position:relative;display:flex;align-items:center}
 .datebar .dnow{display:flex;align-items:center;gap:4px;min-width:112px;justify-content:center;padding:0 8px;font-size:14px;font-weight:400;color:var(--text2)}
 .dnow svg{align-self:center;margin-left:2px}
-.cal{position:absolute;top:calc(100% + 6px);left:50%;z-index:20;transform:translateX(-50%);width:280px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);box-shadow:var(--pop-shadow)}
+.cal{position:absolute;top:calc(100% + 6px);left:50%;z-index:20;transform:translateX(-50%);width:304px;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);box-shadow:var(--pop-shadow)}
 .cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-h b{font-size:15px;color:var(--text)}
 .cal-h button{width:30px;height:30px;border-radius:6px;font-size:18px;color:var(--sub)}.cal-h button:hover:not(:disabled){background:var(--soft)}.cal-h button:disabled{opacity:.3}
-.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-g{display:grid;grid-template-columns:30px repeat(7,1fr);gap:2px}
+.cal-g .wn{display:grid;place-items:center;height:32px;font-size:10.5px;font-weight:700;color:var(--muted);white-space:nowrap}.cal-g .wn.om{display:flex;flex-direction:column;justify-content:center;gap:0;line-height:12px}.cal-g .wn small{font-size:9.5px;font-weight:500}.cal-g button.om{opacity:.45}.cal-g button.om.dim{opacity:.3}.cal-f .wkf{margin-left:auto}.cal-g .wn.on{color:var(--accent)}
 .cal-g em{font-style:normal;text-align:center;font-size:11px;color:var(--muted);padding:2px 0 4px}.cal-g em.sun{color:#E0475B}.cal-g em.sat{color:#3F6FCF}
 .cal-g button{position:relative;height:32px;border-radius:6px;font-size:13px;color:var(--text2)}
 .cal-g button:hover:not(:disabled){background:var(--soft)}
@@ -178,7 +180,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .sp .fbtns{flex-wrap:wrap}
 .sp .sx-mseg{flex:1}
 .dpast{display:flex;align-items:center;gap:8px;width:100%;padding:4px 4px 2px;border-top:1px dashed var(--accent-soft)}
-.dhint{flex:1;font-size:12px;color:var(--accent)}
+.dhint{flex:1;font-size:12px;line-height:18px;color:var(--accent)}.dhint b{font-size:13px}.dhint .num{opacity:.85}
 .datebar .dtoday{background:var(--accent);color:#fff}.datebar .dtoday:hover{background:var(--accent-hover)!important;color:#fff!important}
 .rscroll{display:flex;flex-direction:column;gap:8px}
 .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;font-size:12px;color:var(--muted)}
@@ -628,6 +630,37 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .tseg button::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--tc);opacity:.45;transition:opacity .15s}
 .tseg button.on::before{opacity:1}
 .tseg button[data-tt="D"]{--tc:#4AA5D6}.tseg button[data-tt="W"]{--tc:#9DB32E}.tseg button[data-tt="M"]{--tc:#7C4DEB}
+.sec-wk{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--sub);white-space:nowrap}.sec-wk small{margin-left:4px;font-size:12px;font-weight:500;color:var(--muted)}
+.fillbar{display:flex;align-items:center;gap:10px;margin:8px 0 4px;padding:10px 12px;border-radius:8px;border:1px dashed var(--accent);background:var(--accent-bg)}
+.fillbar .fb-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.fillbar b{font-size:13.5px;color:var(--text)}.fillbar small{font-size:12px;line-height:17px;color:var(--sub)}
+.fillbar .btn{flex-shrink:0;height:32px;border-radius:8px;font-weight:700}
+.modal.fm{max-width:560px;display:flex;flex-direction:column;max-height:calc(100dvh - 32px)}.fm .m-head{flex-shrink:0}.fm .m-body{gap:8px;overflow:auto;min-height:0}.fm .m-body>*{flex-shrink:0}
+.fm-cf{margin-left:8px;padding:0 8px;border-radius:999px;background:var(--accent);font-size:11px;font-style:normal;line-height:20px;vertical-align:2px}
+.fm-sub{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:12.5px;font-weight:700;color:var(--text)}.fm-sub small{font-weight:500;color:var(--muted)}
+.fm-cands{display:flex;flex-direction:column;gap:4px}.fm-cands>*{flex-shrink:0}
+.fm-cand{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card);text-align:left}
+.fm-cand.on{border-color:var(--accent);background:var(--accent-bg)}
+.fm-cand .rd{flex-shrink:0;width:16px;height:16px;margin-top:1px;border-radius:50%;border:1.5px solid var(--border2)}.fm-cand.on .rd{border:5px solid var(--accent)}
+.fm-ct{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.fm-cl{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:13px}.fm-cl b{color:var(--text)}.fm-cl small{font-size:12px;color:var(--muted)}
+.fm-cl em{margin-left:auto;padding:0 7px;border-radius:999px;background:var(--soft);font-size:11px;font-style:normal;font-weight:700;line-height:18px;color:var(--muted)}.fm-cl em.on{background:var(--accent-soft);color:var(--accent)}
+.fm-ic{display:flex;flex-wrap:wrap;gap:3px}.fm-ic img{width:20px;height:20px;border-radius:4px;object-fit:cover;background:var(--frame-bg)}
+.fm-cols,.fm-row{display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) 60px;align-items:center;column-gap:6px}
+.fm-cols{padding:4px 8px 0;font-size:11.5px;font-weight:700;color:var(--muted)}
+.fm-list{display:flex;flex-direction:column;gap:4px}.fm-list>*{flex-shrink:0}
+.fm-row{min-height:40px;padding:5px 8px;border-radius:8px;background:var(--soft)}
+.fm-row.cf{background:var(--accent-bg);box-shadow:inset 0 0 0 1px var(--accent)}
+.fm-row.add.off>.fm-b:not(.fm-x){opacity:.45}
+.fm-sign{text-align:center;font-size:14px;font-weight:800;color:var(--muted)}.fm-row.cf .fm-sign,.fm-row.add:not(.off) .fm-sign{color:var(--accent)}
+.fm-b{display:flex;align-items:center;gap:6px;min-width:0}
+.fm-n{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;min-width:0;font-size:12.5px}.fm-n b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:var(--text)}.fm-n small{font-size:11px;color:var(--muted)}
+.fm-x{height:28px;padding:0 8px;border-radius:6px;border:1px dashed var(--border2);color:var(--muted);font-size:12px}
+.fm-tag{justify-self:end;font-size:11.5px;font-weight:700;color:var(--muted)}.fm-tag.on{color:var(--accent)}
+.fm-tg{justify-self:end;display:inline-flex;align-items:center;justify-content:center;gap:3px;height:26px;min-width:56px;padding:0 10px;border-radius:6px;font-size:12px;font-weight:700}.fm-tg.on{background:var(--accent);color:#fff}.fm-tg.off{border:1px solid var(--out-bd);background:var(--card);color:var(--sub)}.fm-tg:disabled{opacity:.4}
+.fm-ch{grid-column:1/-1;margin-top:6px}.fm-ch .seg{height:32px}
+.fm-warn,.fm-note{grid-column:1/-1;margin-top:4px;font-size:11.5px;color:var(--danger-fg)}.fm-note{color:var(--muted)}
+.fm-foot{display:flex;align-items:center;gap:8px;position:sticky;bottom:-20px;z-index:1;margin:4px -20px -20px;padding:12px 20px 16px;background:var(--bg);border-top:1px solid var(--border)}.fm-foot .cap{flex:1;font-size:12px;color:var(--sub)}.fm-foot .cap b{color:var(--text)}.fm-foot .btn{height:36px;border-radius:8px}
+.fr.s28{width:28px;height:28px;border-radius:5px}.fr.s28 img{width:22px;height:22px;border-radius:2px}.fr.s28 .flag{display:none}
 @media (min-width:901px) and (min-height:560px){
   html,body{height:100%}
   body{display:flex;flex-direction:column;overflow:hidden}
@@ -1224,11 +1257,22 @@ function sample(){
   {const m0=REAL.slice(0,7),m1=mAdd(REAL.slice(0,7)+'.01',-1).slice(0,7);
    ren.loot['blackmage|M'+m1]=['창세의 뱃지'];ren.lootMeta['blackmage|M'+m1]={'창세의 뱃지':{sell:'sold',fee:3}};
    rete.loot['blackmage|M'+m0]=['창세의 뱃지'];rete.lootMeta['blackmage|M'+m0]={'창세의 뱃지':{sell:'keep'}}}
+  // 지난 기록 채우기 예시: 귤민은 지난주부터 보스를 넣었고, 그 전 주엔 실수로 '그 주만' 두 개만 넣어 둠
+  {const k1=pk(1),k2=pk(2),w1=wk(1);mese.slots.forEach(s=>{if(BY[s.boss].diffs[s.diff]==='W')s.start=k1});
+   Object.keys(mese.clears).forEach(b=>{mese.clears[b]=mese.clears[b].filter(d=>d>=w1);if(!mese.clears[b].length)delete mese.clears[b]});
+   mese.slots.push({...S('lucid','normal'),only:k2},{...S('zakum','chaos'),only:k2});
+   const zc=day(wk(2),1);if(zc)mese.clears.zakum=[zc];
+   // 8월엔 노멀 검밑솔, 09.03 주엔 지금과 같은 목록, 09.10 주는 기록 없음 → 09.10에서 채우면 '앞뒤 같은 목록'과 '8월 목록' 두 가지가 뜸
+   const old=[['lotus','normal'],['damien','normal'],['slime','normal'],['lucid','normal'],['will','normal'],['gloom','normal'],['darknell','normal'],['hilla','normal'],['papulatus','chaos'],['magnus','hard'],['queen','chaos'],['bellum','chaos']];
+   mese.slots.filter(s=>s.start===k1).map(s=>({...s,start:pk(4),end:pk(3)})).forEach((s,i)=>{mese.slots.push(s);const dd=day(wk(4),1+(i%5));if(dd)(mese.clears[s.boss]=mese.clears[s.boss]||[]).push(dd)});
+   old.forEach(([b,d],i)=>{mese.slots.push({...S(b,d),start:pk(8),end:pk(4)});[5,6,7,8].forEach(w=>{const dd=day(wk(w),1+(i%5));if(dd)(mese.clears[b]=mese.clears[b]||[]).push(dd)})});
+   Object.values(mese.clears).forEach(a=>a.sort());
+   ['loot','lootSub','lootMeta'].forEach(f=>{const o=mese[f]||{};Object.keys(o).forEach(k=>{if(k.split('|')[1]<k1)delete o[k]})})}
   [ren,rete,mese].forEach(snapClears);
   const chars=EMPTY_START?[]:[ren,rete,mese];
   const cfg={};if(!EMPTY_START){const P=(b,n,v)=>{cfg[b]=cfg[b]||{sell:true,loot:{},custom:[]};cfg[b].loot[n]={on:true,price:v}};
     P('kaling','혼돈의 칠흑 장신구 상자','');P('kalos','남겨진 칼로스의 의지','12억');P('seren','미트라의 분노 선택 상자','');P('seren','데이브레이크 펜던트','3억');P('hilla','데이브레이크 펜던트','3억');P('gloom','거대한 공포','');P('will','익셉셔널 해머 (벨트)','')}
-  return {v:4,sv:13,chars,sel:chars.length?'c1':null,tab:'status',filter:'all',hide:false,
+  return {v:4,sv:17,chars,sel:chars.length?'c1':null,tab:'status',filter:'all',hide:false,
     cfg,presets:EMPTY_START?[]:[
       {id:'p3',name:'하림2인',type:'W',slots:[{...S('limbo','hard',2),cshare:50}]}],ptab:'rec',
     form:{type:'W',targets:EMPTY_START?[]:['c1'],boss:'radiant',diff:'normal',party:2,ceq:true,cshare:50,lmode:'sell',leq:true,lshare:50,memo:'',span:'keep'},
@@ -1242,7 +1286,7 @@ if(st&&st.v===1){st.cfg={};st.v=2}
 if(st&&st.v===2){const th=st.theme;st=sample();if(th)st.theme=th} // 클리어 기록 구조가 바뀌어 예시 데이터로 한 번 초기화
 if(st&&st.v===3){const r=st.chars.find(c=>c.id==='c1'),l=r&&r.slots.find(s=>s.boss==='lotus'&&s.diff==='extreme');if(l&&!l.tmp)l.tmp={key:pkey('W'),diff:'hard',party:1,cshare:null,lmode:'sell',lshare:null,memo:''};st.chars.forEach(snapClears);st.v=4}
 if(!st||st.v!==4)st=sample();
-if(!EMPTY_START&&st.sv!==13&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id))){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
+if(!EMPTY_START&&st.sv!==17&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id))){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
 
 let ui={menu:false,pop:null,popSel:[],popEtc:'',dd:false,ddq:'',modal:null,toast:null,newPreset:null};
 function save(quiet){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}if(!quiet)cloudQueue()} // quiet: 계정에 올리지 않음
@@ -1621,25 +1665,31 @@ const RECORD_START=PRICE_HIST[0].from;
 const minDay=()=>{const y=+REAL.slice(0,4),m=+REAL.slice(5,7)-1,d=ymd(new Date(Date.UTC(y,m-3,1)));return d>RECORD_START?d:RECORD_START};
 const minOff=()=>dnum(minDay())-dnum(REAL);
 const blockMsg=()=>minDay()===RECORD_START?`${md(RECORD_START)} 이전은 결정석 가격 정보가 없어서 입력할 수 없어요`:`${md(minDay())} 이전 기록은 입력할 수 없어요 (최근 3달까지)`;
-function calendar(c){const cal=ui.cal,y=cal.y,m=cal.m,first=new Date(Date.UTC(y,m,1)),days=new Date(Date.UTC(y,m+1,0)).getUTCDate(),lead=first.getUTCDay();
+/* 달력은 메이플 초기화 주(목~수)로 한 줄씩. 줄 앞에 그 주 목요일 기준 주차 */
+const wkNo=d=>{const th=wStart(d);return {m:+th.slice(5,7),n:Math.ceil(+th.slice(8,10)/7),th}};
+function calendar(c){const cal=ui.cal,y=cal.y,m=cal.m,first=new Date(Date.UTC(y,m,1)),days=new Date(Date.UTC(y,m+1,0)).getUTCDate(),lead=(first.getUTCDay()-4+7)%7;
   const rn=dnum(REAL),has=new Set();if(c)Object.values(c.clears).forEach(a=>a.forEach(e=>has.add(dOf(e))));
-  const cells=[];for(let i=0;i<lead;i++)cells.push('<span></span>');
-  for(let d=1;d<=days;d++){const k=ymd(new Date(Date.UTC(y,m,d))),n=dnum(k),off=n-rn,dis=off>0||off<minOff();
-    cells.push(`<button type="button" class="${k===TODAY?'on':''}${WEEK.includes(k)&&!dis?' wk':''}${k===REAL?' real':''}${dis?' dim':''}" data-cday="${off}" data-why="${off>0?'fut':dis?'old':''}">${d}${has.has(k)?'<i></i>':''}</button>`)}
+  const f0=ymd(first),n0=Math.ceil((lead+days)/7)*7,cells=[];
+  // 앞뒤 달 날짜도 흐리게 채워서 한 줄 = 한 주(목~수)가 끊기지 않게
+  for(let i=0;i<n0;i++){const k=addD(f0,i-lead),n=dnum(k),off=n-rn,dis=off>0||off<minOff(),om=+k.slice(5,7)!==m+1;
+    cells.push(`<button type="button" class="${k===TODAY?'on':''}${WEEK.includes(k)&&!dis?' wk':''}${k===REAL?' real':''}${dis?' dim':''}${om?' om':''}" data-cday="${off}" data-why="${off>0?'fut':dis?'old':''}">${+k.slice(8,10)}${has.has(k)?'<i></i>':''}</button>`)}
+  const rows=[];for(let r=0;r*7<n0;r++){const th=addD(f0,r*7-lead),w=wkNo(th),on=th===WEEK[0],om=w.m!==m+1;
+    rows.push(`<b class="wn${om?' om':''}${on?' on':''}" title="${w.m}월 ${w.n}주차 · ${md(th)} ~ ${md(addD(th,6))}">${om?`<small>${w.m}월</small>`:''}${w.n}주</b>`+cells.slice(r*7,r*7+7).join(''))}
   return `<div class="cal" role="dialog" aria-label="날짜 고르기"><div class="cal-h"><button type="button" data-cmon="-1" aria-label="이전 달" ${y*12+m<=+minDay().slice(0,4)*12+ +minDay().slice(5,7)-1?'disabled':''}>‹</button><b>${y}.${String(m+1).padStart(2,'0')}</b><button type="button" data-cmon="1" aria-label="다음 달" ${y*12+m>=+REAL.slice(0,4)*12+ +REAL.slice(5,7)-1?'disabled':''}>›</button></div>
-    <div class="cal-g">${DOW.map((w,i)=>`<em class="${i===0?'sun':i===6?'sat':''}">${w}</em>`).join('')}${cells.join('')}</div>
-    <div class="cal-f"><span><i></i> 클리어 기록</span><span><s></s> 주간 초기화 주(목~수)</span></div></div>`}
+    <div class="cal-g"><em></em>${[4,5,6,0,1,2,3].map(i=>`<em class="${i===0?'sun':i===6?'sat':''}">${DOW[i]}</em>`).join('')}${rows.join('')}</div>
+    <div class="cal-f"><span><i></i> 클리어 기록</span><span><s></s> 보고 있는 주 (목~수)</span></div></div>`}
 function statusView(){
   const c=cur(),k=charStats(c);
   const f=st.filter;
   const L=live(c);
-  const sec=t=>{let list=L.filter(s=>tOf(s)===t);if(!list.length)return '';
+  const sec=t=>{let list=L.filter(s=>tOf(s)===t);const fb=fillBar(c,t),n0=list.length;if(!n0&&!fb)return '';
     if(st.hide)list=list.filter(s=>!isDone(c,s));
     const so=st.sort||'set',pv=s=>myPrice(s)||0;
     if(so==='hi')list=list.slice().sort((a,b)=>pv(b)-pv(a));else if(so==='lo')list=list.slice().sort((a,b)=>pv(a)-pv(b));else if(so==='lv')list=list.slice().sort((a,b)=>lvOf(a)-lvOf(b)||pv(a)-pv(b)); // 같은 레벨이면 결정석 싼 순
     const kk=k[t];
-    return `<div class="sec">${mini(t)}${TKO[t]} 보스<span class="c num">${kk.done} / ${kk.all}</span></div>`+
-      (list.length?list.map(s=>bossCard(c,s)).join(''):`<div class="empty"><b>모두 클리어했어요</b><span>클리어 숨기기를 끄면 다시 보여요.</span></div>`);};
+    const wk=t==='W'&&VIEW_OFF?(w=>`<span class="sec-wk">${w.m}월 ${w.n}주차 <small class="num">${md(WEEK[0])} ~ ${md(WEEK[6])}</small></span>`)(wkNo(WEEK[0])):'';
+    return `<div class="sec">${mini(t)}${TKO[t]} 보스<span class="c num">${kk.done} / ${kk.all}</span>${wk}</div>`+
+      fb+(list.length?list.map(s=>bossCard(c,s)).join(''):n0?`<div class="empty"><b>모두 클리어했어요</b><span>클리어 숨기기를 끄면 다시 보여요.</span></div>`:'');};
   const counts={all:L.length,D:k.D.all,W:k.W.all,M:k.M.all};
   const hideT=st.hideT||{};
   const body0=(f==='all'?['D','W','M'].filter(t=>!hideT[t]):[f]).map(sec).join(''),body=body0?`<div class="bc-list">${body0}</div>`:'';
@@ -1649,7 +1699,7 @@ function statusView(){
         <button type="button" data-dnav="-7" aria-label="1주 전으로" class="${VIEW_OFF<=minOff()?'dim':''}">«<span>1주</span></button><button type="button" data-dnav="-1" aria-label="하루 전으로" class="${VIEW_OFF<=minOff()?'dim':''}">‹<span>1일</span></button>
         <span class="dwrap"><button type="button" class="dnow" id="cal-btn" aria-haspopup="dialog" aria-expanded="${!!ui.cal}"><b class="num">${md(TODAY)}</b> (${DOW[VIEW_DOW]})${VIEW_OFF?`<small>${-VIEW_OFF}일 전</small>`:'<small>오늘</small>'}${I.caret('var(--muted)',8)}</button>${ui.cal?calendar(cur()):''}</span>
         <button type="button" data-dnav="1" aria-label="하루 뒤로" class="${VIEW_OFF>=0?'dim':''}"><span>1일</span>›</button><button type="button" data-dnav="7" aria-label="1주 뒤로" class="${VIEW_OFF>=0?'dim':''}"><span>1주</span>»</button>
-        ${VIEW_OFF?`<div class="dpast"><span class="dhint">클리어하면 ${md(TODAY)}에 기록돼요</span><button type="button" class="dtoday" data-dnav="0">오늘로</button></div>`:''}
+        ${VIEW_OFF?`<div class="dpast"><span class="dhint">${(w=>`<b>${w.m}월 ${w.n}주차</b> <span class="num">${md(WEEK[0])}(목) ~ ${md(WEEK[6])}(수)</span><br>`)(wkNo(TODAY))}클리어하면 ${md(TODAY)}에 기록돼요</span><button type="button" class="dtoday" data-dnav="0">오늘로</button></div>`:''}
       </div>
       <div class="panel sp"><div class="inner"><div class="fbody" data-scroll="st-left">
         <div class="fsec"><div class="fhead">캐릭터<span style="font-size:12px;color:var(--muted)">주간 클리어</span></div>${charList()}</div>
@@ -1697,6 +1747,74 @@ function histDates(c,id,t,tgt){if(t==='D'||!pastP(t))return null;
 const hRange=(dates,t)=>{const a=dates[0],z=dates[dates.length-1];
   if(t==='W')return `${md(a)} ~ ${md(addD(z,6))}`;const mo=d=>+d.slice(5,7)+'월';return a===z?mo(a):`${mo(a)} ~ ${mo(z)}`};
 const histSpan=(dates,t)=>`${FROMW[t]} (${hRange(dates,t)})`;
+const nextP=(d,t)=>{if(t==='W')return addD(d,7);let y=+d.slice(0,4),m=+d.slice(5,7)+1;if(m>12){m=1;y++}return y+'.'+String(m).padStart(2,'0')+'.01'};
+const pkOf=(d,t)=>t+(t==='W'?d:d.slice(0,7));
+const pLabel=(d,t)=>t==='W'?md(d):(+d.slice(5,7))+'월';
+/* 그 기간의 '계속' 목록: 그 주만 넣은 보스·그 주만 바꾼 난이도·그 주만 뺀 것은 무시 */
+function regAt(c,t){const sl=c.slots.filter(s=>!s.only).map(s=>{const x={...s};['skips','skip','tmps','tmp','backs','back'].forEach(k=>delete x[k]);return x});
+  return live({slots:sl}).filter(x=>tOf(x)===t).map(x=>({boss:x.boss,diff:x.diff,party:x.party||1,cshare:x.cshare??null,lmode:x.lmode||'sell',lshare:x.lshare??null}))}
+const regSig=l=>l.map(x=>x.boss+':'+x.diff+':'+x.party).sort().join('|');
+/* 지난 기간 채우기 (보는 기간 기준)
+   - 기록된 기간들의 목록을 모아서, 완전히 같은 목록은 하나로 묶음 (값은 가장 최근 것)
+   - 바로 앞·바로 뒤 기록을 먼저 보여 주고, 그 전 목록도 고를 수 있게 함
+   - 보는 기간부터 이어서 비어 있는 기간은 같이 채움. 이미 기록된 기간은 안 바뀜 */
+function fillPlan(c,t,ci){if(t==='D'||!pastP(t))return null;
+  const key=pkey(t),cap=SLOTN[t]||99,from=t==='W'?WEEK[0]:MONTH+'.01',nowP=t==='W'?REALW:REAL.slice(0,7)+'.01';
+  const start=t==='W'?wStart(minDay()):minDay().slice(0,8)+'01',P=[];for(let d=start,g=0;g<80&&dnum(d)<=dnum(nowP);g++,d=nextP(d,t))P.push(d);
+  const info=P.map(d=>atDay(d,()=>({d,k:pkOf(d,t),reg:regAt(c,t),any:live(c).some(x=>tOf(x)===t)})));
+  const me=info.find(x=>x.k===key);if(!me)return null;
+  const also=[];let to=null;for(const x of info){if(x.k<=key)continue;if(!me.any&&!x.any&&x.d!==nowP)also.push(x.d);else{to=x.d;break}}
+  if(!to)to=nextP(also.length?also[also.length-1]:from,t);
+  const toK=pkOf(to,t),prevR=[...info].reverse().find(x=>x.k<key&&x.reg.length),nextR=info.find(x=>x.k>=toK&&x.reg.length),mine=me.reg.length?regSig(me.reg):null;
+  const G=new Map();info.forEach(x=>{if(!x.reg.length)return;const sg=regSig(x.reg);if(sg===mine)return;const g=G.get(sg)||{sig:sg,ps:[]};g.ps.push(x.d);g.list=x.reg;G.set(sg,g)});
+  const sub=(a,b)=>a.length<b.length&&a.every(x=>b.some(y=>y.boss===x.boss&&y.diff===x.diff&&y.party===x.party));
+  [...G.values()].forEach(g=>{if([...G.values()].some(h=>h!==g&&sub(g.list,h.list)))G.delete(g.sig)}); // 다른 목록에 다 들어 있는 작은 목록은 뺌
+  const cands=[...G.values()].map(g=>({...g,first:g.ps[0],last:g.ps[g.ps.length-1],next:!!nextR&&g.ps.includes(nextR.d),prev:!!prevR&&g.ps.includes(prevR.d)}))
+    .sort((a,b)=>(b.next-a.next)||(b.prev-a.prev)||(a.last<b.last?1:-1));
+  if(!cands.length)return null;
+  ci=ci==null?0:Math.min(ci,cands.length-1);
+  const E=live(c).filter(s=>tOf(s)===t),inc=cands[ci].list,rows=[],used=new Set(),left=[],extra=[];
+  const offK=b=>c.slots.some(s=>s.boss===b&&!s.only&&tOf(s)===t&&hasSkip(s,key)); // 그 주만 뺀 보스는 일부러 뺀 걸로 보고 다시 넣지 않음
+  inc.forEach(n=>{const e=E.find(x=>x.boss===n.boss&&!used.has(x._i));
+    if(e){used.add(e._i);rows.push({k:e._tmp?'keep':e.diff===n.diff&&e.party===n.party?'same':'diff',e,n,pick:'old'})} // 그 주만 바꾼 건 그대로
+    else if(!offK(n.boss))left.push(n)});
+  E.forEach(e=>{if(used.has(e._i))return;if(e.only)extra.push(e);else rows.push({k:'keep',e})});
+  let cnt=E.length;
+  extra.forEach(e=>{const n=left.shift();if(!n){rows.push({k:'old',e});return}const b=cnt<cap;rows.push({k:'swap',e,n,pick:b?'both':'old'});if(b)cnt++});
+  left.forEach(n=>{const b=cnt<cap;rows.push({k:'add',n,pick:b?'new':'off'});if(b)cnt++});
+  return {t,key,cap,rows,from,also,to,toK,cands,ci,regEmpty:!me.reg.length,hasClr:id=>(c.clears[id]||[]).some(e=>t==='W'?inWeek(dOf(e)):inMonth(dOf(e)))}}
+const fillCount=p=>p.rows.reduce((a,r)=>a+(r.k==='add'?(r.pick==='new'?1:0):r.k==='swap'&&r.pick==='both'?2:1),0);
+const fillTodo=p=>p.rows.filter(r=>r.k==='add'||r.k==='swap'||r.k==='diff').length;
+const fillTake=r=>r.n&&(r.k==='add'?r.pick==='new':r.k==='swap'?r.pick!=='old':r.k==='diff'&&r.pick==='new');
+function fillNeed(c,t){if(t==='D'||!pastP(t))return null;const key=pkey(t);if((c.fillDone||[]).includes(key))return null;
+  const late=c.slots.some(s=>tOf(s)===t&&!s.only&&s.start&&s.start>key);
+  if(!late&&regAt(c,t).length)return null;
+  const p=fillPlan(c,t);return p&&p.rows.some(r=>(r.k==='add'&&r.pick==='new')||r.k==='swap')?p:null} // 칸이 꽉 찬 기간은 띄우지 않음
+function applyFill(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.map(d=>pkOf(d,t))],del=[],fix=[];let k=0;
+  const vals=n=>{const o={};SLOTF.forEach(f=>o[f]=n[f]);return o};
+  const differs=(a,n)=>SLOTF.some(f=>(a[f]??null)!==(n[f]??null));
+  const drop=e=>{const s=c.slots[e._i];if(s.only===key)del.push(e._i);else addSkip(s,key);
+    const a=(c.clears[e.boss]||[]).filter(x=>!(t==='W'?inWeek(dOf(x)):inMonth(dOf(x))));if(a.length)c.clears[e.boss]=a;else delete c.clears[e.boss]};
+  const place=n=>{const reg=s=>s.boss===n.boss&&!s.only&&tOf(s)===t;
+    const s1=c.slots.find(s=>reg(s)&&s.start===toK);
+    if(s1){const i=c.slots.indexOf(s1),cf=atDay(p.to,()=>live(c).find(x=>x._i===i))||s1;s1.start=key;
+      if(s1.swap&&!c.slots.some(o=>o.boss===s1.swap&&o.end===toK))delete s1.swap;
+      if(differs(cf,n)){s1.prev=(s1.prev||[]).filter(q=>q.until!==toK);s1.prev.push({until:toK,...vals(n)})}return}
+    const s2=c.slots.find(s=>reg(s)&&s.end===key);
+    if(s2){s2.end=toK;if(differs(s2,n))keys.forEach(kk=>setTmp(s2,kk,vals(n)));return}
+    c.slots.push({boss:n.boss,...vals(n),memo:'',start:key,end:toK})};
+  p.rows.forEach(r=>{if(!fillTake(r))return;k++;
+    if(r.k==='diff'){const s=c.slots[r.e._i];if(s.only)Object.assign(s,vals(r.n));else setTmp(s,key,vals(r.n));fix.push(r.n.boss);return}
+    if(r.k==='swap'&&r.pick==='new')drop(r.e);
+    place(r.n)});
+  fix.forEach(id=>fixClear(c,id));
+  del.sort((a,b)=>b-a).forEach(i=>c.slots.splice(i,1));
+  c.fillDone=[...new Set([...(c.fillDone||[]),...keys])];
+  return k}
+function fillBar(c,t){if(!VIEW_OFF)return '';const p=fillNeed(c,t);if(!p)return '';
+  const E=p.rows.filter(r=>r.e).length,n=Math.min(p.rows.filter(r=>r.k==='add'||r.k==='swap').length,Math.max(0,p.cap-E)),u=t==='W'?'주':'달';
+  const c0=p.cands[0],src=p.cands.length>1?`기록된 목록 ${p.cands.length}가지 중에 골라서 채워요`:`${c0.next&&c0.prev?'앞뒤 기록':c0.next?'바로 뒤 기록':c0.prev?'바로 앞 기록':'기록된 목록'}으로 채워요`;
+  return `<div class="fillbar"><span class="fb-t"><b>${p.regEmpty&&!E?`기록이 없는 ${u}예요`:`비어 있는 칸 ${n}개`}</b><small>${src}${p.also.length?` · ${p.also.length+1}${u} 같이`:''}</small></span><button class="btn pri" type="button" data-fill="${t}">채우기</button></div>`}
 /* 카드·보스 설정 표 공통: '다르게 잡았어요' 창 */
 function bindCfg(v){
   v.querySelectorAll('.cfgp').forEach(p=>p.onclick=e=>e.stopPropagation());
@@ -1749,6 +1867,7 @@ function bindStatus(){
   v.querySelectorAll('[data-vreset]').forEach(b=>b.onclick=()=>{ui.vo=false;set(()=>{st.sort='set';st.hide=false;st.hideT={}});toast('보기 설정을 초기화했어요')});
   const r=document.getElementById('reset');if(r)r.onclick=()=>{ui.modal={kind:'reset'};renderLayer()};
   v.querySelectorAll('[data-go2]').forEach(b=>b.onclick=()=>set(()=>{st.tab=b.dataset.go2}));
+  v.querySelectorAll('[data-fill]').forEach(b=>b.onclick=()=>{const p=fillNeed(cur(),b.dataset.fill);if(!p)return;ui.modal={kind:'fill',p,cid:cur().id};renderLayer()});
   // 기록은 지우지 않고 쌓음 (나중에 수익 기록에 씀)
   const clearOne=(c,id)=>{const s=live(c).find(x=>x.boss===id);if(!s)return;const a=(c.clears[id]||[]).slice();
     if(!a.some(e=>dOf(e)===TODAY))a.push({d:TODAY,diff:s.diff,v:myPrice(s)});a.sort((x,y)=>dOf(x)<dOf(y)?-1:1);c.clears[id]=a};
@@ -2794,6 +2913,37 @@ function renderLayer(){
       <div class="note" style="padding:10px 12px"><div class="lchips">${lt.map(n=>`<span><i class="gem">${lootIcon(n)}</i>${esc(n)}</span>`).join('')}</div></div>
       <div class="m-btns"><button class="btn out" type="button" id="m-cancel">그대로 두기</button><button class="btn danger" type="button" id="u-ok">클리어 취소</button></div></div></div></div>`;
   }
+  if(m&&m.kind==='fill'){const p=m.p,u=p.t==='W'?'주':'달',when=p.t==='W'?md(p.from)+' 주':(+p.from.slice(5,7))+'월',n=fillCount(p);
+    const cf=p.rows.filter(r=>r.k==='swap'||r.k==='diff').length,take=p.rows.filter(fillTake).length;
+    const rng=g=>{const k0=dnum(p.from),d=g.ps.reduce((a,x)=>Math.abs(dnum(x)-k0)<Math.abs(dnum(a)-k0)?x:a);return pLabel(d,p.t)+(p.t==='W'?' 주':'')}; // 보는 기간과 가장 가까운 기록 하나만
+    const ctag=g=>g.next&&g.prev?'앞뒤 기록 같음':g.next?'바로 뒤 기록':g.prev?'바로 앞 기록':'다른 기록';
+    const cand=(g,i)=>`<button type="button" class="fm-cand${i===p.ci?' on':''}" data-fcand="${i}" role="radio" aria-checked="${i===p.ci}"><span class="rd"></span>
+      <span class="fm-ct"><span class="fm-cl"><b class="num">${rng(g)}</b><small>${g.list.length}개</small><em class="${g.next||g.prev?'on':''}">${ctag(g)}</em></span>
+      <span class="fm-ic">${g.list.map(x=>`<img src="${BY[x.boss].img}" alt="" title="${esc(BY[x.boss].name)}">`).join('')}</span></span></button>`;
+    const chip=s=>`<span class="fm-b">${frame(s,'s28')}<span class="fm-n"><b>${esc(BY[s.boss].name)}</b>${dk(s.diff)}${s.party>1?`<small>${s.party}인</small>`:''}</span></span>`,none=`<span class="fm-b fm-x">빈 칸</span>`;
+    const pk=(i,r,opts)=>`<div class="fm-ch"><div class="seg" role="radiogroup">${opts.map(([v,l,dis])=>`<button type="button" role="radio" aria-checked="${r.pick===v}" class="${r.pick===v?'on':''}" data-fpick="${i}:${v}" ${dis?'disabled':''}>${l}</button>`).join('')}</div></div>`;
+    const row=(r,i)=>{const full=n>=p.cap;
+      if(r.k==='keep')return `<div class="fm-row">${chip(r.e)}<span class="fm-sign">=</span>${chip(r.e)}<span class="fm-tag">${r.e._tmp?`그 ${u}만 바꿈`:'그대로'}</span></div>`;
+      if(r.k==='same')return `<div class="fm-row">${chip(r.e)}<span class="fm-sign">=</span>${chip(r.n)}<span class="fm-tag">같아요</span></div>`;
+      if(r.k==='old')return `<div class="fm-row">${chip(r.e)}<span class="fm-sign"></span>${none}<span class="fm-tag">그 ${u}만</span></div>`;
+      if(r.k==='add'){const on=r.pick==='new';return `<div class="fm-row add${on?'':' off'}">${none}<span class="fm-sign">→</span>${chip(r.n)}<button type="button" class="fm-tg ${on?'on':'off'}" data-fpick="${i}:${on?'off':'new'}" ${!on&&full?'disabled':''} aria-pressed="${on}">${on?I.check(11,'currentColor')+'넣기':'안 넣기'}</button></div>`}
+      const sw=r.k==='swap';
+      return `<div class="fm-row cf">${chip(r.e)}<span class="fm-sign">≠</span>${chip(r.n)}<span class="fm-tag on">충돌</span>
+        ${pk(i,r,sw?[['old','기존 유지'],['new','새 것으로'],['both','둘 다',r.pick!=='both'&&full]]:[['old','기존 유지'],['new','새 것으로']])}
+        ${sw&&r.pick==='new'&&p.hasClr(r.e.boss)?`<span class="fm-warn">${esc(BY[r.e.boss].name)} 그 ${u} 클리어 기록도 같이 빠져요</span>`:''}
+        ${sw&&r.pick!=='both'&&full?`<span class="fm-note">칸이 꽉 차서 둘 다는 못 넣어요</span>`:''}</div>`};
+    h+=`<div class="scrim" id="scrim"><div class="modal fm" role="dialog" aria-modal="true" aria-labelledby="f-title">
+      <div class="m-head"><span id="f-title">${when} 채우기${cf?`<em class="fm-cf">충돌 ${cf}</em>`:''}</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
+      <div class="m-body"><div class="info">${I.info}<span>기록된 ${u}의 목록을 골라 채워요. 그 ${u}만 넣은 보스는 빼고 봐요. 이미 기록된 ${u}는 바뀌지 않아요.</span></div>
+        ${p.also.length?`<div class="info">${I.info}<span>${p.also.map(d=>pLabel(d,p.t)).join(', ')}${p.t==='W'?' 주':''}도 비어 있어서 같이 채워져요.</span></div>`:''}
+        <div class="fm-sub">가져올 목록${p.cands.length>1?` <small>${p.cands.length}가지</small>`:''}</div>
+        <div class="fm-cands" role="radiogroup">${p.cands.map(cand).join('')}</div>
+        <div class="fm-sub">비교</div>
+        <div class="fm-cols"><span>그 ${u} 기록</span><span></span><span>들어올 보스</span><span></span></div>
+        <div class="fm-list">${p.rows.map(row).join('')}</div>
+        <div class="fm-foot"><span class="cap">${p.cap<99?`${p.cap}칸 중 <b class="num">${n}</b>칸`:''}</span><button class="btn out" type="button" id="m-cancel">취소</button><button class="btn pri" type="button" id="f-ok" ${take?'':'disabled'}>${take?`${take}칸 채우기`:'채울 칸 없음'}</button></div>
+      </div></div></div>`;
+  }
   if(m&&m.kind==='login'){
     h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="g-title" style="max-width:380px"><div class="m-head"><span id="g-title">로그인</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
       <div class="m-body g-body"><b class="g-t">구글 계정으로 기록 저장하기</b><p class="g-d">로그인하면 캐릭터·보스 설정·클리어 기록이 계정에 저장돼서, 다른 기기에서도 그대로 이어서 쓸 수 있어요.</p>
@@ -2813,7 +2963,9 @@ function renderLayer(){
       ${typeBox(DEL_PHRASE,'del-in')}
       <div class="m-btns"><button class="btn out" type="button" id="m-cancel">취소</button><button class="btn danger" type="button" id="del-ok" disabled>계정 삭제</button></div></div></div></div>`;
   }
+  const fl0=L.querySelector('.fm .m-body'),fy=fl0?fl0.scrollTop:0;
   L.innerHTML=h;
+  const fl1=L.querySelector('.fm .m-body');if(fl1&&fy)fl1.scrollTop=fy;
   const close=()=>{ui.modal=null;renderLayer()};
   const x=document.getElementById('m-x');if(x)x.onclick=close;
   const cc=document.getElementById('m-cancel');if(cc)cc.onclick=close;
@@ -2856,6 +3008,10 @@ function renderLayer(){
   const dk2=document.getElementById('dc-ok');if(dk2)dk2.onclick=()=>{const id=ui.modal.id,back=ui.modal.back,c=st.chars.find(x=>x.id===id);
     set(()=>{st.chars=st.chars.filter(x=>x.id!==id);if(st.sel===id)st.sel=st.chars[0]?st.chars[0].id:null;st.form.targets=st.form.targets.filter(x=>x!==id);if(!st.form.targets.length&&st.sel)st.form.targets=[st.sel]});
     ui.modal=back||null;renderLayer();toast(`${c?jo(c.name,'을'):'캐릭터를'} 삭제했어요`)};
+  L.querySelectorAll('[data-fcand]').forEach(b=>b.onclick=()=>{const m=ui.modal,c=st.chars.find(x=>x.id===m.cid)||cur();m.p=fillPlan(c,m.p.t,+b.dataset.fcand);renderLayer()});
+  L.querySelectorAll('[data-fpick]').forEach(b=>b.onclick=()=>{const [i,v]=b.dataset.fpick.split(':');ui.modal.p.rows[+i].pick=v;renderLayer()});
+  const fok=document.getElementById('f-ok');if(fok)fok.onclick=()=>{const {p,cid}=ui.modal,c=st.chars.find(x=>x.id===cid)||cur();ui.modal=null;renderLayer();let k=0;set(()=>{k=applyFill(c,p)});
+    toast(`${p.t==='W'?md(p.from)+' 주':(+p.from.slice(5,7))+'월'}에 ${k}칸을 채웠어요${p.also.length?` · ${p.also.length}${p.t==='W'?'주':'달'} 더`:''}`)};
   const uo=document.getElementById('u-ok');if(uo)uo.onclick=()=>{const {id,cid}=ui.modal;ui.modal=null;renderLayer();unclear(id,cid)};
   if(uo)setTimeout(()=>{const c=document.getElementById('m-cancel');c&&c.focus()},0);
   const ro=document.getElementById('r-ok');if(ro)ro.onclick=()=>{if(!typeOk((document.getElementById('r-in')||{}).value,RESET_PHRASE))return;const th=st.theme;st=sample();if(th)st.theme=th;ui={...ui,modal:null,pop:null};save();render();renderLayer();toast(EMPTY_START?'처음 상태로 초기화했어요':'예시 데이터로 되돌렸어요')};
