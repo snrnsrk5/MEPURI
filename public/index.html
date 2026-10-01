@@ -1475,9 +1475,9 @@ function live(c){
     const k0=pkey(BY[s.boss].diffs[s.diff]);
     if(s.only&&s.only!==k0)return null;
     if(hasSkip(s,k0)||(s.end&&k0>=s.end&&!hasBack(s,k0))||(s.start&&k0<s.start))return null; // 다른 보스로 바꿔 잡은 기간
-    if(s.swap&&s.start===k0)return {...s,_i:i,_from:true,_base:{boss:s.swap}};
-    const tmp=tmpAt(s,k0);
+    const tmp=tmpAt(s,k0);   // 그 주만 바꾼 값이 먼저 (바꿔 넣은 첫 주에도 적용되게)
     if(tmp)return {...s,...tmp,_i:i,_tmp:true,_base:s};
+    if(s.swap&&s.start===k0)return {...s,_i:i,_from:true,_base:{boss:s.swap}};
     if(s.prev){const k=pkey(BY[s.boss].diffs[s.diff]),ps=[...s.prev].sort((a,b)=>a.until<b.until?-1:1);
       const old=ps.find(p=>p.until[0]===k[0]&&k<p.until);if(old){const{until,...o}=old;return {...s,...o,_i:i}}
       const now=ps.find(p=>p.until===k);if(now)return {...s,_i:i,_from:true,_base:now}}
@@ -1801,7 +1801,7 @@ function applyFill(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.map(
   const place=n=>{const reg=s=>s.boss===n.boss&&!s.only&&tOf(s)===t;
     const s1=c.slots.find(s=>reg(s)&&s.start===toK);
     if(s1){const i=c.slots.indexOf(s1),cf=atDay(p.to,()=>live(c).find(x=>x._i===i))||s1;s1.start=key;
-      if(s1.swap&&!c.slots.some(o=>o.boss===s1.swap&&o.end===toK))delete s1.swap;
+      if(s1.swap&&!c.slots.some(o=>o.boss===s1.swap&&o.end===key))delete s1.swap; // 앞당기면 '○○ 대신' 연결은 끊김
       if(differs(cf,n)){s1.prev=(s1.prev||[]).filter(q=>q.until!==toK);s1.prev.push({until:toK,...vals(n)})}return}
     const s2=c.slots.find(s=>reg(s)&&s.end===key);
     if(s2){s2.end=toK;if(differs(s2,n))keys.forEach(kk=>setTmp(s2,kk,vals(n)));return}
