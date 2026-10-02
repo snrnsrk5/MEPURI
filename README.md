@@ -99,3 +99,17 @@ schema.sql          데이터베이스 표 구조 (참고용, Worker가 자동�
   `workers.dev` 주소에서는 캐시가 저장되지 않고 내 도메인을 연결했을 때만 동작해요. 캐시가 안 돼도 조회는 정상이에요.
 - **데이터 갱신:** 넥슨 정책상 API로 받은 데이터는 30일 안에 다시 갱신해야 해요. DB를 붙일 때 불러온 날짜를 같이 저장해 두세요.
 - **출처 표시:** 사이트에 `Data based on NEXON Open API` 문구를 꼭 표시해야 해요 (화면 왼쪽 아래에 넣어 둠).
+
+## 저작권 · 출처
+
+메푸리는 넥슨과 관련 없는 비공식 팬 사이트예요. 돈을 받지 않는 무료 도구로 운영해요.
+
+- **게임 데이터:** Data based on NEXON Open API. 화면 왼쪽 아래에 표시해요.
+- **게임 그림:** MapleStory © NEXON Korea Corp. 보스·아이템 아이콘, 직업 일러스트, 캐릭터 이미지의 권리는 모두 넥슨에 있어요.
+  - 직업 일러스트는 넥슨 메이플스토리 공식 직업 일러스트예요. (파일은 [MapleStory Wiki](https://maplestorywiki.net)에서 받아 줄여서 넣음)
+  - 넥슨 [게임 IP 사용 가이드](https://member.nexon.com/policy/gameipguide.aspx)에 따라 출처(넥슨 · 메이플스토리)와 비공식이라는 문구를 화면에 표시해요.
+- **글꼴**
+  - Noto Sans KR — SIL Open Font License 1.1, Google Fonts에서 불러와요.
+  - Pretendard — SIL Open Font License 1.1, Copyright (c) 2021 Kil Hyung-jin. 숫자·억·만 글자만 잘라서 페이지에 넣었어요. 예약 글꼴 이름 조항에 따라 잘라낸 글꼴은 `MepuriNum`이라는 이름으로 써요. 라이선스 원문: `licenses/Pretendard-OFL.txt`
+- 결정석 가격, 보스·아이템 이름 같은 게임 수치는 사실 정보로 직접 정리했어요.
+- 넥슨 요청이 있으면 해당 그림이나 기능은 바로 내려요.
