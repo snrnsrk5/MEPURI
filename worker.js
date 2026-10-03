@@ -24,6 +24,13 @@
  *   GET    /api/state               내 기록 불러오기  { data, rev, updatedAt }
  *   PUT    /api/state               내 기록 저장하기  { data, rev } — rev가 서버와 다르면 409 + 서버 기록
  *   DELETE /api/account             계정과 기록 모두 삭제
+ *
+ * 물욕 시세 (D1 데이터베이스 DB, 비밀값 ADMIN_PASSWORD 필요 — 없으면 시세 고치기는 꺼짐)
+ *   GET  /api/loot-prices            날짜별 시세 전체  { hist:[{ d:'2026.10.03', p:{ 템이름: 억 } }] } (누구나)
+ *   POST /api/admin/login            { password } 비밀번호 확인
+ *   POST /api/admin/prices           { password, d, p } 그 날짜 시세를 통째로 저장 (있으면 바꿈)
+ *   POST /api/admin/delete           { password, d } 그 날짜 시세 지우기
+ *   관리 화면: /admin  (비밀번호를 5번 틀리면 그 주소에서 15분 동안 막힘)
  */
 
 const NEXON = 'https://open.api.nexon.com/maplestory/v1/';
@@ -50,6 +57,14 @@ export default {
     // 로그인·기록 저장 (같은 사이트에서만 부름 — 쿠키를 쓰므로 CORS 헤더는 안 붙임)
     if (url.pathname === '/api/config' || url.pathname.startsWith('/api/auth/') || url.pathname === '/api/me' || url.pathname === '/api/state' || url.pathname === '/api/account') {
       try { return await account(req, env, url); }
+      catch (e) {
+        if (e instanceof HttpError) return fail(e.status, e.code, e.message, {});
+        return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', {});
+      }
+    }
+    // 물욕 시세: 읽기는 누구나, 고치기는 관리 비밀번호
+    if (url.pathname === '/api/loot-prices' || url.pathname.startsWith('/api/admin/')) {
+      try { return await lootPrices(req, env, url, cors); }
       catch (e) {
         if (e instanceof HttpError) return fail(e.status, e.code, e.message, {});
         return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', {});
@@ -261,6 +276,83 @@ async function account(req, env, url) {
     return json({ ok: true }, 200, { ...noStore(), 'set-cookie': cookie('', 0) });
   }
   throw new HttpError(404, 'NOT_FOUND', '없는 주소예요');
+}
+
+// ── 물욕 시세 ──
+// 시세는 억 메소 단위 숫자. 날짜는 'YYYY.MM.DD' (사이트와 같은 모양)
+const PRICE_MAX_ITEMS = 300, FAIL_LIMIT = 5, FAIL_LOCK_MIN = 15;
+async function lootPrices(req, env, url, cors) {
+  const p = url.pathname, m = req.method;
+  if (!env.DB) throw new HttpError(503, 'NO_DB', '데이터베이스가 아직 설정되지 않았어요');
+  await ensurePriceSchema(env.DB);
+
+  if (p === '/api/loot-prices' && m === 'GET') {
+    const { results } = await env.DB.prepare('SELECT d, item, price FROM loot_prices ORDER BY d, item').all();
+    const by = new Map();
+    for (const r of results || []) { if (!by.has(r.d)) by.set(r.d, {}); by.get(r.d)[r.item] = r.price; }
+    return json({ hist: [...by].map(([d, pr]) => ({ d, p: pr })) }, 200, { ...cors, 'cache-control': 'public, max-age=60' });
+  }
+  if (m !== 'POST') throw new HttpError(405, 'METHOD', 'POST 요청만 받아요');
+  if (!env.ADMIN_PASSWORD) throw new HttpError(503, 'ADMIN_OFF', '관리 비밀번호가 아직 설정되지 않았어요');
+  // 다른 사이트 페이지에서 몰래 보내는 요청 막기 (Origin이 붙어 오면 같은 주소여야 함)
+  const origin = req.headers.get('Origin');
+  if (origin && origin !== url.origin) throw new HttpError(403, 'ORIGIN', '다른 사이트에서는 요청할 수 없어요');
+
+  const body = await readJson(req, 64 * 1024);
+  await checkAdmin(req, env, String(body.password || ''));
+
+  if (p === '/api/admin/login') return json({ ok: true }, 200, noStore());
+  const d = String(body.d || '');
+  if (!/^\d{4}\.(0[1-9]|1[0-2])\.(0[1-9]|[12]\d|3[01])$/.test(d)) throw new HttpError(400, 'DATE', '날짜는 2026.10.03 모양으로 적어 주세요');
+
+  if (p === '/api/admin/prices') {
+    const src = body.p && typeof body.p === 'object' ? body.p : null;
+    if (!src) throw new HttpError(400, 'PRICES', '저장할 시세가 없어요');
+    const rows = [];
+    for (const [item, v] of Object.entries(src)) {
+      const name = String(item).trim(), n = Number(v);
+      if (!name || name.length > 60) throw new HttpError(400, 'ITEM', '템 이름이 이상해요: ' + name.slice(0, 20));
+      if (v === null || v === '' ) continue; // 빈 칸은 저장 안 함
+      if (!Number.isFinite(n) || n < 0 || n > 100000) throw new HttpError(400, 'PRICE', `${name} 시세가 이상해요 (억 단위 숫자)`);
+      rows.push([name, Math.round(n * 1000) / 1000]);
+    }
+    if (rows.length > PRICE_MAX_ITEMS) throw new HttpError(400, 'TOO_MANY', '템이 너무 많아요');
+    const now = new Date().toISOString();
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d),
+      ...rows.map(([name, n]) => env.DB.prepare('INSERT INTO loot_prices (d, item, price, updated_at) VALUES (?1, ?2, ?3, ?4)').bind(d, name, n, now)),
+    ]);
+    return json({ ok: true, d, count: rows.length }, 200, noStore());
+  }
+  if (p === '/api/admin/delete') {
+    await env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d).run();
+    return json({ ok: true, d }, 200, noStore());
+  }
+  throw new HttpError(404, 'NOT_FOUND', '없는 주소예요');
+}
+
+// 비밀번호 확인 + 많이 틀리면 잠깐 막기 (주소마다)
+async function checkAdmin(req, env, password) {
+  const ip = req.headers.get('CF-Connecting-IP') || 'unknown', now = Date.now();
+  const row = await env.DB.prepare('SELECT n, until FROM admin_fail WHERE ip = ?1').bind(ip).first();
+  if (row && row.until && row.until > now) throw new HttpError(429, 'LOCKED', `비밀번호를 여러 번 틀려서 ${Math.ceil((row.until - now) / 60000)}분 동안 막혔어요`);
+  const ok = password && (await sha256(password)) === (await sha256(String(env.ADMIN_PASSWORD)));
+  if (ok) { if (row) await env.DB.prepare('DELETE FROM admin_fail WHERE ip = ?1').bind(ip).run(); return; }
+  const n = (row && !(row.until && row.until <= now) ? row.n : 0) + 1, lock = n >= FAIL_LIMIT;
+  await env.DB.prepare('INSERT INTO admin_fail (ip, n, until) VALUES (?1, ?2, ?3) ON CONFLICT(ip) DO UPDATE SET n = ?2, until = ?3')
+    .bind(ip, lock ? 0 : n, lock ? now + FAIL_LOCK_MIN * 60000 : 0).run();
+  throw new HttpError(401, 'PASSWORD', lock ? `비밀번호를 ${FAIL_LIMIT}번 틀려서 ${FAIL_LOCK_MIN}분 동안 막혔어요` : `비밀번호가 달라요 (${n}/${FAIL_LIMIT})`);
+}
+
+let priceSchemaReady = false;
+async function ensurePriceSchema(db) {
+  if (priceSchemaReady) return;
+  await db.batch([
+    db.prepare(`CREATE TABLE IF NOT EXISTS loot_prices (
+      d TEXT NOT NULL, item TEXT NOT NULL, price REAL NOT NULL, updated_at TEXT, PRIMARY KEY (d, item))`),
+    db.prepare('CREATE TABLE IF NOT EXISTS admin_fail (ip TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0, until INTEGER NOT NULL DEFAULT 0)'),
+  ]);
+  priceSchemaReady = true;
 }
 
 // 표가 없으면 만들기 (처음 한 번만 실제로 실행됨)

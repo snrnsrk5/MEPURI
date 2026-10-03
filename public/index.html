@@ -1266,6 +1266,10 @@ div.sx-pbr{cursor:default}
   .sx-bt .sx-brow3>.sx-fx{display:none}
 }
 
+/* 팔았는데 판매가를 안 적은 물욕: 예상가 옆 작은 점 + 입력칸 테두리 살짝 (예상가로 계산 중이라는 뜻) */
+.sx-nosp{display:inline-block;flex:none;width:5px;height:5px;margin-right:6px;border-radius:50%;background:var(--accent);opacity:.75;vertical-align:middle}
+.sx-spin.need{border-color:rgba(246,134,0,.5)}.sx-spin.need::placeholder{color:var(--accent);opacity:.6}
+
 </style>
 
 <header class="top"><div class="wrap">
@@ -1456,8 +1460,15 @@ function lootHistCompact(h,today){const T=Date.parse(today.replace(/\./g,'-')),s
   [...h].sort((a,b)=>a.d<b.d?1:-1).forEach((s,i)=>{const age=Math.floor((T-Date.parse(s.d.replace(/\./g,'-')))/864e5);
     const g=i===0||age<=13?'d'+s.d:age<=91?'w'+Math.floor(age/7):'m'+s.d.slice(0,7);if(seen.has(g))return;seen.add(g);out.push(s)});
   return out.reverse()}
-const LOOT_HIST=LOOT_HIST_RAW,LOOT_BASE=LOOT_HIST[LOOT_HIST.length-1].p,LOOT_BASE_DATE=(d=>`${+d.slice(5,7)}/${+d.slice(8)}`)(LOOT_HIST[LOOT_HIST.length-1].d);
+// LOOT_BASE: 템마다 가장 최근 시세 (최신 날짜에 없는 템은 그 전 값)
+const lootLatest=h=>Object.assign({},...h.map(s=>s.p)),lootDateTxt=h=>(d=>`${+d.slice(5,7)}/${+d.slice(8)}`)(h[h.length-1].d);
+let LOOT_HIST=LOOT_HIST_RAW,LOOT_BASE=lootLatest(LOOT_HIST),LOOT_BASE_DATE=lootDateTxt(LOOT_HIST);
 let lootHistC=null;
+// 서버(관리 화면에서 넣은 시세)가 있으면 그걸 우선 — 같은 날짜는 서버 값으로 통째로 바꿈. 서버가 안 되면 페이지 안 기본 시세 그대로
+function lootServerLoad(){fetch('/api/loot-prices',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+  const H=j&&Array.isArray(j.hist)?j.hist.filter(s=>s&&/^\d{4}\.\d\d\.\d\d$/.test(s.d)&&s.p&&typeof s.p==='object'):[];if(!H.length)return;
+  const m=new Map(LOOT_HIST_RAW.map(s=>[s.d,s]));H.forEach(s=>{const p={};Object.entries(s.p).forEach(([k,v])=>{if(Number.isFinite(+v))p[k]=+v});m.set(s.d,{d:s.d,p})});
+  LOOT_HIST=[...m.values()].sort((a,b)=>a.d<b.d?-1:1);LOOT_BASE=lootLatest(LOOT_HIST);LOOT_BASE_DATE=lootDateTxt(LOOT_HIST);lootHistC=null;render()}).catch(()=>{})}
 // 그 날짜(d) 기준 시세: d 이전 중 가장 최근 값, 그보다 앞선 기록이 없으면 가장 오래된 값
 function lootBaseAt(n,d){if(!d)return LOOT_BASE[n];if(!lootHistC)lootHistC=typeof REAL==='string'?lootHistCompact(LOOT_HIST,REAL):LOOT_HIST;
   let v=null,f=null;for(const s of lootHistC){if(s.p[n]==null)continue;if(f==null)f=s.p[n];if(s.d<=d)v=s.p[n]}return v!=null?v:f}
@@ -1510,6 +1521,8 @@ function sample(){
         const party=sl.party||1,r=rnd(),m={};
         if(party>1){if(r<.3){m.sell='sold';m.fee=rnd()<.4?3:5}else if(r<.4)m.sell='keep';else{m.sell='rot';const ms=((c.dist||{})[sl.boss]||{}).members||[],who=Math.floor(rnd()*party);m.taker=who===0?'me':(((ms[who-1]||{}).name)||('#'+(who-1)))}}
         else if(r<.8){m.sell='sold';m.fee=rnd()<.5?3:5}else m.sell='keep';
+        // 판 템 중 절반 남짓은 판매가를 적어 둔 걸로 (rnd 순서를 안 바꾸게 이름으로 정함) — 안 적은 템은 예상가 옆에 점이 뜸
+        if(m.sell==='sold'&&!bx){const h=[...key+n].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,7),v=LOOT_BASE[n];if(v!=null&&h%5<3)m.sp=Math.round(v*(.92+(h%17)/100)*10)*1e7}
         (c.lootMeta[key]=c.lootMeta[key]||{})[n]=m}})};
   drops(ren,.12);drops(rete,.08);drops(mese,.05);
   // 물욕 등급 예시: 이번 주 목록에 기본 + 6등급(브론즈~블랙)이 하나씩 보이게 — 예상가가 그 등급 범위인 템을 골라 넣음
@@ -1519,10 +1532,10 @@ function sample(){
      ((LOOT[b.name]||{})[sl.diff]||[]).forEach(q=>{if(B[q[0]]!=null&&!boxOf(q[0]))cand.push({c,sl,n:q[0],v:B[q[0]]})})}));
    const used=new Set(),put=(o,m)=>{const key=o.sl.boss+'|'+w0,arr=o.c.loot[key]=o.c.loot[key]||[];if(arr.includes(o.n))return false;
      const cl=o.c.clears[o.sl.boss]=o.c.clears[o.sl.boss]||[];if(!cl.some(d=>(typeof d==='string'?d:d.d)>=wk(0)))cl.push(wk(0));
-     arr.push(o.n);used.add(o.n);o.c.lootMeta=o.c.lootMeta||{};(o.c.lootMeta[key]=o.c.lootMeta[key]||{})[o.n]=m;return true};
+     arr.push(o.n);used.add(o.n);o.c.lootMeta=o.c.lootMeta||{};const mm={...m};if(mm.spx){if(mm.sp==null)mm.sp=Math.round(o.v*mm.spx*10)*1e7;delete mm.spx}(o.c.lootMeta[key]=o.c.lootMeta[key]||{})[o.n]=mm;return true};
    // 그 범위 시세 템이 없으면 남은 템을 그 범위 금액에 판 걸로
    const pick=(lo,hi,m)=>{for(const o of cand.filter(q=>q.v>=lo&&q.v<hi&&!used.has(q.n)).sort((a,b)=>a.v-b.v))if(put(o,m))return;for(const o of cand.filter(q=>!used.has(q.n)&&q.v<lo).sort((a,b)=>b.v-a.v))if(put(o,{...m,sp:Math.round((lo+(hi-lo)*.3))*1e8}))return};
-   pick(50,100,{sell:'sold',fee:5});pick(100,250,{sell:'sold',fee:5});pick(250,500,{sell:'sold',fee:3});pick(500,750,{sell:'sold',fee:5});pick(750,1000,{sell:'sold',fee:5});pick(1000,1700,{sell:'sold',fee:5})}
+   pick(50,100,{sell:'sold',fee:5,spx:1.04});pick(100,250,{sell:'sold',fee:5});pick(250,500,{sell:'sold',fee:3,spx:.97});pick(500,750,{sell:'sold',fee:5});pick(750,1000,{sell:'sold',fee:5,spx:1.02});pick(1000,1700,{sell:'sold',fee:5,spx:1})}
   // 월간 검마 물욕 (지난달 · 이번 달)
   {const m0=REAL.slice(0,7),m1=mAdd(REAL.slice(0,7)+'.01',-1).slice(0,7);
    ren.loot['blackmage|M'+m1]=['창세의 뱃지'];ren.lootMeta['blackmage|M'+m1]={'창세의 뱃지':{sell:'sold',fee:3}};
@@ -1543,7 +1556,7 @@ function sample(){
   const chars=EMPTY_START?[]:[ren,rete,mese];
   const cfg={};if(!EMPTY_START){const P=(b,n,v)=>{cfg[b]=cfg[b]||{sell:true,loot:{},custom:[]};cfg[b].loot[n]={on:true,price:v}};
     P('kaling','혼돈의 칠흑 장신구 상자','');P('kalos','남겨진 칼로스의 의지','12억');P('seren','미트라의 분노 선택 상자','');P('seren','데이브레이크 펜던트','3억');P('hilla','데이브레이크 펜던트','3억');P('gloom','거대한 공포','');P('will','익셉셔널 해머 (벨트)','')}
-  return {v:4,sv:20,chars,sel:chars.length?'c1':null,tab:'status',filter:'all',hide:false,
+  return {v:4,sv:22,chars,sel:chars.length?'c1':null,tab:'status',filter:'all',hide:false,
     cfg,presets:EMPTY_START?[]:[
       {id:'p3',name:'하림2인',type:'W',slots:[{...S('limbo','hard',2),cshare:50}]}],ptab:'rec',
     form:{type:'W',targets:EMPTY_START?[]:['c1'],boss:'radiant',diff:'normal',party:2,ceq:true,cshare:50,lmode:'sell',leq:true,lshare:50,memo:'',span:'keep'},
@@ -1557,7 +1570,7 @@ if(st&&st.v===1){st.cfg={};st.v=2}
 if(st&&st.v===2){const th=st.theme;st=sample();if(th)st.theme=th} // 클리어 기록 구조가 바뀌어 예시 데이터로 한 번 초기화
 if(st&&st.v===3){const r=st.chars.find(c=>c.id==='c1'),l=r&&r.slots.find(s=>s.boss==='lotus'&&s.diff==='extreme');if(l&&!l.tmp)l.tmp={key:pkey('W'),diff:'hard',party:1,cshare:null,lmode:'sell',lshare:null,memo:''};st.chars.forEach(snapClears);st.v=4}
 if(!st||st.v!==4)st=sample();
-if(!EMPTY_START&&st.sv!==20&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id))){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
+if(!EMPTY_START&&st.sv!==22&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id))){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
 
 let ui={menu:false,pop:null,popSel:[],popEtc:'',dd:false,ddq:'',modal:null,toast:null,newPreset:null};
 function save(quiet){try{if(typeof sxSync==='function'){sxMigrateParties();sxSync()}}catch(e){console.error(e)}try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}if(!quiet)cloudQueue()} // quiet: 계정에 올리지 않음
@@ -2846,6 +2859,7 @@ function statsView(){
       <div class="bar-r">${extra||''}<span>${x.cid==='all'?`전체 캐릭터 (${vis().length})`:esc(nm(st.chars.find(c=>c.id===x.cid)))}</span><span style="color:var(--faint)">|</span><span class="num">${r.label}</span></div></div>`;
   // 물욕 아이콘 테두리: 판 금액이 있으면 그 값, 없으면 예상가로 등급 (SX_TIERS)
   //  브론즈 50억 · 실버 100억 · 골드 250억 · 다이아 500억 · 레드 750억 · 블랙 1,000억
+  const sxNoSp=e=>!!e&&!e.pending&&e.res!=='꽝'&&e.k&&e.k.sp==null&&(e.k.sold||e.k.rotSold)&&e.price!=null;
   const tierOf=e=>{if(!e||e.pending||e.res==='꽝')return '';const v=e.k&&e.k.sp!=null?e.k.sp:e.price;const t=SX_TIERS.find(q=>v>=q[0]);return t?' tier '+t[1]:''};
   const tierN=e=>tierOf(e).replace(' tier ','');
   const ifr=(n,e)=>{const t=tierOf(e);return `<span class="sx-ifr${t}">${lootIcon(n)}${t?'<span class="gw" aria-hidden="true"></span><span class="gl" aria-hidden="true"><i></i></span><span class="gl2" aria-hidden="true"><i></i></span><span class="sp" aria-hidden="true"></span>':''}</span>`};
@@ -2866,10 +2880,11 @@ function statsView(){
         ${get?`<div class="sx-sr sx-stl get"><span>파티원에게 받을 돈</span><b class="num">${Mr(get)}</b></div>`:''}
         ${!gv.length&&!get?'<div class="sx-sr"><span class="sx-z">남은 정산이 없어요</span></div>':''}${sxHelpBox('settle2')}</div>`})();
     right=bar([['all','전체',lootRows.length],['pend','미선택',lootRows.filter(e=>e.pending).length],['solo','개인',lootRows.filter(e=>is(e,'solo')).length],['party','파티',lootRows.filter(e=>is(e,'party')).length],['settle','정산 남음',lootRows.filter(unsettled).length]],['all','pend','solo','party','settle'].includes(lf)?lf:'all','sxlf')+stl+
-      `<div class="stable sx-table sx-auc"><div class="sx-bhead"><span style="width:40px"></span><span class="c-name">아이템</span><span class="sx-tg">판매</span><span class="sx-m">예상가</span><span class="sx-m">내 수익</span></div>
+      `<div class="stable sx-table sx-auc"><div class="sx-bhead"><span style="width:40px"></span><span class="c-name">아이템</span><span class="sx-tg">판매</span><span class="sx-m">판매가</span><span class="sx-m">내 수익</span></div>
       <div class="sx-bbody">${shown.length?shownP.map(({e,i})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n;
         const tn=tierN(e); // 레드·블랙은 줄 전체를 칠함 (블랙 라벨처럼)
-        return `<div class="sx-brow sx-arow${i===si?' picked':''}${e.pending?' pend':''}${tn==='red'||tn==='black'?' rt-'+tn:''}" role="button" tabindex="0" data-sxpick="${i}">${tn==='black'?'<span class="rgl" aria-hidden="true"><i></i></span>':''}${ifr(itn,e)}<span class="c-name"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${esc(nm(e.c))} · ${esc(BY[e.id].name)}${e.box&&e.res&&e.res!=='꽝'?` · ${esc(e.n)}`:''}</small></span><span class="sx-tg">${tag(e)}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':e.price==null?'<span class="sx-z">가격 없음</span>':`${coin(13)}<span class="sx-tv${tn?' '+tn:''}">${S(e.price)}</span>`}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':M(e.v)}</span></div>`}).join(''):'<div class="sx-empty">이 기간에 먹은 물욕템이 없어요</div>'}</div>${sxPager(shown.length,LPER,lpg,'sxlpg')}</div>`;
+        const ns=sxNoSp(e); // 팔았는데 판매가를 안 적음 → 예상가 옆에 작은 점
+        return `<div class="sx-brow sx-arow${i===si?' picked':''}${e.pending?' pend':''}${tn==='red'||tn==='black'?' rt-'+tn:''}" role="button" tabindex="0" data-sxpick="${i}">${tn==='black'?'<span class="rgl" aria-hidden="true"><i></i></span>':''}${ifr(itn,e)}<span class="c-name"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${esc(nm(e.c))} · ${esc(BY[e.id].name)}${e.box&&e.res&&e.res!=='꽝'?` · ${esc(e.n)}`:''}</small></span><span class="sx-tg">${tag(e)}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':(e.k&&e.k.sp!=null?e.k.sp:e.price)==null?'<span class="sx-z">가격 없음</span>':`${ns?'<i class="sx-nosp" title="판매가를 안 적어서 예상가로 보여요" aria-label="판매가 안 적음"></i>':''}${coin(13)}<span class="sx-tv${tn?' '+tn:''}">${S(e.k&&e.k.sp!=null?e.k.sp:e.price)}</span>`}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':M(e.v)}</span></div>`}).join(''):'<div class="sx-empty">이 기간에 먹은 물욕템이 없어요</div>'}</div>${sxPager(shown.length,LPER,lpg,'sxlpg')}</div>`;
     const seg=(i,f,cur,opts)=>`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${String(cur)===String(v)?'on':''}" data-sxm="${i}|${f}|${v}">${l}</button>`).join('')}</div>`;
     let form='<div class="sx-empty">오른쪽 목록에서 템을 골라 주세요.</div>';
     if(si>=0){const e=lootRows[si],k=e.k,i=si,bx=e.box&&boxOf(e.n),itn=e.res&&e.res!=='꽝'?e.res:e.n,adv=!!x.adv; // adv: 상세 설정 (켜면 모든 템에 계속)
@@ -2877,7 +2892,7 @@ function statsView(){
       if(bx)form+=`<div class="sx-bxr"><span class="bxl">${I.corner}${esc(e.n)}에서 나온 것</span><div class="bxo">${bx.opts.map(([kk,full])=>`<button type="button" class="${e.res===full?'on':''}${kk==='꽝'?' trash':''}" data-sxsub="${i}|${esc(full)}" title="${esc(full)}"><span class="bi">${kk==='꽝'?TRASH.replace(/13/g,'16'):(ITEM_ICONS[full]?`<img src="${ITEM_ICONS[full]}" alt="">`:I.gem)}</span>${esc(kk)}</button>`).join('')}</div></div>`;
       if(!e.pending&&e.res!=='꽝'){
         form+=`<div class="frow"><span class="flbl">처리</span>${seg(i,'sell',k.rot?'rot':k.sold?'sold':'keep',[['sold','판매함'],['keep','안 팜'],...(k.party>1?[['rot','순환 획득']]:[])])}</div>`;
-        const spRow=()=>`<div class="frow"><span class="flbl">판매한 금액</span><input class="inp sx-spin num" type="text" inputmode="text" data-sxsp="${i}" value="${k.sp!=null?meso(k.sp):''}" placeholder="${e.price!=null?'예상가 '+meso(e.price):'예) 10억 2500만'}" aria-label="판매한 금액 (수수료 떼기 전)"></div><div class="sx-spv"><b class="num" data-sxspv></b></div>`;
+        const spRow=()=>`<div class="frow"><span class="flbl">판매한 금액</span><input class="inp sx-spin num${sxNoSp(e)?' need':''}" type="text" inputmode="text" data-sxsp="${i}" value="${k.sp!=null?meso(k.sp):''}" placeholder="${e.price!=null?'예상가 '+meso(e.price):'예) 10억 2500만'}" aria-label="판매한 금액 (수수료 떼기 전)"></div><div class="sx-spv"><b class="num" data-sxspv></b></div>`;
         // 기본 칸은 form, 상세 설정 칸은 advH, 정산 상자는 box → 순서: 기본 · [상세 설정 스위치 · 상세 칸] · 정산 상자
         let advH='',box='';const feeRow=()=>`<div class="frow"><span class="flbl">판매 수수료</span>${seg(i,'fee',k.fee,[[SX_FEE.hi,`${SX_FEE.hi}%`],[SX_FEE.lo,`${SX_FEE.lo}%`]])}</div>`;
         if(k.sold){form+=spRow();advH+=feeRow()}
@@ -3149,7 +3164,7 @@ function syncClock(r){const d=Date.parse(r.headers.get('date')||'');if(!d)return
 let SAME_API=false; // 이 사이트를 메푸리 Worker가 보여주는 중이면 같은 주소의 /api 를 자동으로 씀
 const savedBase=()=>{try{return (localStorage.getItem(APIKEY)||'').trim().replace(/\/+$/,'')}catch(e){return ''}};
 const apiBase=()=>savedBase()||(SAME_API?location.origin:'');
-if(/^https?:$/.test(location.protocol))fetch('/api/health',{cache:'no-store'}).then(r=>{syncClock(r);return r.ok?r.json():null}).then(j=>{if(j&&j.service==='mepuri-api'){SAME_API=true;if(ui.modal)renderLayer();fixLooks();cloudInit();setTimeout(chalScan,1500)}}).catch(()=>{});
+if(/^https?:$/.test(location.protocol))fetch('/api/health',{cache:'no-store'}).then(r=>{syncClock(r);return r.ok?r.json():null}).then(j=>{if(j&&j.service==='mepuri-api'){SAME_API=true;lootServerLoad();if(ui.modal)renderLayer();fixLooks();cloudInit();setTimeout(chalScan,1500)}}).catch(()=>{});
 const setApiBase=v=>{try{v?localStorage.setItem(APIKEY,v.trim().replace(/\/+$/,'')):localStorage.removeItem(APIKEY)}catch(e){}};
 const apiOn=()=>!!(apiBase()||nxKey());
 async function srv(path,params){

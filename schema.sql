@@ -17,3 +17,18 @@ CREATE TABLE IF NOT EXISTS user_state (
   rev INTEGER NOT NULL DEFAULT 0,    -- 저장 번호 (다른 기기와 겹침 확인용)
   updated_at TEXT
 );
+
+-- 물욕 시세 (억 메소). 날짜마다 템 시세를 통째로 저장
+CREATE TABLE IF NOT EXISTS loot_prices (
+  d TEXT NOT NULL,                   -- 'YYYY.MM.DD'
+  item TEXT NOT NULL,
+  price REAL NOT NULL,
+  updated_at TEXT,
+  PRIMARY KEY (d, item)
+);
+-- 관리 비밀번호를 틀린 횟수 (주소마다, 5번 틀리면 15분 막힘)
+CREATE TABLE IF NOT EXISTS admin_fail (
+  ip TEXT PRIMARY KEY,
+  n INTEGER NOT NULL DEFAULT 0,
+  until INTEGER NOT NULL DEFAULT 0   -- 막힌 게 풀리는 시각 (밀리초)
+);
