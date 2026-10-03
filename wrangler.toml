@@ -13,6 +13,10 @@ binding = "ASSETS"
 [vars]
 # 허용할 다른 사이트 주소 (쉼표로 구분). 같은 주소에서 쓰면 비워둬도 돼요
 ALLOWED_ORIGINS = ""
+# 캐릭터 조회 남발 방지 (비워두면 기본값): 계정마다 1분 / 하루, 접속 주소마다 1분
+# RATE_USER_MIN = "60"
+# RATE_USER_DAY = "3000"
+# RATE_IP_MIN = "120"
 
 # API 키는 여기 적지 말고 대시보드의 비밀값(Secret) NEXON_API_KEY로 넣기
 # 구글 로그인 클라이언트 ID도 대시보드 비밀값(Secret) GOOGLE_CLIENT_ID로 넣기

@@ -32,3 +32,10 @@ CREATE TABLE IF NOT EXISTS admin_fail (
   n INTEGER NOT NULL DEFAULT 0,
   until INTEGER NOT NULL DEFAULT 0   -- 막힌 게 풀리는 시각 (밀리초)
 );
+
+-- 캐릭터 조회 남발 방지 (계정·접속 주소마다 시간 칸별 횟수)
+CREATE TABLE IF NOT EXISTS api_rate (
+  k TEXT PRIMARY KEY,                -- 'u:계정번호:60:칸번호' 같은 모양
+  n INTEGER NOT NULL,
+  reset INTEGER NOT NULL             -- 이 칸이 끝나는 시각 (초)
+);

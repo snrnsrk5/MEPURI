@@ -1455,11 +1455,16 @@ const pd=n=>WEEK[Math.min(n,WEEK.indexOf(REAL))];
 //  오래된 건 압축: 최근 13일은 하루 단위, 13주까지는 주 단위, 그 전은 달 단위로 하나씩만
 const LOOT_HIST_RAW=[
  {d:'2026.09.29',p:{'미트라의 분노 선택 상자':8,'저주받은 마도서 선택 상자':40,'저주받은 마도서':40,'루즈 컨트롤 머신 마크':15,'마력이 깃든 안대':25,'몽환의 벨트':40,'거대한 공포':45,'고통의 근원':50,'커맨더 포스 이어링':15,'컴플리트 언더컨트롤':200,'창세의 뱃지':200,'근원의 속삭임':600,'죽음의 맹세':700,'불멸의 유산':800,'황홀한 악몽':600,'굶주리는 핏빛 원혼':900,'리스트레인트 링 3레벨':45,'리스트레인트 링 4레벨':45,'컨티뉴어스 링 3레벨':30,'컨티뉴어스 링 4레벨':30,'생명의 연마석':10,'신념의 연마석':35,'영롱한 달빛 포션':15,'익셉셔널 해머 (눈장식)':300,'익셉셔널 해머 (벨트)':80,'익셉셔널 해머 (얼굴장식)':60,'익셉셔널 해머 (훈장)':600,'익셉셔널 해머 (귀고리)':1500,'도미네이터 펜던트':8,'블랙빈 마크':1,'파풀라투스 마크':2,'1단계 소울 에테르':10,'2단계 소울 에테르':15,'3단계 소울 에테르':15,'4단계 소울 에테르':60}},
- {d:'2026.10.03',p:{'미트라의 분노 선택 상자':9,'저주받은 마도서 선택 상자':42,'저주받은 마도서':42,'루즈 컨트롤 머신 마크':14,'마력이 깃든 안대':30,'몽환의 벨트':39,'거대한 공포':42,'고통의 근원':52,'커맨더 포스 이어링':14,'컴플리트 언더컨트롤':230,'창세의 뱃지':180,'근원의 속삭임':630,'죽음의 맹세':715,'불멸의 유산':795,'황홀한 악몽':610,'굶주리는 핏빛 원혼':880,'리스트레인트 링 3레벨':42,'리스트레인트 링 4레벨':42,'컨티뉴어스 링 3레벨':28,'컨티뉴어스 링 4레벨':28,'생명의 연마석':9.5,'신념의 연마석':31,'영롱한 달빛 포션':9,'익셉셔널 해머 (눈장식)':300,'익셉셔널 해머 (벨트)':58,'익셉셔널 해머 (얼굴장식)':62,'익셉셔널 해머 (훈장)':640,'익셉셔널 해머 (귀고리)':1500,'도미네이터 펜던트':7.4,'블랙빈 마크':0.7,'파풀라투스 마크':1.7,'1단계 소울 에테르':10,'2단계 소울 에테르':15,'3단계 소울 에테르':15,'4단계 소울 에테르':60}}];
+ {d:'2026.10.03',p:{'미트라의 분노 선택 상자':9,'저주받은 마도서 선택 상자':42,'저주받은 마도서':42,'루즈 컨트롤 머신 마크':14,'마력이 깃든 안대':30,'몽환의 벨트':39,'거대한 공포':42,'고통의 근원':52,'커맨더 포스 이어링':14,'컴플리트 언더컨트롤':230,'창세의 뱃지':180,'근원의 속삭임':630,'죽음의 맹세':715,'불멸의 유산':795,'황홀한 악몽':610,'굶주리는 핏빛 원혼':880,'리스트레인트 링 3레벨':42,'리스트레인트 링 4레벨':42,'컨티뉴어스 링 3레벨':28,'컨티뉴어스 링 4레벨':28,'생명의 연마석':9.5,'신념의 연마석':31,'영롱한 달빛 포션':9,'익셉셔널 해머 (눈장식)':300,'익셉셔널 해머 (벨트)':58,'익셉셔널 해머 (얼굴장식)':62,'익셉셔널 해머 (훈장)':640,'익셉셔널 해머 (귀고리)':1500,'도미네이터 펜던트':7.4,'블랙빈 마크':0.7,'파풀라투스 마크':1.7,'1단계 소울 에테르':10,'2단계 소울 에테르':15,'3단계 소울 에테르':15,'4단계 소울 에테르':60,'에테르넬 방어구 상자 (상하모견)':0.26,'에테르넬 방어구 상자 (장신망)':17.9}}];
 function lootHistCompact(h,today){const T=Date.parse(today.replace(/\./g,'-')),seen=new Set(),out=[];
   [...h].sort((a,b)=>a.d<b.d?1:-1).forEach((s,i)=>{const age=Math.floor((T-Date.parse(s.d.replace(/\./g,'-')))/864e5);
     const g=i===0||age<=13?'d'+s.d:age<=91?'w'+Math.floor(age/7):'m'+s.d.slice(0,7);if(seen.has(g))return;seen.add(g);out.push(s)});
   return out.reverse()}
+// 에테르넬 방어구 상자는 보스마다 이름이 달라도 시세는 두 묶음뿐: 상하모견 상자(부위 평균) · 장신망 상자(부위 평균)
+//  목록·아이콘은 각 상자 이름 그대로, 시세만 묶음 값을 씀
+const ETER_GROUP={'의지':'상하모견','고대':'상하모견','흉수':'상하모견','환상':'상하모견','시간':'상하모견','운명':'상하모견','광기':'장신망','욕망':'장신망','맹세':'장신망','갈망':'장신망'};
+const lootPKey=n=>{const m=/^(.+?)의 에테르넬 방어구 상자$/.exec(n);return m&&ETER_GROUP[m[1]]?`에테르넬 방어구 상자 (${ETER_GROUP[m[1]]})`:n};
+const lootBase=n=>LOOT_BASE[lootPKey(n)];
 // LOOT_BASE: 템마다 가장 최근 시세 (최신 날짜에 없는 템은 그 전 값)
 const lootLatest=h=>Object.assign({},...h.map(s=>s.p)),lootDateTxt=h=>(d=>`${+d.slice(5,7)}/${+d.slice(8)}`)(h[h.length-1].d);
 let LOOT_HIST=LOOT_HIST_RAW,LOOT_BASE=lootLatest(LOOT_HIST),LOOT_BASE_DATE=lootDateTxt(LOOT_HIST);
@@ -1471,7 +1476,7 @@ function lootServerLoad(){fetch('/api/loot-prices',{cache:'no-store'}).then(r=>r
   const p=lootLatest(LOOT_HIST_RAW);H.sort((a,b)=>a.d<b.d?-1:1).forEach(s=>Object.entries(s.p).forEach(([k,v])=>{if(Number.isFinite(+v))p[k]=+v}));
   LOOT_HIST=[{d:'2000.01.01',p}];LOOT_BASE=p;LOOT_BASE_DATE='최신';lootHistC=null;render()}).catch(()=>{})}
 // 그 날짜(d) 기준 시세: d 이전 중 가장 최근 값, 그보다 앞선 기록이 없으면 가장 오래된 값
-function lootBaseAt(n,d){if(!d)return LOOT_BASE[n];if(!lootHistC)lootHistC=typeof REAL==='string'?lootHistCompact(LOOT_HIST,REAL):LOOT_HIST;
+function lootBaseAt(n,d){n=lootPKey(n);if(!d)return LOOT_BASE[n];if(!lootHistC)lootHistC=typeof REAL==='string'?lootHistCompact(LOOT_HIST,REAL):LOOT_HIST;
   let v=null,f=null;for(const s of lootHistC){if(s.p[n]==null)continue;if(f==null)f=s.p[n];if(s.d<=d)v=s.p[n]}return v!=null?v:f}
 function sample(){
   // 통계 테스트용 예시: 강은호=최상위, 아델=중위, 귤민=검밑솔. 지난 8주 기록까지 채움
@@ -1523,14 +1528,14 @@ function sample(){
         if(party>1){if(r<.3){m.sell='sold';m.fee=rnd()<.4?3:5}else if(r<.4)m.sell='keep';else{m.sell='rot';const ms=((c.dist||{})[sl.boss]||{}).members||[],who=Math.floor(rnd()*party);m.taker=who===0?'me':(((ms[who-1]||{}).name)||('#'+(who-1)))}}
         else if(r<.8){m.sell='sold';m.fee=rnd()<.5?3:5}else m.sell='keep';
         // 판 템 중 절반 남짓은 판매가를 적어 둔 걸로 (rnd 순서를 안 바꾸게 이름으로 정함) — 안 적은 템은 예상가 옆에 점이 뜸
-        if(m.sell==='sold'&&!bx){const h=[...key+n].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,7),v=LOOT_BASE[n];if(v!=null&&h%5<3)m.sp=Math.round(v*(.92+(h%17)/100)*10)*1e7}
+        if(m.sell==='sold'&&!bx){const h=[...key+n].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,7),v=lootBase(n);if(v!=null&&h%5<3)m.sp=Math.round(v*(.92+(h%17)/100)*10)*1e7}
         (c.lootMeta[key]=c.lootMeta[key]||{})[n]=m}})};
   drops(ren,.12);drops(rete,.08);drops(mese,.05);
   // 물욕 등급 예시: 이번 주 목록에 기본 + 6등급(브론즈~블랙)이 하나씩 보이게 — 예상가가 그 등급 범위인 템을 골라 넣음
   //  (그 범위 템이 시세표에 없으면 남은 템을 그 범위 금액에 판 걸로)
   {const B=typeof LOOT_BASE!=='undefined'?LOOT_BASE:{},w0=pk(0),cand=[];
    [ren,rete,mese].forEach(c=>c.slots.forEach(sl=>{const b=BY[sl.boss];if(!b||b.diffs[sl.diff]!=='W')return;
-     ((LOOT[b.name]||{})[sl.diff]||[]).forEach(q=>{if(B[q[0]]!=null&&!boxOf(q[0]))cand.push({c,sl,n:q[0],v:B[q[0]]})})}));
+     ((LOOT[b.name]||{})[sl.diff]||[]).forEach(q=>{if(lootBase(q[0])!=null&&!boxOf(q[0]))cand.push({c,sl,n:q[0],v:lootBase(q[0])})})}));
    const used=new Set(),put=(o,m)=>{const key=o.sl.boss+'|'+w0,arr=o.c.loot[key]=o.c.loot[key]||[];if(arr.includes(o.n))return false;
      const cl=o.c.clears[o.sl.boss]=o.c.clears[o.sl.boss]||[];if(!cl.some(d=>(typeof d==='string'?d:d.d)>=wk(0)))cl.push(wk(0));
      arr.push(o.n);used.add(o.n);o.c.lootMeta=o.c.lootMeta||{};const mm={...m};if(mm.spx){if(mm.sp==null)mm.sp=Math.round(o.v*mm.spx*10)*1e7;delete mm.spx}(o.c.lootMeta[key]=o.c.lootMeta[key]||{})[o.n]=mm;return true};
@@ -1603,6 +1608,9 @@ const tOf=s=>BY[s.boss].diffs[s.diff];
     Object.keys(c.loot||{}).forEach(k=>{if(k.includes('|'))return;const v=c.loot[k];delete c.loot[k];const sl=c.slots.find(x=>x.boss===k);c.loot[k+'|'+pkey(sl?tOf(sl):'W')]=v})})})();
 const cfgOf=id=>{if(!st.cfg[id])st.cfg[id]={sell:true,loot:{},custom:[]};const c=st.cfg[id];c.loot=c.loot||{};c.custom=c.custom||[];return c};
 function lootList(id,diff){const data=((LOOT[BY[id].name]||{})[diff]||[]).map(x=>x[0]);return [...data,...cfgOf(id).custom.filter(n=>!data.includes(n))]}
+// 보스 설정 · 보상: 시세가 없거나 1천만 메소(0.1억) 아래인 템은 목록에서 접어 둠 — 직접 켜거나 끄거나 값을 적은 템은 그대로 보임
+const LOOT_CHEAP=0.1,lootCheap=n=>{if(boxOf(n))return false;const v=lootBase(n);return v==null||v<LOOT_CHEAP}; // 시세가 없는 템도 접음 (결과를 고르는 상자는 결과 시세로 보니 빼고)
+const lootTouched=(id,n)=>{const c=cfgOf(id),o=c.loot[n];return c.custom.includes(n)||(!!o&&(typeof o.on==='boolean'||!!o.price))}; // 직접 켜고 끈 · 값을 적은 · 직접 추가한 템
 function lootDefault(id,n){for(const arr of Object.values(LOOT[BY[id].name]||{})){const hit=arr.find(x=>x[0]===n);if(hit)return hit[1]}return true}
 function isOn(id,n){const o=cfgOf(id).loot[n];return o&&typeof o.on==='boolean'?o.on:lootDefault(id,n)}
 // 물욕템 기본 시세(억) — 9/29 본서버 시세를 반올림 (10억↓ 1억 · 50억↓ 5억 · 100억↓ 10억 · 500억↓ 50억 · 1000억↓ 100억 단위).
@@ -1848,6 +1856,8 @@ function renderBanner(){
   const ad=document.querySelector('#banner [data-add]');if(ad)ad.onclick=()=>{ui.menu=false;openAdd()};
   document.getElementById('refresh').onclick=async()=>{const c=cur();if(!c)return;
     if(!c.ocid||!apiOn()){toast(c.ocid?'테스트 설정에서 API 서버를 연결하면 새로 불러올 수 있어요':'예시 캐릭터라 새로 불러올 정보가 없어요');return}
+    if(loginNeed()){toast('구글 계정으로 로그인해야 새로 불러올 수 있어요');openLogin();return}
+    const now=Date.now(),last=REFRESH_AT.get(c.ocid)||0;if(now-last<15000){toast(`방금 불러왔어요. ${Math.ceil((15000-(now-last))/1000)}초 뒤에 다시 눌러 주세요`);return}REFRESH_AT.set(c.ocid,now); // 연타 방지
     try{const b=await nxRefresh(c.ocid);set(()=>Object.assign(c,{name:b.name,world:b.world,lv:b.lv,job:b.job,img:b.img,frames:b.frames,look:b.look,lookUrl:b.lookUrl,lookV:b.lookV,at:b.at}));toast(`${b.name} 정보를 새로 불러왔어요`);if(c.chal===undefined)chalScan()}
     catch(err){toast(err.message)}};
 }
@@ -2389,7 +2399,7 @@ function rewardPanel(){
     </div>
     <div class="fsec">
       <div class="fhead"><b style="color:var(--text2)">${DKO[f.diff]} 물욕템 <span style="font-weight:500;color:var(--muted)" class="num">${lootList(f.boss,f.diff).length}</span></b><span style="font-size:12px;color:var(--muted)">기록 · 예상 판매가</span></div>
-      ${lootList(f.boss,f.diff).map(n=>{const o=isOn(f.boss,n);return `<div class="lrow"><span class="gem" style="width:28px;height:28px">${lootIcon(n)}</span><span class="n" style="${o?'':'color:var(--muted)'}">${esc(n)}</span><button type="button" data-lon="${esc(n)}" aria-pressed="${o}" aria-label="${esc(n)} 기록" style="display:grid;place-items:center;width:40px;height:28px;flex-shrink:0"><span class="tg${o?' on':''}"></span></button><input class="inp" type="text" data-lp="${esc(n)}" placeholder="${LOOT_BASE[n]!=null?`${LOOT_BASE[n]}억`:boxOf(n)?'결과 시세':'예상 판매가'}" title="${LOOT_BASE[n]!=null?`비워두면 ${LOOT_BASE_DATE} 시세 ${LOOT_BASE[n]}억으로 계산`:boxOf(n)?'상자는 고른 결과 템 시세로 계산돼요':''}" value="${esc(lootUserPrice(f.boss,n))}" aria-label="${esc(n)} 예상 판매가"></div>`}).join('')||'<span style="font-size:12px;color:var(--muted)">이 난이도는 등록된 물욕템이 없어요.</span>'}
+      ${(()=>{const all=lootList(f.boss,f.diff),hid=all.filter(n=>lootCheap(n)&&!lootTouched(f.boss,n)),show=ui.lmore?all:all.filter(n=>!hid.includes(n));return show.map(n=>{const o=isOn(f.boss,n);return `<div class="lrow"><span class="gem" style="width:28px;height:28px">${lootIcon(n)}</span><span class="n" style="${o?'':'color:var(--muted)'}">${esc(n)}</span><button type="button" data-lon="${esc(n)}" aria-pressed="${o}" aria-label="${esc(n)} 기록" style="display:grid;place-items:center;width:40px;height:28px;flex-shrink:0"><span class="tg${o?' on':''}"></span></button><input class="inp" type="text" data-lp="${esc(n)}" placeholder="${lootBase(n)!=null?`${lootBase(n)}억`:boxOf(n)?'결과 시세':'예상 판매가'}" title="${lootBase(n)!=null?`비워두면 ${LOOT_BASE_DATE} 시세 ${lootBase(n)}억으로 계산`:boxOf(n)?'상자는 고른 결과 템 시세로 계산돼요':''}" value="${esc(lootUserPrice(f.boss,n))}" aria-label="${esc(n)} 예상 판매가"></div>`}).join('')+(hid.length?`<button type="button" class="linkish" data-lmore style="align-self:flex-start;margin-top:4px;font-size:12px;color:var(--muted)">${ui.lmore?'시세 없거나 싼 템 접기':`시세 없거나 1천만 메소 아래인 템 ${hid.length}개 더 보기`}</button>`:'')})()||'<span style="font-size:12px;color:var(--muted)">이 난이도는 등록된 물욕템이 없어요.</span>'}
       <span style="font-size:11px;color:var(--faint)">난이도마다 드롭 목록이 달라요. 켜고 끄기와 판매가는 보스마다 저장돼요. 판매가를 비워두면 ${LOOT_BASE_DATE} 시세(흐린 글자)로, 상자는 고른 결과 템 시세로 계산해요.</span>
       <div class="frow"><input class="inp" id="loot-new" type="text" placeholder="물욕템 직접 추가" style="flex:1"><button class="btn out" type="button" id="loot-add">${I.plus(11)} 추가</button></div>
     </div>
@@ -2520,6 +2530,7 @@ function bindSettings(){
   v.querySelectorAll('[data-rwdiff]').forEach(b=>b.onclick=()=>set(()=>{st.rw.diff=b.dataset.rwdiff}));
   const sell=document.getElementById('sell');if(sell)sell.onclick=()=>set(()=>{const c=cfgOf(rw.boss);c.sell=!c.sell});
   const rep=document.getElementById('report');if(rep)rep.onclick=()=>toast('가격 제보는 준비 중이에요');
+  v.querySelectorAll('[data-lmore]').forEach(b=>b.onclick=()=>{ui.lmore=!ui.lmore;render()});
   v.querySelectorAll('[data-lon]').forEach(b=>b.onclick=()=>set(()=>{const n=b.dataset.lon,c=cfgOf(rw.boss);c.loot[n]={...(c.loot[n]||{}),on:!isOn(rw.boss,n)}}));
   v.querySelectorAll('[data-lp]').forEach(inp=>inp.onchange=()=>set(()=>{const n=inp.dataset.lp,c=cfgOf(rw.boss);c.loot[n]={...(c.loot[n]||{}),price:inp.value}}));
   const la=document.getElementById('loot-add');if(la)la.onclick=()=>{const n=document.getElementById('loot-new').value.trim();if(!n)return;set(()=>{const c=cfgOf(rw.boss);if(!c.custom.includes(n))c.custom.push(n);c.loot[n]={on:true,price:''}});toast(`${n} 추가했어요`)};
@@ -3168,7 +3179,14 @@ const apiBase=()=>savedBase()||(SAME_API?location.origin:'');
 if(/^https?:$/.test(location.protocol))fetch('/api/health',{cache:'no-store'}).then(r=>{syncClock(r);return r.ok?r.json():null}).then(j=>{if(j&&j.service==='mepuri-api'){SAME_API=true;lootServerLoad();if(ui.modal)renderLayer();fixLooks();cloudInit();setTimeout(chalScan,1500)}}).catch(()=>{});
 const setApiBase=v=>{try{v?localStorage.setItem(APIKEY,v.trim().replace(/\/+$/,'')):localStorage.removeItem(APIKEY)}catch(e){}};
 const apiOn=()=>!!(apiBase()||nxKey());
-async function srv(path,params){
+// 이 사이트 서버로 조회할 때는 구글 로그인이 필요함 (서버가 막음) — 로그인 기능이 켜져 있고 아직 로그인 안 했으면 true
+const loginNeed=()=>SAME_API&&!savedBase()&&!!(cloud&&cloud.cfg&&cloud.cfg.auth)&&!cloud.user;
+// 같은 조회가 동시에 여러 번 나가지 않게 묶음 (남발 방지)
+const SRV_INFLIGHT=new Map();
+const REFRESH_AT=new Map(); // 캐릭터 새로고침 버튼 연타 방지 (15초)
+function srv(path,params){const k=path+'?'+new URLSearchParams(params);if(SRV_INFLIGHT.has(k))return SRV_INFLIGHT.get(k);
+  const p=srv0(path,params).finally(()=>SRV_INFLIGHT.delete(k));SRV_INFLIGHT.set(k,p);return p}
+async function srv0(path,params){
   let u;try{u=new URL(apiBase()+path)}catch(e){throw new Error('API 서버 주소가 올바르지 않아요. 테스트 설정에서 확인해 주세요.')}
   Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
   let r;try{r=await fetch(u)}catch(e){throw new Error('API 서버에 연결하지 못했어요. 테스트 설정의 서버 주소를 확인해 주세요.')}
@@ -3223,7 +3241,9 @@ const CHAL_SEASONS=[
   {n:4,name:'OVERDRIVE',from:'2026.06.18',to:'2026.09.17',leapTo:'2026.09.30',on:true,boss:'메이린'}];
 const CHAL_LV=200; // 처음 생긴 날 이 레벨 이상이면 옮겨 온 캐릭터
 // 그날 기준 정보 {lv, world}, 그날 캐릭터가 없었으면 null
-async function basicAt(ocid,d){const date=d.replace(/\./g,'-');
+// 챌린저스 확인은 뒤에서 조용히 돌아서 천천히 (1분 60번 제한 안 넘게 1.1초 간격)
+let BASIC_AT_LAST=0;
+async function basicAt(ocid,d){const date=d.replace(/\./g,'-');const w=BASIC_AT_LAST+1100-Date.now();if(w>0)await new Promise(r=>setTimeout(r,w));BASIC_AT_LAST=Date.now();
   try{if(apiBase()){const b=await srv('/api/character/basic',{ocid,date});return {lv:b.level,world:b.world}}
     const b=await nx('character/basic',{ocid,date});return b&&b.character_name?{lv:b.character_level,world:b.world_name}:null}
   catch(e){if(/정보가 없|찾을 수 없/.test(e.message))return null;throw e}}
@@ -3240,7 +3260,7 @@ async function chalCheck(c){
 let CHAL_BUSY=false;
 // 아직 안 본 캐릭터만 차례로 확인 (한 번 확인하면 c.chal에 남김: 객체 = 옮겨 옴, null = 아님)
 // 이 기능이 생기기 전에 추가한 캐릭터도 c.chal이 비어 있으니 처음 접속할 때 알아서 확인함
-async function chalScan(){if(CHAL_BUSY||!apiOn())return;CHAL_BUSY=true;let hit=null,n=0,err=false;
+async function chalScan(){if(CHAL_BUSY||!apiOn()||loginNeed())return;CHAL_BUSY=true;let hit=null,n=0,err=false;
   try{for(const c of st.chars){if(!c.ocid||c.chal!==undefined)continue;
     try{const r=await chalCheck(c);c.chal=r;n++;save(true);if(r)hit=c}catch(e){err=true;break}}}
   finally{CHAL_BUSY=false}
@@ -3324,7 +3344,7 @@ async function onGoogle(resp){
   const box=document.getElementById('gbtn');if(box)box.innerHTML='<span class="g-wait">로그인하는 중…</span>';
   const r=await capi('POST','/api/auth/google',{credential:resp.credential}).catch(()=>({s:0}));
   if(r.s!==200){ui.modal=null;renderLayer();toast(r.j&&r.j.error?r.j.error.message:'로그인하지 못했어요');return}
-  cloud.user=r.j.user;ui.modal=null;renderLayer();paintAcct();toast(`${cloud.user.name||'계정'}으로 로그인했어요`);await cloudPull('login');paintAcct()}
+  cloud.user=r.j.user;ui.modal=null;renderLayer();paintAcct();toast(`${cloud.user.name||'계정'}으로 로그인했어요`);await cloudPull('login');paintAcct();setTimeout(chalScan,800)}
 async function logout(){ui.acct=false;if(cloud.dirty)await cloudPush();await capi('POST','/api/auth/logout').catch(()=>{});
   cloud.uid=cloud.user.email;cloud.user=null;cloud.state='off';cloudSaveMeta();paintAcct();toast('로그아웃했어요. 이 기기 기록은 그대로 남아요')}
 const GLOGO='<svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.2 5.6c4.2-3.9 7.1-9.6 7.1-17z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.2-5.6c-2 1.4-4.7 2.3-8.7 2.3-6.3 0-11.6-4.2-13.5-10l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
@@ -3504,6 +3524,7 @@ function renderLayer(){
   const sc=document.getElementById('scrim');if(sc)sc.onclick=e=>{if(e.target===sc)close()};
   const fm=document.getElementById('m-form');if(fm)fm.onsubmit=async e=>{e.preventDefault();const q=document.getElementById('m-q').value.trim();if(!q){toast('캐릭터 이름을 입력해 주세요');return}
     const md=ui.modal;md.q=q;md.err=null;
+    if(loginNeed()){toast('구글 계정으로 로그인해야 캐릭터를 찾을 수 있어요');openLogin();return}
     if(!apiOn()){const dup=st.chars.find(c=>c.name===q);const k=KNOWN[q];md.found=k?{name:q,...k,dup:!!dup}:{name:q,lv:null,job:null,world:'베라',fake:true,dup:!!dup};renderLayer();return}
     md.loading=true;md.found=null;renderLayer();
     try{const fo=await nxChar(q);fo.dup=!!st.chars.find(c=>c.ocid===fo.ocid||c.name===fo.name);md.found=fo}

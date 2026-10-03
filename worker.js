@@ -25,6 +25,10 @@
  *   PUT    /api/state               내 기록 저장하기  { data, rev } — rev가 서버와 다르면 409 + 서버 기록
  *   DELETE /api/account             계정과 기록 모두 삭제
  *
+ * 캐릭터 조회(/api/character, /api/character/basic, /api/scheduler)는 구글 로그인한 사람만 쓸 수 있음
+ *   남발 방지: 계정마다 1분 RATE_USER_MIN번 · 하루 RATE_USER_DAY번, 접속 주소(IP)마다 1분 RATE_IP_MIN번 (넘으면 429)
+ *   기본값 60 · 3000 · 120 — 대시보드 변수로 바꿀 수 있음. /api/look(외형 그림)은 로그인 없이 되고 IP 제한만
+ *
  * 물욕 시세 (D1 데이터베이스 DB, 비밀값 ADMIN_PASSWORD 필요 — 없으면 시세 고치기는 꺼짐)
  *   GET  /api/loot-prices            날짜별 시세 전체  { hist:[{ d:'2026.10.03', p:{ 템이름: 억 } }] } (누구나)
  *   POST /api/admin/login            { password } 비밀번호 확인
@@ -71,6 +75,15 @@ export default {
       }
     }
     if (req.method !== 'GET') return fail(405, 'METHOD', 'GET 요청만 받아요', cors);
+
+    // 넥슨 조회: 로그인 확인 + 남발 방지 (외형 그림은 IP 제한만)
+    if (url.pathname === '/api/look' || NEXON_PATHS.includes(url.pathname)) {
+      try { await guardNexon(req, env, url.pathname !== '/api/look'); }
+      catch (e) {
+        if (e instanceof HttpError) return fail(e.status, e.code, e.message, e.retry ? { ...cors, 'retry-after': String(e.retry) } : cors);
+        return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', cors);
+      }
+    }
 
     // 외형 이미지는 키가 필요 없음. 넥슨 외형 이미지 주소만 받아서 그대로 전달
     if (url.pathname === '/api/look') {
@@ -276,6 +289,39 @@ async function account(req, env, url) {
     return json({ ok: true }, 200, { ...noStore(), 'set-cookie': cookie('', 0) });
   }
   throw new HttpError(404, 'NOT_FOUND', '없는 주소예요');
+}
+
+// ── 캐릭터 조회 지키기: 구글 로그인 + 남발 방지 ──
+const NEXON_PATHS = ['/api/character', '/api/character/basic', '/api/scheduler'];
+async function guardNexon(req, env, needLogin) {
+  if (!env.DB) { if (needLogin) throw new HttpError(503, 'NO_AUTH', '로그인 기능이 아직 설정되지 않아서 조회할 수 없어요'); return; }
+  await ensureRateSchema(env.DB);
+  const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
+  const lim = (k, d) => { const n = parseInt(env[k], 10); return n > 0 ? n : d; };
+  await hit(env.DB, 'ip:' + ip, 60, lim('RATE_IP_MIN', 120), '이 접속 주소에서 요청이 너무 많아요');
+  if (!needLogin) return;
+  if (!env.GOOGLE_CLIENT_ID) throw new HttpError(503, 'NO_AUTH', '로그인 기능이 아직 설정되지 않아서 조회할 수 없어요');
+  await ensureSchema(env.DB);
+  const me = await sessionUser(req, env);
+  if (!me) throw new HttpError(401, 'LOGIN', '구글 계정으로 로그인해야 캐릭터를 조회할 수 있어요');
+  await hit(env.DB, 'u:' + me.id, 60, lim('RATE_USER_MIN', 60), '조회를 너무 자주 했어요');
+  await hit(env.DB, 'ud:' + me.id, 86400, lim('RATE_USER_DAY', 3000), '오늘 조회 횟수를 다 썼어요');
+}
+// 고정 시간 칸(초)마다 횟수 세기. 넘으면 429 + 몇 초 뒤 다시
+async function hit(db, key, sec, max, msg) {
+  const now = Math.floor(Date.now() / 1000), win = Math.floor(now / sec), k = `${key}:${sec}:${win}`, reset = (win + 1) * sec;
+  const row = await db.prepare('INSERT INTO api_rate (k, n, reset) VALUES (?1, 1, ?2) ON CONFLICT(k) DO UPDATE SET n = n + 1 RETURNING n').bind(k, reset).first();
+  if (Math.random() < 0.02) await db.prepare('DELETE FROM api_rate WHERE reset < ?1').bind(now).run(); // 지난 칸 가끔 청소
+  if (row && row.n > max) {
+    const wait = reset - now, e = new HttpError(429, 'RATE', `${msg}. ${wait >= 3600 ? Math.ceil(wait / 3600) + '시간' : wait >= 60 ? Math.ceil(wait / 60) + '분' : wait + '초'} 뒤에 다시 시도해 주세요`);
+    e.retry = wait; throw e;
+  }
+}
+let rateSchemaReady = false;
+async function ensureRateSchema(db) {
+  if (rateSchemaReady) return;
+  await db.prepare('CREATE TABLE IF NOT EXISTS api_rate (k TEXT PRIMARY KEY, n INTEGER NOT NULL, reset INTEGER NOT NULL)').run();
+  rateSchemaReady = true;
 }
 
 // ── 물욕 시세 ──
