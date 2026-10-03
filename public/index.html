@@ -678,6 +678,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .fillbar{display:flex;align-items:center;gap:10px;margin:8px 0 4px;padding:10px 12px;border-radius:8px;border:1px dashed var(--accent);background:var(--accent-bg)}
 .fillbar .fb-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.fillbar b{font-size:14px;color:var(--text)}.fillbar small{font-size:12px;line-height:17px;color:var(--sub)}
 .fillbar .btn{flex-shrink:0;font-weight:700}
+.fillbar{flex-wrap:wrap}.fillbar .fb-t{flex:1 1 220px}.fb-btns{display:flex;gap:6px;margin-left:auto}
 .modal.fm{max-width:560px;display:flex;flex-direction:column;max-height:calc(100dvh - 32px)}.fm .m-head{flex-shrink:0}.fm .m-body{gap:8px;overflow:auto;min-height:0}.fm .m-body>*{flex-shrink:0}
 .fm-cf{margin-left:8px;padding:0 8px;border-radius:999px;background:var(--accent);font-size:11px;font-style:normal;line-height:20px;vertical-align:2px}
 .fm-sub{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:13px;font-weight:700;color:var(--text)}.fm-sub small{font-weight:500;color:var(--muted)}
@@ -887,6 +888,7 @@ html.theme-fade,html.theme-fade *{transition:background-color .32s ease,color .3
 .sx-steps li{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--sub)}.sx-steps li b{font-weight:600;color:var(--text2)}
 .sx-steps li.fin{margin-top:2px;padding-top:5px;border-top:1px dashed var(--dash)}.sx-steps li.fin b{font-weight:800;color:var(--price)}
 .sx-hint{font-size:11px;line-height:1.5;color:var(--faint)}
+.sx-hint.sx-sph{margin:-2px 0 6px;text-align:right}
 .sx-mvp{display:flex;flex-direction:column}
 .sx-mv{width:100%;min-height:40px;border-bottom:1px solid var(--border)}.sx-mv:last-child{border-bottom:0}.sx-mv .ava{width:26px;height:26px}
 .sx-mv span:not(.tg){flex:1;text-align:left;font-size:13px;font-weight:600;color:var(--text2)}.sx-mv small{font-size:12px;color:var(--muted)}
@@ -2067,6 +2069,8 @@ function fillPlan(c,t,ci){if(t==='D'||!pastP(t))return null;
   const me=info.find(x=>x.k===key);if(!me)return null;
   const also=[];let to=null;for(const x of info){if(x.k<=key)continue;if(!me.any&&!x.any&&x.d!==nowP)also.push(x.d);else{to=x.d;break}}
   if(!to)to=nextP(also.length?also[also.length-1]:from,t);
+  // 보스를 빼면 같은 상태인 뒤 주들도 같이 빠지므로, 채울 때도 바로 뒤에 같은 목록이 이어지는 기간은 같이 채움
+  const run=[];if(me.any){const s0=regSig(me.cur);for(const x of info){if(x.k<=key)continue;if(x.d!==nowP&&x.any&&regSig(x.cur)===s0)run.push(x.d);else break}}
   const top=Math.max(0,...info.map(x=>x.cur.length)),okL=x=>x.cur.length&&x.cur.length*2>=top; // 반도 안 찬 기간(일부만 넣어 둔 주)은 후보로 안 씀
   const toK=pkOf(to,t),prevR=[...info].reverse().find(x=>x.k<key&&okL(x)),nextR=info.find(x=>x.k>=toK&&okL(x)),mine=me.cur.length?regSig(me.cur):null;
   const G=new Map();info.forEach(x=>{if(!okL(x)||x.k===key)return;const sg=regSig(x.cur);if(sg===mine)return;const g=G.get(sg)||{sig:sg,ps:[]};g.ps.push(x.d);g.list=x.cur;G.set(sg,g)});
@@ -2077,28 +2081,36 @@ function fillPlan(c,t,ci){if(t==='D'||!pastP(t))return null;
   if(!cands.length)return null;
   ci=ci==null?0:Math.min(ci,cands.length-1);
   const E=live(c).filter(s=>tOf(s)===t&&!isSeason(s.boss)),inc=cands[ci].list,rows=[],used=new Set(),left=[],extra=[]; // 시즌 보스(메이린·카이)는 12칸 밖이라 채우기 비교에서 뺌
-  const offK=b=>c.slots.some(s=>s.boss===b&&!s.only&&tOf(s)===t&&hasSkip(s,key)); // 그 주만 뺀 보스는 일부러 뺀 걸로 보고 다시 넣지 않음
+  const offK=b=>c.slots.some(s=>s.boss===b&&!s.only&&tOf(s)===t&&hasSkip(s,key)); // 그 주에 뺀 보스 (채우기 창에 '그 주에 뺌'으로 표시)
   inc.forEach(n=>{const e=E.find(x=>x.boss===n.boss&&!used.has(x._i));
     if(e){used.add(e._i);rows.push({k:e._tmp?'keep':e.diff===n.diff&&e.party===n.party?'same':'diff',e,n,pick:'old'})} // 그 주만 바꾼 건 그대로
-    else if(!offK(n.boss))left.push(n)});
+    else left.push(offK(n.boss)?{...n,was:1}:n)}); // 그 주에 뺀 보스도 빈 칸으로 보고 후보에 넣음 (넣을지는 채우기 창에서 고름)
   E.forEach(e=>{if(used.has(e._i))return;if(e.only)extra.push(e);else rows.push({k:'keep',e})});
   let cnt=capW(E).length;
   extra.forEach(e=>{const n=left.shift();if(!n){rows.push({k:'old',e});return}const b=cnt<cap;rows.push({k:'swap',e,n,pick:b?'both':'old'});if(b)cnt++});
   left.forEach(n=>{const b=cnt<cap;rows.push({k:'add',n,pick:b?'new':'off'});if(b)cnt++});
-  return {t,key,cap,rows,from,also,to,toK,cands,ci,regEmpty:!me.reg.length,hasClr:id=>(c.clears[id]||[]).some(e=>t==='W'?inWeek(dOf(e)):inMonth(dOf(e)))}}
+  return {t,key,cap,rows,from,also,run,to,toK,cands,ci,regEmpty:!me.reg.length,hasClr:id=>(c.clears[id]||[]).some(e=>t==='W'?inWeek(dOf(e)):inMonth(dOf(e)))}}
 const fillCount=p=>p.rows.reduce((a,r)=>a+(r.k==='add'?(r.pick==='new'?1:0):r.k==='swap'&&r.pick==='both'?2:1),0);
 const fillTodo=p=>p.rows.filter(r=>r.k==='add'||r.k==='swap'||r.k==='diff').length;
 const fillTake=r=>r.n&&(r.k==='add'?r.pick==='new':r.k==='swap'?r.pick!=='old':r.k==='diff'&&r.pick==='new');
-function fillNeed(c,t){if(t==='D'||!pastP(t))return null;const key=pkey(t);if((c.fillDone||[]).includes(key))return null;
-  const late=c.slots.some(s=>tOf(s)===t&&!s.only&&s.start&&s.start>key);
-  if(!late&&regAt(c,t).length)return null;
+/* 그 기간에 보이는 목록 서명 (시즌 보스 제외) */
+const weekSig=(c,t)=>regSig(live(c).filter(x=>tOf(x)===t&&!isSeason(x.boss)).map(x=>({boss:x.boss,diff:x.diff,party:x.party||1})));
+/* 채우기 물어보기: 칸 단위로 그때그때 계산
+   - 채웠거나 '그대로 두기'를 누른 그 상태 그대로면 안 물어봄 → 보스를 빼거나 바꿔서 상태가 달라지면 다시 물어봄
+   - 그 기간이 '계속' 목록 그대로이고 뒤에 새로 시작한 보스도 없으면 일부러 그렇게 둔 기간으로 봄 */
+function fillNeed(c,t){if(t==='D'||!pastP(t))return null;const key=pkey(t),sig=weekSig(c,t);
+  if((c.fillSeen||{})[key]===sig)return null;
+  const late=c.slots.some(s=>tOf(s)===t&&!s.only&&s.start&&s.start>key),reg=regAt(c,t).filter(x=>!isSeason(x.boss));
+  if(!late&&reg.length&&regSig(reg)===sig)return null;
   const p=fillPlan(c,t);return p&&p.rows.some(r=>(r.k==='add'&&r.pick==='new')||r.k==='swap')?p:null} // 칸이 꽉 찬 기간은 띄우지 않음
-function applyFill(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.map(d=>pkOf(d,t))],del=[],fix=[];let k=0;
+function applyFillOne(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.map(d=>pkOf(d,t))],del=[],fix=[];let k=0;
   const vals=n=>{const o={};SLOTF.forEach(f=>o[f]=n[f]);return o};
   const differs=(a,n)=>SLOTF.some(f=>(a[f]??null)!==(n[f]??null));
   const drop=e=>{const s=c.slots[e._i];if(s.only===key)del.push(e._i);else addSkip(s,key);
     const a=(c.clears[e.boss]||[]).filter(x=>!(t==='W'?inWeek(dOf(x)):inMonth(dOf(x))));if(a.length)c.clears[e.boss]=a;else delete c.clears[e.boss]};
   const place=n=>{const reg=s=>s.boss===n.boss&&!s.only&&tOf(s)===t;
+    const sk=c.slots.find(s=>reg(s)&&hasSkip(s,key)); // 그 주에 뺐던 보스면 뺀 표시만 지우고 (값이 다르면 그 주만 맞춤)
+    if(sk){const i=c.slots.indexOf(sk);delSkip(sk,key);const e=live(c).find(x=>x._i===i);if(!e||differs(e,n))setTmp(sk,key,vals(n));return}
     const s1=c.slots.find(s=>reg(s)&&s.start===toK);
     // 앞당기거나 늘린 뒤, 채운 기간에 실제로 보이는 값이 고른 목록과 다르면 맞춰 줌
     // (뒤 주의 '그 주만' 값이나 예전 설정은 채운 기간에 안 따라오기 때문)
@@ -2116,12 +2128,19 @@ function applyFill(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.map(
     place(r.n)});
   fix.forEach(id=>fixClear(c,id));
   del.sort((a,b)=>b-a).forEach(i=>c.slots.splice(i,1));
-  c.fillDone=[...new Set([...(c.fillDone||[]),...keys])];
+  delete c.fillDone; // 예전 '채움' 표시 (영구) → 채운 뒤 상태를 기간마다 기억
+  c.fillSeen=c.fillSeen||{};[p.from,...p.also].forEach(d=>{c.fillSeen[pkOf(d,t)]=atDay(d,()=>weekSig(c,t))});
+  return k}
+/* 채우기: 보는 기간 + 같은 목록이 이어지는 뒤 기간들에 같은 선택을 적용 */
+function applyFill(c,p){let k=applyFillOne(c,p);const t=p.t,want=regSig(p.cands[p.ci].list);
+  const rk=r=>r.k+':'+(r.n?r.n.boss:'')+':'+(r.e?r.e.boss:''),pick=new Map(p.rows.map(r=>[rk(r),r.pick]));
+  (p.run||[]).forEach(d=>atDay(d,()=>{const q0=fillPlan(c,t);if(!q0)return;const ci=q0.cands.findIndex(g=>regSig(g.list)===want);if(ci<0)return;
+    const q=ci===q0.ci?q0:fillPlan(c,t,ci);q.also=[];q.rows.forEach(r=>{const v=pick.get(rk(r));if(v!==undefined)r.pick=v});k+=applyFillOne(c,q)}));
   return k}
 function fillBar(c,t){if(!VIEW_OFF)return '';const p=fillNeed(c,t);if(!p)return '';
   const E=p.rows.filter(r=>r.e).length,n=Math.min(p.rows.filter(r=>r.k==='add'||r.k==='swap').length,Math.max(0,p.cap-E)),u=t==='W'?'주':'달';
   const c0=p.cands[0],src=p.cands.length>1?`기록된 목록 ${p.cands.length}가지 중에 골라서 채워요`:`${c0.next&&c0.prev?'앞뒤 기록':c0.next?'바로 뒤 기록':c0.prev?'바로 앞 기록':'기록된 목록'}으로 채워요`;
-  return `<div class="fillbar"><span class="fb-t"><b>${p.regEmpty&&!E?`기록이 없는 ${u}예요`:`비어 있는 칸 ${n}개`}</b><small>${src}${p.also.length?` · ${p.also.length+1}${u} 같이`:''}</small></span><button class="btn pri" type="button" data-fill="${t}">채우기</button></div>`}
+  return `<div class="fillbar"><span class="fb-t"><b>${p.regEmpty&&!E?`기록이 없는 ${u}예요`:`비어 있는 칸 ${n}개`}</b><small>${src}${p.also.length+p.run.length?` · ${p.also.length+p.run.length+1}${u} 같이`:''}</small></span><span class="fb-btns"><button class="btn out" type="button" data-fillno="${t}">그대로 두기</button><button class="btn pri" type="button" data-fill="${t}">채우기</button></span></div>`}
 /* 카드·보스 설정 표 공통: '다르게 잡았어요' 창 */
 function bindCfg(v){
   v.querySelectorAll('.cfgp').forEach(p=>p.onclick=e=>e.stopPropagation());
@@ -2181,6 +2200,9 @@ function bindStatus(){
     set(()=>{const sl={boss:id,diff,party:1,cshare:null,lmode:'sell',lshare:null,memo:'',only:key};c.slots.push(sl);
       const a=(c.clears[id]||[]).filter(e=>!inWeek(dOf(e)));a.push({d:TODAY,diff,v:myPrice(sl,TODAY)});a.sort((x,y)=>dOf(x)<dOf(y)?-1:1);c.clears[id]=a});
     toast(`${BY[id].name} ${DKO[diff]} 클리어!${other?` · ${other.name}도 이 주에 잡았어요 (메이플ID당 주 1회)`:''}`)});
+  v.querySelectorAll('[data-fillno]').forEach(b=>b.onclick=()=>{const c=cur(),t=b.dataset.fillno,p=fillNeed(c,t);if(!p)return;
+    set(()=>{c.fillSeen=c.fillSeen||{};[p.from,...p.also,...p.run].forEach(d=>{c.fillSeen[pkOf(d,t)]=atDay(d,()=>weekSig(c,t))})});
+    toast(`${t==='W'?'이 주는':'이 달은'} 지금 목록 그대로 둘게요`)});
   v.querySelectorAll('[data-fill]').forEach(b=>b.onclick=()=>{const p=fillNeed(cur(),b.dataset.fill);if(!p)return;ui.modal={kind:'fill',p,cid:cur().id};renderLayer()});
   // 기록은 지우지 않고 쌓음 (나중에 수익 기록에 씀)
   const clearOne=(c,id)=>{const s=live(c).find(x=>x.boss===id);if(!s)return;const a=(c.clears[id]||[]).slice();
@@ -2570,8 +2592,9 @@ function sxLootCalc(c,id,key,n,P,sl){
   const pt=sxPartyAt(c,id,key.split('|')[1]),same=!pt||sxPSize(pt)===(sl.party||1); // 인원이 지금 설정과 다르면 정분배로
   const m=((c.lootMeta||{})[key]||{})[n]||{},party=pt?sxPSize(pt):(sl.party||1),rot=party>1&&m.sell==='rot',sold=m.sell!=='keep'&&m.sell!=='rot',fee=m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,saleFee=sold?fee:0,taker=rot?sxTk(pt,m.taker):(m.taker||'me');
   const sp=sxSplit(party,party<=1?100:same?sl.lshare:null,same?((c.dist||{})[id]||{}).lm:null),my=party<=1?1:sp.me/100;
-  const rotSold=rot&&taker==='me'&&m.after!=='keep', /* 순환 획득 '그 다음' 기본값은 팔았음 */sold$=(sold||rotSold)&&m.sp!=null?+m.sp:null;
-  const out={m,pt,party,sold,rot,rotSold,fee,saleFee,taker,takerName:taker==='me'?'나':pt&&/^#\d+$/.test(taker)?sxPMem(pt,+taker.slice(1)).name:'파티원',sp:sold$,cut:my,fair:rot&&P!=null?P*my:null,rows:[],fees:{sale:0,xfer:0,tax:0,all:0}};
+  const rotSold=rot&&taker==='me'&&m.after!=='keep', /* 순환 획득 '그 다음' 기본값은 팔았음 */sold$=(sold||rotSold||(rot&&taker!=='me'))&&m.sp!=null?+m.sp:null; // 파티원이 먹은 템도 판 금액은 기록
+  const val=sold$!=null?sold$:P; // 순환 장부 금액: 판 금액을 적었으면 그걸로, 아니면 예상가
+  const out={m,pt,party,sold,rot,rotSold,fee,saleFee,taker,takerName:taker==='me'?'나':pt&&/^#\d+$/.test(taker)?sxPMem(pt,+taker.slice(1)).name:'파티원',sp:sold$,cut:my,fair:rot&&val!=null?val*my:null,rows:[],fees:{sale:0,xfer:0,tax:0,all:0}};
   if(sold$!=null)P=sold$; // 실제로 판 금액을 적었으면 예상가 대신 그걸로
   if(P==null){out.v=0;return out}
   if(rot){if(taker!=='me'){out.v=0;return out}
@@ -2704,7 +2727,8 @@ function sxLedger(everyone,p){const G=sxLGroup(p),ms=p.members.map((_,j)=>({key:
   const map=(q,j)=>{if(q===p)return '#'+j;const i=p.members.findIndex(m=>(m.name||'').trim()===(q.members[j].name||'').trim());return '#'+(i<0?j:i)};
   everyone.loots.forEach(e=>{const q=e.k.pt;if(!e.k.rot||e.k.fair==null||!q||!G.includes(q))return;const my=e.k.cut,sl=sxSlot(e.c,e.id)||{},same=(sl.party||1)===sxPSize(q);
     const spl=sxSplit(sxPSize(q),same?sl.lshare:null,same?(((e.c.dist||{})[e.id]||{}).lm):null),tk=e.k.taker,who=tk==='me'?'me':(P[map(q,+tk.slice(1))]?map(q,+tk.slice(1)):'#0');
-    P.me.fair+=e.price*my;P.me.en+=my;q.members.forEach((_,j)=>{const ot=spl.others[j]/100,k=map(q,j);P[k].fair+=e.price*ot;P[k].en+=ot});P[who].n++;P[who].v+=e.price;
+    const val=e.k.sp!=null?e.k.sp:e.price; // 판 금액을 적었으면 그걸로
+    P.me.fair+=val*my;P.me.en+=my;q.members.forEach((_,j)=>{const ot=spl.others[j]/100,k=map(q,j);P[k].fair+=val*ot;P[k].en+=ot});P[who].n++;P[who].v+=val;
     drops.push({e,persons:q.members.map((_,j)=>({key:'#'+j,name:sxPMem(q,j).name})),who:tk==='me'?'me':tk,q})});
   const people=Object.values(P);drops.sort((a,b)=>a.e.d<b.e.d?1:-1);
   return{people,drops,group:G,next:amt=>people.reduce((b,pp)=>{const s=amt?pp.v-pp.fair:pp.n-pp.en,bs=amt?b.v-b.fair:b.n-b.en;return s<bs-1e-9?pp:b},people[0])}}
@@ -2862,8 +2886,10 @@ function statsView(){
             :`<label class="sel sx-tsel" style="margin-left:auto"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`;
           if(who==='me'){form+=`<div class="frow"><span class="flbl">그 다음</span>${seg(i,'after',k.rotSold?'sold':'keep',[['sold','팔았음'],['keep','안 팔았음']])}</div>`;
             if(k.rotSold){form+=spRow();advH+=feeRow()}}
+          else form+=spRow()+`<p class="sx-hint sx-sph">${esc(jo(k.takerName,'이'))} 판 금액 · 비워 두면 예상가로 장부 계산</p>`;
           const base=k.sp!=null?k.sp:e.price;
-          if(base!=null)box+=`<div class="sx-split"><div class="sx-sh"><span>${k.sp!=null?`판매가 ${M(k.sp)}`:`예상가 ${M(e.price)}`}</span><span>${who!=='me'?'순환 획득 · 파티원이 가져감':k.rotSold?`판매 수수료 ${k.fee}% · ${Mr(k.fees.sale)}`:'순환 획득 · 안 팔고 가짐'}</span></div><div class="sx-sr sx-sfee"><span>${who==='me'?'내가 가져감':'파티원이 가져감'}</span><b class="num" style="color:var(--price)!important">${who==='me'?M(k.v):'0'}</b></div></div>`}
+          if(base!=null)box+=`<div class="sx-split"><div class="sx-sh"><span>${k.sp!=null?`판매가 ${M(k.sp)}${e.price!=null&&who!=='me'?` <small class="sx-z">예상 ${S(e.price)}</small>`:''}`:`예상가 ${M(e.price)}`}</span><span>${who!=='me'?'순환 획득 · 파티원이 가져감':k.rotSold?`판매 수수료 ${k.fee}% · ${Mr(k.fees.sale)}`:'순환 획득 · 안 팔고 가짐'}</span></div>${who==='me'?`<div class="sx-sr sx-sfee"><span>내가 가져감</span><b class="num" style="color:var(--price)!important">${M(k.v)}</b></div>`
+            :`<div class="sx-sr"><span>${esc(jo(k.takerName,'이'))} 가져감</span><b class="num">${M(base)}</b></div><div class="sx-sr sx-sfee"><span>내 수익</span><b class="num" style="color:var(--price)!important">0</b></div>`}</div>`}
         else if(e.price!=null||k.sp!=null){
             const st=k.settle;
             if(st)advH+=`<div class="frow"><span class="flbl">${k.sold?'판 사람':'가진 사람'}</span>${seg(i,'seller',st.seller,[['me','나'],['party','파티원']])}</div>`;
@@ -2952,7 +2978,7 @@ function statsView(){
             ${(()=>{const PER=5,pages=Math.ceil(L2.drops.length/PER),pg=Math.min(Math.max(0,x.dpg||0),pages-1);
               // 드랍 기록: 옥션처럼 쪽 나누기 (한 쪽 5개, 최신부터)
               return `<div class="fhead sx-dh"><span>드랍 기록</span><span class="num">${L2.drops.length}개</span></div><div class="sx-drops">${L2.drops.slice(pg*PER,pg*PER+PER).map(({e,persons,who})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n,opts=[['me','나'],...persons.map(pp=>[pp.key,pp.name])];
-              return `<div class="sx-drop">${ifr(itn,e)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${S(e.price)} · ${esc(BY[e.id].name)}${L2.group.length>1?` · ${TKO[e.k.pt.t||'W']}`:''}</small></span>${opts.length<=3?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
+              return `<div class="sx-drop">${ifr(itn,e)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${e.k.sp!=null?`판매 ${S(e.k.sp)}`:S(e.price)} · ${esc(BY[e.id].name)}${L2.group.length>1?` · ${TKO[e.k.pt.t||'W']}`:''}</small></span>${opts.length<=3?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
                 :`<label class="sel sx-tsel"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`}).join('')}</div>
               ${sxPager(L2.drops.length,PER,pg,'sxdpg')}`})()}`}
         else form+='<span class="sx-hint">순환 획득한 템이 아직 없어요. 물욕 관리에서 "순환 획득"으로 두면 여기 쌓여요.</span>';
@@ -3408,7 +3434,7 @@ function renderLayer(){
       if(r.k==='keep')return `<div class="fm-row">${chip(r.e)}<span class="fm-sign">=</span>${chip(r.e)}<span class="fm-tag">${r.e._tmp?`그 ${u}만 바꿈`:'그대로'}</span></div>`;
       if(r.k==='same')return `<div class="fm-row">${chip(r.e)}<span class="fm-sign">=</span>${chip(r.n)}<span class="fm-tag">같아요</span></div>`;
       if(r.k==='old')return `<div class="fm-row">${chip(r.e)}<span class="fm-sign"></span>${none}<span class="fm-tag">그 ${u}만</span></div>`;
-      if(r.k==='add'){const on=r.pick==='new';return `<div class="fm-row add${on?'':' off'}">${none}<span class="fm-sign">→</span>${chip(r.n)}<button type="button" class="fm-tg ${on?'on':'off'}" data-fpick="${i}:${on?'off':'new'}" ${!on&&full?'disabled':''} aria-pressed="${on}">${on?I.check(11,'currentColor')+'넣기':'안 넣기'}</button></div>`}
+      if(r.k==='add'){const on=r.pick==='new';return `<div class="fm-row add${on?'':' off'}">${r.n.was?`<span class="fm-b fm-x">빈 칸 · 그 ${u}에 뺌</span>`:none}<span class="fm-sign">→</span>${chip(r.n)}<button type="button" class="fm-tg ${on?'on':'off'}" data-fpick="${i}:${on?'off':'new'}" ${!on&&full?'disabled':''} aria-pressed="${on}">${on?I.check(11,'currentColor')+'넣기':'안 넣기'}</button></div>`}
       const sw=r.k==='swap';
       return `<div class="fm-row cf">${chip(r.e)}<span class="fm-sign">≠</span>${chip(r.n)}<span class="fm-tag on">충돌</span>
         ${pk(i,r,sw?[['old','기존 유지'],['new','새 것으로'],['both','둘 다',r.pick!=='both'&&full]]:[['old','기존 유지'],['new','새 것으로']])}
@@ -3416,8 +3442,9 @@ function renderLayer(){
         ${sw&&r.pick!=='both'&&full?`<span class="fm-note">칸이 꽉 차서 둘 다는 못 넣어요</span>`:''}</div>`};
     h+=`<div class="scrim" id="scrim"><div class="modal fm" role="dialog" aria-modal="true" aria-labelledby="f-title">
       <div class="m-head"><span id="f-title">${when} 채우기${cf?`<em class="fm-cf">충돌 ${cf}</em>`:''}</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
-      <div class="m-body"><div class="info">${I.info}<span>기록된 ${u}의 목록을 골라 채워요. 그 ${u}만 넣은 보스는 빼고 봐요. 이미 기록된 ${u}는 바뀌지 않아요.</span></div>
+      <div class="m-body"><div class="info">${I.info}<span>기록된 ${u}의 목록을 골라 채워요. 그 ${u}만 넣은 보스는 빼고 봐요. 다른 기록된 ${u}는 바뀌지 않아요.</span></div>
         ${p.also.length?`<div class="info">${I.info}<span>${p.also.map(d=>pLabel(d,p.t)).join(', ')}${p.t==='W'?' 주':''}도 비어 있어서 같이 채워져요.</span></div>`:''}
+        ${p.run.length?`<div class="info">${I.info}<span>${p.run.map(d=>pLabel(d,p.t)).join(', ')}${p.t==='W'?' 주':''}도 지금 목록이 같아서 같이 채워져요.</span></div>`:''}
         <div class="fm-sub">가져올 목록${p.cands.length>1?` <small>${p.cands.length}가지</small>`:''}</div>
         <div class="fm-cands" role="radiogroup">${p.cands.map(cand).join('')}</div>
         <div class="fm-sub">비교</div>
