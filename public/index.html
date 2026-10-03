@@ -908,6 +908,89 @@ html.theme-fade,html.theme-fade *{transition:background-color .32s ease,color .3
 @media (hover:hover){.sx-arow:not(.picked):hover{background:var(--soft)}}
 .sx-arow.picked{background:var(--accent-bg);box-shadow:inset 0 0 0 1px var(--accent)}
 .sx-arow.pend .sx-ifr{border-color:var(--accent)}
+/* 비싼 물욕 (등급 금액): 브론즈~다이아는 아이콘 아래 등급색 줄 + 금액 글자색 (조용하게),
+   레드·블랙은 목록 줄 전체를 칠함 — 레드: 진빨강, 블랙: 검정 + 금테 · 금빛 글자 (블랙 라벨) */
+.sx-auc,.sxp{--t-bronze:#B87A5E;--t-silver:#8D98A6;--t-gold:#D99A12;--t-dia:#3E9BEA;--t-red:#E2334B;--t-black:#E2B13C}
+:root[data-theme="dark"] :is(.sx-auc,.sxp),:root[data-mode="deep"] :is(.sx-auc,.sxp){--t-bronze:#D29A7E;--t-silver:#C3CCD6;--t-gold:#F4C04A;--t-dia:#6CB8FF;--t-red:#FF5A6E;--t-black:#F0C24E}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) :is(.sx-auc,.sxp){--t-bronze:#D29A7E;--t-silver:#C3CCD6;--t-gold:#F4C04A;--t-dia:#6CB8FF;--t-red:#FF5A6E;--t-black:#F0C24E}}
+/* 아이콘 칸: 등급별 색 · 움직임 (v240 그대로) */
+.sx-ifr>img,.sx-ifr>svg{position:relative;z-index:1}
+/* 비싼 물욕: 등급 색 (미선택 주황 테두리와 같은 1px) — 브론즈는 반짝임 없음, 위로 갈수록 더 반짝임 */
+.sx-ifr.bronze{border-color:#B9773F;background:linear-gradient(160deg,#FBF1E7,#EBCFB4)}
+.sx-ifr.silver{border-color:#8E99A7;box-shadow:0 0 6px rgba(120,136,155,.45);background:linear-gradient(160deg,#FAFBFC,#D3DAE2)}
+.sx-ifr.gold{border-color:#E0AE3A;box-shadow:0 0 6px rgba(224,174,58,.4);background:linear-gradient(160deg,#FFF6DD,#F3DFA6)}
+.sx-ifr.dia{border-color:#3FB7D6;box-shadow:0 0 7px rgba(63,183,214,.5);background:linear-gradient(160deg,#F0FCFF,#BFE9F5)}
+.sx-ifr.red{border-color:#E0414E;box-shadow:0 0 8px rgba(224,65,78,.5);background:linear-gradient(160deg,#FFF0F1,#F7C3C8)}
+.sx-ifr.black{border-color:#E0AE3A;box-shadow:0 0 9px rgba(224,174,58,.45);background:linear-gradient(160deg,#4A4A55,#17171C)}
+:root[data-theme="dark"] .sx-ifr.bronze,:root[data-mode="deep"] .sx-ifr.bronze{background:linear-gradient(160deg,#4A3524,#2E2219)}
+:root[data-theme="dark"] .sx-ifr.silver,:root[data-mode="deep"] .sx-ifr.silver{border-color:#C3CCD6;box-shadow:0 0 6px rgba(195,204,214,.3);background:linear-gradient(160deg,#3A4048,#2A2F36)}
+:root[data-theme="dark"] .sx-ifr.gold,:root[data-mode="deep"] .sx-ifr.gold{background:linear-gradient(160deg,#4A3D1F,#33291A);box-shadow:0 0 6px rgba(224,174,58,.3)}
+:root[data-theme="dark"] .sx-ifr.dia,:root[data-mode="deep"] .sx-ifr.dia{background:linear-gradient(160deg,#1E4450,#152F38)}
+:root[data-theme="dark"] .sx-ifr.red,:root[data-mode="deep"] .sx-ifr.red{background:linear-gradient(160deg,#4E2227,#33171B)}
+:root[data-theme="dark"] .sx-ifr.black,:root[data-mode="deep"] .sx-ifr.black{border-color:#E0AE3A;background:linear-gradient(160deg,#2A2A31,#0B0B0E)}
+/* ── 등급별 움직임 (전부 transform·opacity만 움직여서 부드럽게) ──
+   브론즈: 안 움직임 · 실버: 가는 빛 한 줄 · 골드: 빛 줄기 + 아이콘 위로 금빛 + 은은한 숨쉬기
+   다이아: 무지개빛 줄기 + 모서리 별 반짝 · 레드: 테두리를 도는 빛 + 두근 · 블랙: 금빛 두 줄이 돌고 + 별 + 숨쉬기 */
+.sx-ifr .gl,.sx-ifr .gl2,.sx-ifr .gw,.sx-ifr .sp{position:absolute;pointer-events:none;display:none}
+/* 테두리 모양 칸 */
+.sx-ifr .gl{inset:-1px;border-radius:6px;padding:1px;overflow:hidden;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.sx-ifr .gl i,.sx-ifr .gl2 i{position:absolute;top:-60%;left:0;width:55%;height:220%;transform:translate3d(-190%,0,0) rotate(25deg);animation:sxGlint 3s linear infinite;will-change:transform}
+.sx-ifr .gl i{background:linear-gradient(90deg,transparent,var(--glint) 32%,var(--glint2) 50%,var(--glint) 68%,transparent)}
+/* 아이콘 위로 지나가는 빛 */
+.sx-ifr .gl2{inset:0;border-radius:5px;overflow:hidden}
+.sx-ifr .gl2 i{mix-blend-mode:screen;background:linear-gradient(90deg,transparent 30%,var(--sheen) 50%,transparent 70%)}
+/* 숨쉬는 빛 (바깥 번짐을 opacity로만) */
+.sx-ifr .gw{inset:-1px;border-radius:7px;box-shadow:0 0 10px 1px var(--glow);opacity:.25;animation:sxBreath 2.8s ease-in-out infinite;will-change:opacity}
+/* 모서리 별 */
+.sx-ifr .sp{inset:0}
+.sx-ifr .sp::before,.sx-ifr .sp::after{content:'';position:absolute;width:9px;height:9px;background:var(--star);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  transform:scale(0);animation:sxTwinkle 2.4s ease-in-out infinite;will-change:transform,opacity;filter:drop-shadow(0 0 2px var(--star))}
+.sx-ifr .sp::before{top:-4px;right:-4px}.sx-ifr .sp::after{bottom:-4px;left:-4px;width:7px;height:7px;animation-delay:1.2s}
+/* 등급별 */
+.sx-ifr.silver{--glint:#7FA6D6;--glint2:#F2F8FF}
+.sx-ifr.silver .gl{display:block}.sx-ifr.silver .gl i{width:60%;opacity:.8;animation-duration:6s}
+.sx-ifr.gold{--glint:#FFB300;--glint2:#FFFFFF;--sheen:rgba(255,240,180,.7);--glow:rgba(255,190,40,.75)}
+.sx-ifr.gold .gl,.sx-ifr.gold .gl2,.sx-ifr.gold .gw{display:block}.sx-ifr.gold .gl i,.sx-ifr.gold .gl2 i{width:80%;animation-duration:5.4s}
+.sx-ifr.dia{--glint2:#FFFFFF;--sheen:rgba(220,250,255,.8);--glow:rgba(80,190,240,.75)}
+.sx-ifr.dia .gl,.sx-ifr.dia .gl2,.sx-ifr.dia .gw{display:block}.sx-ifr.dia .gw{animation-duration:3s}
+.sx-ifr.dia .gl i{width:90%;animation-duration:5s;background:linear-gradient(90deg,transparent,#7EE0FF 20%,#B49CFF 35%,#FFFFFF 50%,#FF9CD6 65%,#8CF5C8 80%,transparent)}
+.sx-ifr.dia .gl2 i{width:85%;animation-duration:5s;background:linear-gradient(90deg,transparent 25%,rgba(150,230,255,.45) 40%,rgba(255,255,255,.85) 50%,rgba(255,170,230,.45) 60%,transparent 75%)}
+/* 레드부터 모서리 별 (다이아보다 한 단계 위) */
+.sx-ifr.red .sp::before,.sx-ifr.red .sp::after{filter:drop-shadow(0 0 2px #FF3B4E) drop-shadow(0 0 1px #FF3B4E)}
+.sx-ifr.red{--glow:rgba(255,50,70,.8);--glint:#FF3B4E;--glint2:#FFE3E6;--sheen:rgba(255,205,212,.7)}
+.sx-ifr.red{--star:#FFE3E6}.sx-ifr.red .gl,.sx-ifr.red .gl2,.sx-ifr.red .gw,.sx-ifr.red .sp{display:block}.sx-ifr.red .gl i,.sx-ifr.red .gl2 i{width:90%;animation-duration:4.6s}.sx-ifr.red .gw{box-shadow:0 0 14px 2px var(--glow);animation-duration:3.2s}
+.sx-ifr.black .gl i{top:-50%;left:-50%;width:200%;height:200%;transform:none;animation:sxSpin 4s linear infinite}
+.sx-ifr.black{--glow:rgba(255,190,40,.8);--sheen:rgba(255,236,170,.75);--star:#FFD970}
+.sx-ifr.black .gl,.sx-ifr.black .gl2,.sx-ifr.black .gw,.sx-ifr.black .sp{display:block}
+.sx-ifr.black .gl i{animation-duration:4s;background:conic-gradient(from 0deg,transparent 0 20%,#FFB300 32%,#FFF6CC 37%,#FFB300 42%,transparent 50% 70%,#FFB300 82%,#FFF6CC 87%,#FFB300 92%,transparent)}
+.sx-ifr.black .gl2 i{width:90%;animation-duration:4.4s}.sx-ifr.black .gw{animation-duration:2.2s}
+@keyframes sxGlint{0%{transform:translate3d(-190%,0,0) rotate(25deg)}70%,100%{transform:translate3d(210%,0,0) rotate(25deg)}}
+@keyframes sxSpin{to{transform:rotate(360deg)}}
+@keyframes sxBreath{0%,100%{opacity:.2}50%{opacity:.9}}
+@keyframes sxBeat{0%,40%,100%{opacity:.15}15%{opacity:1}28%{opacity:.5}34%{opacity:.85}}
+@keyframes sxTwinkle{0%,55%,100%{transform:scale(0) rotate(0);opacity:0}70%{transform:scale(1.1) rotate(45deg);opacity:1}85%{transform:scale(.6) rotate(90deg);opacity:.6}}
+@media (prefers-reduced-motion:reduce){.sx-ifr .gl,.sx-ifr .gl2,.sx-ifr .gw,.sx-ifr .sp{display:none!important}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sx-ifr.bronze{background:linear-gradient(160deg,#4A3524,#2E2219)}:root:not([data-theme="light"]) .sx-ifr.silver{border-color:#C3CCD6;box-shadow:0 0 6px rgba(195,204,214,.3);background:linear-gradient(160deg,#3A4048,#2A2F36)}:root:not([data-theme="light"]) .sx-ifr.gold{background:linear-gradient(160deg,#4A3D1F,#33291A);box-shadow:0 0 6px rgba(224,174,58,.3)}:root:not([data-theme="light"]) .sx-ifr.dia{background:linear-gradient(160deg,#1E4450,#152F38)}:root:not([data-theme="light"]) .sx-ifr.red{background:linear-gradient(160deg,#4E2227,#33171B)}:root:not([data-theme="light"]) .sx-ifr.black{border-color:#E0AE3A;background:linear-gradient(160deg,#2A2A31,#0B0B0E)}}
+.sx-ifr.bronze,.sx-tv.bronze{--tc:var(--t-bronze)}.sx-ifr.silver,.sx-tv.silver{--tc:var(--t-silver)}.sx-ifr.gold,.sx-tv.gold{--tc:var(--t-gold)}
+.sx-ifr.dia,.sx-tv.dia{--tc:var(--t-dia)}.sx-ifr.red,.sx-tv.red{--tc:var(--t-red)}.sx-ifr.black,.sx-tv.black{--tc:var(--t-black)}
+.sx-tv.black{font-weight:800}
+/* 레드 줄: 테두리만 (블랙보다 튀지 않게) */
+.sx-table .sx-arow.rt-red:not(.picked){border-color:var(--t-red)}
+/* 블랙 줄 */
+.sx-table .sx-arow.rt-black{background:linear-gradient(90deg,#26262A,#0B0B0D);border-color:#9C7628;box-shadow:0 0 8px rgba(226,177,60,.22)}
+.sx-table .sx-arow.rt-black .c-name b{color:#F5F2EA}.sx-arow.rt-black .c-name small{color:#B9A979}.sx-arow.rt-black :is(.sx-m,.sx-m b,.sx-tv){color:#F3C75A!important}
+.sx-table .sx-arow.rt-black .sx-tag{background:rgba(255,255,255,.08);color:#E9D9A8}
+/* 고른 줄은 주황 테두리를 안쪽에 한 겹 더 */
+.sx-table .sx-arow.picked.rt-black{border-color:var(--accent);box-shadow:none}
+/* 블랙 줄 테두리: 금빛 줄기가 줄 테두리를 따라 천천히 훑음 (아이콘 빛 줄기와 같은 방식, 1px) */
+.sx-table .sx-arow.rt-black{position:relative}
+.sx-arow .rgl{position:absolute;inset:-1px;border-radius:9px;padding:1px;overflow:hidden;pointer-events:none;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.sx-arow .rgl i{position:absolute;top:-150%;left:0;width:26%;height:400%;background:linear-gradient(90deg,transparent,#FFC83D 30%,#FFFBEA 50%,#FFC83D 70%,transparent);
+  transform:translate3d(-150%,0,0) rotate(25deg);animation:sxRowGlint 7s linear infinite;will-change:transform}
+@keyframes sxRowGlint{0%{transform:translate3d(-150%,0,0) rotate(25deg)}60%,100%{transform:translate3d(560%,0,0) rotate(25deg)}}
+@media (prefers-reduced-motion:reduce){.sx-arow .rgl{display:none}}
 .sx-arow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .sx-tg{width:170px;display:flex;flex-wrap:wrap;gap:3px}
 .sx-auc .sx-m{display:flex;align-items:center;justify-content:flex-end;gap:4px}
@@ -987,6 +1070,21 @@ div.sx-pbr{cursor:default}
 .sx-xsel{width:104px;height:30px;flex:none}.sx-xsel .t{font-size:12px}.sx-xsel.on{border-color:var(--info-bd);background:var(--info-bg)}.sx-xsel.on .t{color:var(--info-fg)}
 .sx-ptab .stsec.sthd{margin-bottom:6px}
 .sx-pnew{display:inline-flex;align-items:center;gap:4px}
+.sx-xf{display:flex;flex-direction:column;gap:6px;margin:2px 0 4px}
+.sx-xfh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:13px;font-weight:500;color:var(--sub)}.sx-xfh small{font-size:11px;color:var(--faint)}
+.sx-xr{display:grid;grid-template-columns:minmax(0,1fr) 76px 184px;align-items:center;gap:6px}.sx-xr .sx-mseg{margin-left:0;width:100%}.sx-xr .sx-mseg button{flex:1;padding:0 4px;white-space:nowrap}
+.sx-xhd{font-size:11px;color:var(--muted)}.sx-xhd span{text-align:center}
+.sx-xm{display:flex;flex-direction:column;gap:6px}.sx-xm .flbl small{margin-left:4px;font-size:11px;color:var(--muted)}
+.sx-xsub .flbl{padding-left:12px;color:var(--muted)}
+.sx-xfn{flex:1;min-width:0;font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sx-spv:has(b:empty){display:none}
+.sx-advr{gap:8px}
+/* 상세 설정: 보스 설정 폼처럼 점선으로 위아래를 끊음 */
+.sx-advw{display:flex;flex-direction:column;gap:10px;padding:10px 0;border-top:1px dashed var(--dash);border-bottom:1px dashed var(--dash)}
+.sx-advg{display:flex;flex-direction:column;gap:10px}.sx-advr .tg-lbl{margin-left:auto;flex:none}
+.sx-advs{flex:1;min-width:0;font-size:12px;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sx-dh{margin-top:4px;font-size:13px;color:var(--sub)}.sx-dh .num{font-size:12px;color:var(--muted)}
+.sx-pages{padding-top:2px}
 .sx-tag.acc{background:var(--accent-soft);color:var(--accent)}
 .sx-stbox{margin-bottom:6px}
 /* 기간 바: 보스 설정 검색창과 같은 모양 한 줄 (단위 고르기 + 기간 이동) */
@@ -1345,6 +1443,22 @@ function snapClears(c){Object.keys(c.clears).forEach(id=>{const sl=c.slots.find(
 const EMPTY_START=true;
 // 예시 기록 날짜: 이번 주 n번째 날(오늘을 넘지 않게)
 const pd=n=>WEEK[Math.min(n,WEEK.indexOf(REAL))];
+// 물욕 기본 시세 (예시 데이터에서도 쓰니 sample 위에 둠)
+// 물욕 시세 기록 (억) — 운영 쪽에서 날짜 붙여 추가. 유저는 실제 판매가만 적음
+//  드롭한 날 이전 중 가장 최근 시세로 계산 → 시세표를 갱신해도 지난 기록 값은 그대로
+//  오래된 건 압축: 최근 13일은 하루 단위, 13주까지는 주 단위, 그 전은 달 단위로 하나씩만
+const LOOT_HIST_RAW=[
+ {d:'2026.09.29',p:{'미트라의 분노 선택 상자':8,'저주받은 마도서 선택 상자':40,'저주받은 마도서':40,'루즈 컨트롤 머신 마크':15,'마력이 깃든 안대':25,'몽환의 벨트':40,'거대한 공포':45,'고통의 근원':50,'커맨더 포스 이어링':15,'컴플리트 언더컨트롤':200,'창세의 뱃지':200,'근원의 속삭임':600,'죽음의 맹세':700,'불멸의 유산':800,'황홀한 악몽':600,'굶주리는 핏빛 원혼':900,'리스트레인트 링 3레벨':45,'리스트레인트 링 4레벨':45,'컨티뉴어스 링 3레벨':30,'컨티뉴어스 링 4레벨':30,'생명의 연마석':10,'신념의 연마석':35,'영롱한 달빛 포션':15,'익셉셔널 해머 (눈장식)':300,'익셉셔널 해머 (벨트)':80,'익셉셔널 해머 (얼굴장식)':60,'익셉셔널 해머 (훈장)':600,'익셉셔널 해머 (귀고리)':1500,'도미네이터 펜던트':8,'블랙빈 마크':1,'파풀라투스 마크':2,'1단계 소울 에테르':10,'2단계 소울 에테르':15,'3단계 소울 에테르':15,'4단계 소울 에테르':60}},
+ {d:'2026.10.03',p:{'미트라의 분노 선택 상자':9,'저주받은 마도서 선택 상자':42,'저주받은 마도서':42,'루즈 컨트롤 머신 마크':14,'마력이 깃든 안대':30,'몽환의 벨트':39,'거대한 공포':42,'고통의 근원':52,'커맨더 포스 이어링':14,'컴플리트 언더컨트롤':230,'창세의 뱃지':180,'근원의 속삭임':630,'죽음의 맹세':715,'불멸의 유산':795,'황홀한 악몽':610,'굶주리는 핏빛 원혼':880,'리스트레인트 링 3레벨':42,'리스트레인트 링 4레벨':42,'컨티뉴어스 링 3레벨':28,'컨티뉴어스 링 4레벨':28,'생명의 연마석':9.5,'신념의 연마석':31,'영롱한 달빛 포션':9,'익셉셔널 해머 (눈장식)':300,'익셉셔널 해머 (벨트)':58,'익셉셔널 해머 (얼굴장식)':62,'익셉셔널 해머 (훈장)':640,'익셉셔널 해머 (귀고리)':1500,'도미네이터 펜던트':7.4,'블랙빈 마크':0.7,'파풀라투스 마크':1.7,'1단계 소울 에테르':10,'2단계 소울 에테르':15,'3단계 소울 에테르':15,'4단계 소울 에테르':60}}];
+function lootHistCompact(h,today){const T=Date.parse(today.replace(/\./g,'-')),seen=new Set(),out=[];
+  [...h].sort((a,b)=>a.d<b.d?1:-1).forEach((s,i)=>{const age=Math.floor((T-Date.parse(s.d.replace(/\./g,'-')))/864e5);
+    const g=i===0||age<=13?'d'+s.d:age<=91?'w'+Math.floor(age/7):'m'+s.d.slice(0,7);if(seen.has(g))return;seen.add(g);out.push(s)});
+  return out.reverse()}
+const LOOT_HIST=LOOT_HIST_RAW,LOOT_BASE=LOOT_HIST[LOOT_HIST.length-1].p,LOOT_BASE_DATE=(d=>`${+d.slice(5,7)}/${+d.slice(8)}`)(LOOT_HIST[LOOT_HIST.length-1].d);
+let lootHistC=null;
+// 그 날짜(d) 기준 시세: d 이전 중 가장 최근 값, 그보다 앞선 기록이 없으면 가장 오래된 값
+function lootBaseAt(n,d){if(!d)return LOOT_BASE[n];if(!lootHistC)lootHistC=typeof REAL==='string'?lootHistCompact(LOOT_HIST,REAL):LOOT_HIST;
+  let v=null,f=null;for(const s of lootHistC){if(s.p[n]==null)continue;if(f==null)f=s.p[n];if(s.d<=d)v=s.p[n]}return v!=null?v:f}
 function sample(){
   // 통계 테스트용 예시: 강은호=최상위, 아델=중위, 귤민=검밑솔. 지난 8주 기록까지 채움
   const D=x=>{const[y,m,d]=x.split('.').map(Number);return new Date(Date.UTC(y,m-1,d))},mAdd=(x,n)=>{const d=D(x);return ymd(new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+n,1)))};
@@ -1386,16 +1500,27 @@ function sample(){
     c.slots.forEach(sl=>{const b=BY[sl.boss];if(!b||b.diffs[sl.diff]!=='W')return;
       const pool=((LOOT[b.name]||{})[sl.diff]||[]).filter(q=>q[1]&&!/에테르넬|흉수의 고리|환상의 단편|오만의 원죄|분노한 자쿰/.test(q[0])).map(q=>q[0]);if(!pool.length)return; // 기본 시세가 없는 템은 빼고
       for(let w=8;w>=0;w--){const ws=wk(w),we=ymd(new Date(D(ws).getTime()+6*864e5));if(!(c.clears[sl.boss]||[]).some(d=>d>=ws&&d<=we))continue;
-        if(rnd()>.17+boost)continue;
+        if(rnd()>((sl.party||1)>1?.6:.17)+boost)continue; // 파티 보스는 순환 장부 확인용으로 더 자주
         const key=sl.boss+'|'+pk(w),n=pool[Math.floor(rnd()*pool.length)],arr=c.loot[key]=c.loot[key]||[];if(arr.includes(n))continue;
         if(/근원의 속삭임|죽음의 맹세|불멸의 유산|황홀한 악몽|굶주리는|창세|컴플리트|해머 \((귀고리|훈장|눈장식)\)/.test(n)&&rnd()>.15)continue; // 수백억짜리는 드물게
         arr.push(n);
         const bx=boxOf(n);if(bx&&!(w===0&&rnd()<.5)){const op=bx.opts.filter(o=>o[0]!=='꽝');(c.lootSub[key]=c.lootSub[key]||{})[n]=rnd()<.15?'꽝':op[Math.floor(rnd()*op.length)][1]}
         const party=sl.party||1,r=rnd(),m={};
-        if(party>1){if(r<.5){m.sell='sold';m.fee=rnd()<.4?3:5}else if(r<.75)m.sell='keep';else{m.sell='rot';const ms=((c.dist||{})[sl.boss]||{}).members||[],who=Math.floor(rnd()*party);m.taker=who===0?'me':(((ms[who-1]||{}).name)||('#'+(who-1)))}}
+        if(party>1){if(r<.3){m.sell='sold';m.fee=rnd()<.4?3:5}else if(r<.4)m.sell='keep';else{m.sell='rot';const ms=((c.dist||{})[sl.boss]||{}).members||[],who=Math.floor(rnd()*party);m.taker=who===0?'me':(((ms[who-1]||{}).name)||('#'+(who-1)))}}
         else if(r<.8){m.sell='sold';m.fee=rnd()<.5?3:5}else m.sell='keep';
         (c.lootMeta[key]=c.lootMeta[key]||{})[n]=m}})};
   drops(ren,.12);drops(rete,.08);drops(mese,.05);
+  // 물욕 등급 예시: 이번 주 목록에 기본 + 6등급(브론즈~블랙)이 하나씩 보이게 — 예상가가 그 등급 범위인 템을 골라 넣음
+  //  (그 범위 템이 시세표에 없으면 남은 템을 그 범위 금액에 판 걸로)
+  {const B=typeof LOOT_BASE!=='undefined'?LOOT_BASE:{},w0=pk(0),cand=[];
+   [ren,rete,mese].forEach(c=>c.slots.forEach(sl=>{const b=BY[sl.boss];if(!b||b.diffs[sl.diff]!=='W')return;
+     ((LOOT[b.name]||{})[sl.diff]||[]).forEach(q=>{if(B[q[0]]!=null&&!boxOf(q[0]))cand.push({c,sl,n:q[0],v:B[q[0]]})})}));
+   const used=new Set(),put=(o,m)=>{const key=o.sl.boss+'|'+w0,arr=o.c.loot[key]=o.c.loot[key]||[];if(arr.includes(o.n))return false;
+     const cl=o.c.clears[o.sl.boss]=o.c.clears[o.sl.boss]||[];if(!cl.some(d=>(typeof d==='string'?d:d.d)>=wk(0)))cl.push(wk(0));
+     arr.push(o.n);used.add(o.n);o.c.lootMeta=o.c.lootMeta||{};(o.c.lootMeta[key]=o.c.lootMeta[key]||{})[o.n]=m;return true};
+   // 그 범위 시세 템이 없으면 남은 템을 그 범위 금액에 판 걸로
+   const pick=(lo,hi,m)=>{for(const o of cand.filter(q=>q.v>=lo&&q.v<hi&&!used.has(q.n)).sort((a,b)=>a.v-b.v))if(put(o,m))return;for(const o of cand.filter(q=>!used.has(q.n)&&q.v<lo).sort((a,b)=>b.v-a.v))if(put(o,{...m,sp:Math.round((lo+(hi-lo)*.3))*1e8}))return};
+   pick(50,100,{sell:'sold',fee:5});pick(100,250,{sell:'sold',fee:5});pick(250,500,{sell:'sold',fee:3});pick(500,750,{sell:'sold',fee:5});pick(750,1000,{sell:'sold',fee:5});pick(1000,1700,{sell:'sold',fee:5})}
   // 월간 검마 물욕 (지난달 · 이번 달)
   {const m0=REAL.slice(0,7),m1=mAdd(REAL.slice(0,7)+'.01',-1).slice(0,7);
    ren.loot['blackmage|M'+m1]=['창세의 뱃지'];ren.lootMeta['blackmage|M'+m1]={'창세의 뱃지':{sell:'sold',fee:3}};
@@ -1416,7 +1541,7 @@ function sample(){
   const chars=EMPTY_START?[]:[ren,rete,mese];
   const cfg={};if(!EMPTY_START){const P=(b,n,v)=>{cfg[b]=cfg[b]||{sell:true,loot:{},custom:[]};cfg[b].loot[n]={on:true,price:v}};
     P('kaling','혼돈의 칠흑 장신구 상자','');P('kalos','남겨진 칼로스의 의지','12억');P('seren','미트라의 분노 선택 상자','');P('seren','데이브레이크 펜던트','3억');P('hilla','데이브레이크 펜던트','3억');P('gloom','거대한 공포','');P('will','익셉셔널 해머 (벨트)','')}
-  return {v:4,sv:18,chars,sel:chars.length?'c1':null,tab:'status',filter:'all',hide:false,
+  return {v:4,sv:20,chars,sel:chars.length?'c1':null,tab:'status',filter:'all',hide:false,
     cfg,presets:EMPTY_START?[]:[
       {id:'p3',name:'하림2인',type:'W',slots:[{...S('limbo','hard',2),cshare:50}]}],ptab:'rec',
     form:{type:'W',targets:EMPTY_START?[]:['c1'],boss:'radiant',diff:'normal',party:2,ceq:true,cshare:50,lmode:'sell',leq:true,lshare:50,memo:'',span:'keep'},
@@ -1430,7 +1555,7 @@ if(st&&st.v===1){st.cfg={};st.v=2}
 if(st&&st.v===2){const th=st.theme;st=sample();if(th)st.theme=th} // 클리어 기록 구조가 바뀌어 예시 데이터로 한 번 초기화
 if(st&&st.v===3){const r=st.chars.find(c=>c.id==='c1'),l=r&&r.slots.find(s=>s.boss==='lotus'&&s.diff==='extreme');if(l&&!l.tmp)l.tmp={key:pkey('W'),diff:'hard',party:1,cshare:null,lmode:'sell',lshare:null,memo:''};st.chars.forEach(snapClears);st.v=4}
 if(!st||st.v!==4)st=sample();
-if(!EMPTY_START&&st.sv!==18&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id))){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
+if(!EMPTY_START&&st.sv!==20&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id))){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
 
 let ui={menu:false,pop:null,popSel:[],popEtc:'',dd:false,ddq:'',modal:null,toast:null,newPreset:null};
 function save(quiet){try{if(typeof sxSync==='function'){sxMigrateParties();sxSync()}}catch(e){console.error(e)}try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}if(!quiet)cloudQueue()} // quiet: 계정에 올리지 않음
@@ -1466,10 +1591,8 @@ function lootDefault(id,n){for(const arr of Object.values(LOOT[BY[id].name]||{})
 function isOn(id,n){const o=cfgOf(id).loot[n];return o&&typeof o.on==='boolean'?o.on:lootDefault(id,n)}
 // 물욕템 기본 시세(억) — 9/29 본서버 시세를 반올림 (10억↓ 1억 · 50억↓ 5억 · 100억↓ 10억 · 500억↓ 50억 · 1000억↓ 100억 단위).
 // 보상 탭에 직접 적은 값이 있으면 그게 우선. 상자는 고른 결과 템의 시세로 계산
-const LOOT_BASE_DATE='9/29';
-const LOOT_BASE={'미트라의 분노 선택 상자':8,'저주받은 마도서 선택 상자':40,'저주받은 마도서':40,'루즈 컨트롤 머신 마크':15,'마력이 깃든 안대':25,'몽환의 벨트':40,'거대한 공포':45,'고통의 근원':50,'커맨더 포스 이어링':15,'컴플리트 언더컨트롤':200,'창세의 뱃지':200,'근원의 속삭임':600,'죽음의 맹세':700,'불멸의 유산':800,'황홀한 악몽':600,'굶주리는 핏빛 원혼':900,'리스트레인트 링 3레벨':45,'리스트레인트 링 4레벨':45,'컨티뉴어스 링 3레벨':30,'컨티뉴어스 링 4레벨':30,'생명의 연마석':10,'신념의 연마석':35,'영롱한 달빛 포션':15,'익셉셔널 해머 (눈장식)':300,'익셉셔널 해머 (벨트)':80,'익셉셔널 해머 (얼굴장식)':60,'익셉셔널 해머 (훈장)':600,'익셉셔널 해머 (귀고리)':1500,'도미네이터 펜던트':8,'블랙빈 마크':1,'파풀라투스 마크':2,'1단계 소울 에테르':10,'2단계 소울 에테르':15,'3단계 소울 에테르':15,'4단계 소울 에테르':60};
 function lootUserPrice(id,n){const o=cfgOf(id).loot[n];return (o&&o.price)||''}
-function lootPrice(id,n){return lootUserPrice(id,n)||(LOOT_BASE[n]!=null?LOOT_BASE[n]+'억':'')}
+function lootPrice(id,n,d){const v=lootBaseAt(n,d);return lootUserPrice(id,n)||(v!=null?v+'억':'')}
 function share(s){ // my crystal share (0..1)
   if(s.party<=1)return 1;
   return (s.cshare==null?100/s.party:s.cshare)/100;
@@ -2426,7 +2549,6 @@ function sxMeso(t){if(t==null||t==='')return null;const s=String(t).replace(/[,\
 // 판매 금액 최대 100조 — 그 위는 메이플에서 나올 수 없는 금액으로 보고 막음 (경·해 같은 단위는 재미로 알아듣기만 함)
 const SX_SPMAX=1e14,SX_BIG=/[경해자양구간정재극]/;
 function sxSpMsg(t,val){if(!t.trim())return '';if(SX_BIG.test(t))return '그 단위는 메이플에 아직 없어요 ㅋㅋ (100조 미만까지)';if(!val)return '금액을 알아볼 수 없어요';if(val>=SX_SPMAX)return '너무 커요 · 100조 미만까지 적을 수 있어요';return ''}
-// ? 도움말은 아직 테스트 중이라 깃 버전에선 뺌
 const sxQ=k=>'',sxHelpBox=k=>'';let sxHelpOpen=null;
 function sxKor(v){if(v==null||!isFinite(v)||v<=0)return '';v=Math.round(v);const j=Math.floor(v/1e12),e=Math.floor(v%1e12/1e8),m=Math.floor(v%1e8/1e4),r=v%1e4;const o=[];if(j)o.push(j+'조');if(e)o.push(e+'억');if(m)o.push(m+'만');if(r&&!j&&!e)o.push(r);return o.join(' ')}
 function sxState(){st.sx=st.sx||{unit:'W',off:0,cid:'all'};const x=st.sx;if(x.cid!=='all'&&!vis().some(c=>c.id===x.cid))x.cid='all';if(!['W','M','Y'].includes(x.unit)){x.unit='W';x.off=0}x.lt=x.lt||'sum';x.bf=x.bf||'all';x.form=x.form||'stack';x.gv=x.gv||'tier';if(x.cid!=='all'&&!st.chars.find(c=>c.id===x.cid))x.cid='all';return x}
@@ -2439,7 +2561,7 @@ const sxKeyDate=k=>k[0]==='M'?k.slice(1)+'.01':k.slice(1);
 // 수수료율(%) — 패치로 바뀌면 여기만 고치면 됨
 const SX_FEE={hi:5,lo:3,tax:10,mp:1}; // mp: 타섭 파티원에게 메소→메이플포인트(1%)로 보냄 (메포→메소는 0%)
 // 파티원 설정 (분배 탭): c.dist[보스] = {members:[{name,fee:5|3,tax:bool}], rot:'turn'|'amount'}
-function sxMembers(c,id,party){const d=(c.dist||{})[id]||{},ms=d.members||[];return Array.from({length:Math.max(0,party-1)},(_,j)=>({name:(ms[j]&&ms[j].name)||`파티원 ${j+1}`,fee:ms[j]&&ms[j].fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,tax:!!(ms[j]&&ms[j].tax)}))}
+function sxMembers(c,id,party){const d=(c.dist||{})[id]||{},ms=d.members||[];return Array.from({length:Math.max(0,party-1)},(_,j)=>{const m=ms[j]||{},xs=sxXs(m);return{name:m.name||`파티원 ${j+1}`,xs,fee:m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,ex:sxXP(xs)}})}
 // 물욕템 한 개 계산. m = c.lootMeta[key][템] = {sell:'sold'|'keep'|'rot', fee:5|3, taker:'me'|이름, after:'keep'|'sold'(순환으로 내가 먹은 뒤 팔았나), sp:실제 판매 금액(수수료 떼기 전)}
 //  판매함: 판매 수수료 + 교환 수수료 / 안 팜: 가진 사람이 몫만큼 메소를 보냄 → 교환 수수료만 / 순환 획득: 먹은 사람이 통째로 → 수수료 없음
 //  판매: 예상가 − 판매 수수료(5·3%) → 나와 파티원 몫으로 나눔 → 파티원마다 메소 교환 수수료(5·3%)와 관세(10%)를 받는 쪽에서 뺌
@@ -2457,14 +2579,14 @@ function sxLootCalc(c,id,key,n,P,sl){
   // 수수료·관세는 파티 전원이 몫대로 같이 냄: 모두 똑같은 비율로 받게 되는 최종 금액 D를 구함
   //  파티원 j에게 몫 p_j·D가 가려면 교환 수수료 f_j를 감안해 p_j·D/(1−f_j)를 보내고, 관세 t_j면 그만큼 더 냄 → 합계가 판매 후 금액(net)
   const net=P*(1-saleFee/100);out.net=net;out.fees.sale=P-net;
-  const ms=pt?pt.members.map((_,j)=>sxPMem(pt,j)):sxMembers(c,id,party),ps=ms.map((_,j)=>sp.others[j]/100),den=my+ms.reduce((t,mb,j)=>t+ps[j]*(1+(mb.tax?SX_FEE.tax/100:0))/(1-mb.fee/100),0),D=party<=1?net:net/den;out.dist=D;
+  const ms0=pt?pt.members.map((_,j)=>sxPMem(pt,j)):sxMembers(c,id,party),ms=ms0.map((mb,j)=>{const o=(m.xf||{})[j];if(!o)return mb;const xs=sxXs(o);return{...mb,xs,fee:o.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,ex:sxXP(xs)}});out.ms=ms;const ps=ms.map((_,j)=>sp.others[j]/100),den=my+ms.reduce((t,mb,j)=>t+ps[j]*(1+mb.ex/100)/(1-mb.fee/100),0),D=party<=1?net:net/den;out.dist=D;
   const burden=pp=>pp*(P-D);
   out.rows.push({name:'나',me:true,share:my,recv:my*D,fee:burden(my)});
-  ms.forEach((mb,j)=>{const sent=ps[j]*D/(1-mb.fee/100),xf=sent*mb.fee/100,tx=mb.tax?sent*SX_FEE.tax/100:0;out.fees.xfer+=xf;out.fees.tax+=tx;
-    out.rows.push({name:mb.name,share:ps[j],recv:ps[j]*D,fee:burden(ps[j]),mfee:mb.fee,hasTax:mb.tax,sent,tx})});
+  ms.forEach((mb,j)=>{const sent=ps[j]*D/(1-mb.fee/100),xf=sent*mb.fee/100,tx=sent*mb.ex/100;out.fees.xfer+=xf;out.fees.tax+=tx;
+    out.rows.push({name:mb.name,share:ps[j],recv:ps[j]*D,fee:burden(ps[j]),mfee:mb.fee,xs:mb.xs,sent,tx})});
   // 정산: 내가 팔았으면(가졌으면) 파티원마다 보낼 돈, 파티원이 팔았으면 내가 받을 돈
   if(party>1){const seller=m.seller==='party'?'party':'me';out.settle={seller,done:m.settled==='1'||m.settled===true,
-    give:seller==='me'?out.rows.filter(r=>!r.me).map(r=>({name:r.name,amt:r.sent,recv:r.recv,fee:r.mfee,tax:r.tx})):[],get:seller==='party'?my*D:0}}
+    give:seller==='me'?out.rows.filter(r=>!r.me).map(r=>({name:r.name,amt:r.sent,recv:r.recv,fee:r.mfee,xs:r.xs,tax:r.tx})):[],get:seller==='party'?my*D:0}}
   out.fees.all=out.fees.sale+out.fees.xfer+out.fees.tax;out.v=Math.round(my*D);return out}
 // 지금 보고 있는 기간에 적용되는 슬롯 설정 (이번 주만 바꾼 값 포함)
 const sxSlot=(c,id)=>live(c).find(x=>x.boss===id)||c.slots.find(x=>x.boss===id);
@@ -2476,9 +2598,11 @@ function sxCollect(chars){const clears=[],loots=[];
     Object.entries(c.clears||{}).forEach(([id,arr])=>{if(!BY[id])return;const sell=cfgOf(id).sell!==false,sl=sxSlot(c,id)||{party:1};
       arr.forEach(e=>{const d=dOf(e),diff=typeof e==='object'?e.diff:sl.diff;const v=!sell?0:typeof e==='object'&&e.v!=null?e.v:(myPrice({...sl,diff},d)||0);clears.push({c,id,d,diff,v})})});
     Object.entries(c.loot||{}).forEach(([key,items])=>{const[id,pk]=key.split('|');if(!BY[id]||!pk)return;const d=sxKeyDate(pk),sub=((c.lootSub||{})[key])||{},sl=sxSlot(c,id)||{party:1,lmode:'sell'};
-      (items||[]).forEach(n=>{const bx=boxOf(n),res=bx?sub[n]||null:null,p=sxMeso(res&&res!=='꽝'&&lootPrice(id,res)||lootPrice(id,n));
+      // 드롭한 날: 그 기간 안 첫 클리어 날 (없으면 기간 시작일) — 그날 시세로 예상가
+      const pe=pk[0]==='M'?sxAdd(ymd(new Date(Date.UTC(+d.slice(0,4),+d.slice(5,7),1))),-1):sxAdd(d,6),dd=((c.clears||{})[id]||[]).map(dOf).filter(x=>x>=d&&x<=pe).sort()[0]||d;
+      (items||[]).forEach(n=>{const bx=boxOf(n),res=bx?sub[n]||null:null,p=sxMeso(res&&res!=='꽝'&&lootPrice(id,res,dd)||lootPrice(id,n,dd));
         const pending=!!bx&&!res,P=pending||res==='꽝'?null:p,k=sxLootCalc(c,id,key,n,P,sl);
-        loots.push({c,id,d,key,n,box:!!bx,res,pending,price:p,v:k.v,k})})})});
+        loots.push({c,id,d,dd,key,n,box:!!bx,res,pending,price:p,v:k.v,k})})})});
   return{clears,loots}}
 const sxIn=(d,r)=>d>=r.from&&d<=r.to;
 // 보스 그룹 — 낮은 구간부터 순서대로 (보스:난이도 목록). 목록에 없는 주간 보스는 가격으로 카파풀 / '그 외 상위'
@@ -2525,10 +2649,11 @@ function sxKnown(){const nm={},cb={};st.chars.forEach(c=>live(c).forEach(sl=>{if
 const sxPSize=p=>p.members.length+1;
 const sxPName=p=>{if(p.name&&p.name.trim())return p.name.trim();const ns=p.members.map(m=>(m.name||'').trim()).filter(Boolean);if(!ns.length)return '';const rest=p.members.length-ns.length;return `${ns.slice(0,3).join('·')}${ns.length>3?` 외 ${ns.length-3+rest}명`:rest>0?` 외 ${rest}명`:''} 파티`};
 const sxPLabel=p=>sxPName(p)||`이름 없는 ${TKO[p.t||'W']} 파티 (${sxPSize(p)}인)`;
-// 파티원 보내는 방법: 같은 서버 = 교환 수수료 5·3% / 타섭 메포 = 1%만 / 타섭 관세 = 교환 5·3% + 관세 10%
+// 파티원 보내는 방법: 교환 수수료 5·3%는 늘 붙고, 타섭이면 더 붙음 — 메포(메소→메이플포인트) 1% / 관세(타섭 경매장) 10%
 const sxXs=m=>m.xs==='mp'||m.xs==='tax'?m.xs:m.tax?'tax':'';
-const sxPMem=(p,j)=>{const m=p.members[j]||{},xs=sxXs(m);return{name:(m.name||'').trim()||`파티원 ${j+1}`,xs,fee:xs==='mp'?SX_FEE.mp:m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,tax:xs==='tax'}};
-const SX_XS=[['','같은 서버'],['mp','타섭 · 메포 1%'],['tax','타섭 · 관세 10%']];
+const sxXP=xs=>xs==='mp'?SX_FEE.mp:xs==='tax'?SX_FEE.tax:0; // 타섭으로 더 붙는 %
+const sxPMem=(p,j)=>{const m=p.members[j]||{},xs=sxXs(m);return{name:(m.name||'').trim()||`파티원 ${j+1}`,xs,fee:m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,ex:sxXP(xs)}};
+const SX_XS=[['','없음'],['mp','메포 1%'],['tax','관세 10%']];
 const sxPById=id=>(st.parties||[]).find(p=>p.id===id)||null;
 const sxPT=(c,id)=>(((c.dist||{})[id]||{}).pt)||[];
 const sxKD=k=>sxKeyDate(k);
@@ -2583,6 +2708,11 @@ function sxLedger(everyone,p){const G=sxLGroup(p),ms=p.members.map((_,j)=>({key:
     drops.push({e,persons:q.members.map((_,j)=>({key:'#'+j,name:sxPMem(q,j).name})),who:tk==='me'?'me':tk,q})});
   const people=Object.values(P);drops.sort((a,b)=>a.e.d<b.e.d?1:-1);
   return{people,drops,group:G,next:amt=>people.reduce((b,pp)=>{const s=amt?pp.v-pp.fair:pp.n-pp.en,bs=amt?b.v-b.fair:b.n-b.en;return s<bs-1e-9?pp:b},people[0])}}
+// 쪽 나누기 (옥션처럼 « ‹ 1 2 3 › », 번호는 최대 5개 보임)
+function sxPager(total,per,pg,key){const pages=Math.ceil(total/per);if(pages<2)return '';const last=pg===pages-1,w0=Math.max(0,Math.min(pg-2,pages-5)),win=Array.from({length:Math.min(5,pages)},(_,n)=>w0+n);
+  return `<div class="cm-pages sx-pages"><button type="button" data-${key}="0" ${pg===0?'disabled':''} aria-label="처음">«</button><button type="button" data-${key}="${pg-1}" ${pg===0?'disabled':''} aria-label="이전">‹</button>${win.map(n=>`<button type="button" data-${key}="${n}" class="${n===pg?'on':''}">${n+1}</button>`).join('')}<button type="button" data-${key}="${pg+1}" ${last?'disabled':''} aria-label="다음">›</button><button type="button" data-${key}="${pages-1}" ${last?'disabled':''} aria-label="마지막">»</button></div>`}
+// 물욕 등급 경계 (억 메소) — 노작 시세 구간에 맞춰 등급마다 2~3배씩 (2026.10 기준)
+const SX_TIERS=[[1000,'black'],[750,'red'],[500,'dia'],[250,'gold'],[100,'silver'],[50,'bronze']].map(([v,t])=>[v*1e8,t]);
 const sxPIcon=ids=>ids.length>1?`<span class="fr s40"><span class="pmz">${[0,1,2,3].map(i=>ids[i]?`<img src="${BY[ids[i]].img}" alt="">`:'<i></i>').join('')}</span></span>`:ids.length?`<span class="fr s40"><img src="${BY[ids[0]].img}" alt=""></span>`:`<span class="sx-all">${SX_ALL}</span>`;
 // 몫 나누기: 내 몫(없으면 정분배) + 파티원 몫(적은 사람은 그 값, 안 적은 사람은 남은 몫을 똑같이) → % 배열
 function sxSplit(party,my,arr){const n=Math.max(0,party-1),me=my!=null?+my:100/party,ms=Array.from({length:n},(_,j)=>arr&&arr[j]!=null&&arr[j]!==''?+arr[j]:null);
@@ -2690,13 +2820,20 @@ function statsView(){
   if(x.lt==='dist'||x.lt==='gem'||(x.lt==='loot'&&x.lv==='party')){x.lt='party';x.lv='items'}
   let sub='',right='';const bar=(dots,cur,key,extra)=>`<div class="bar"><div class="dots" role="tablist">${dots.map(([v,l,n])=>`<button class="dot${cur===v?' on':''}${n===0||n==='0'?' zero':''}" type="button" role="tab" aria-selected="${cur===v}" data-${key}="${v}">${l} <span class="num">${n}</span></button>`).join('')}</div>
       <div class="bar-r">${extra||''}<span>${x.cid==='all'?`전체 캐릭터 (${vis().length})`:esc(nm(st.chars.find(c=>c.id===x.cid)))}</span><span style="color:var(--faint)">|</span><span class="num">${r.label}</span></div></div>`;
-  const ifr=n=>`<span class="sx-ifr">${lootIcon(n)}</span>`;
+  // 물욕 아이콘 테두리: 판 금액이 있으면 그 값, 없으면 예상가로 등급 (SX_TIERS)
+  //  브론즈 50억 · 실버 100억 · 골드 250억 · 다이아 500억 · 레드 750억 · 블랙 1,000억
+  const tierOf=e=>{if(!e||e.pending||e.res==='꽝')return '';const v=e.k&&e.k.sp!=null?e.k.sp:e.price;const t=SX_TIERS.find(q=>v>=q[0]);return t?' tier '+t[1]:''};
+  const tierN=e=>tierOf(e).replace(' tier ','');
+  const ifr=(n,e)=>{const t=tierOf(e);return `<span class="sx-ifr${t}">${lootIcon(n)}${t?'<span class="gw" aria-hidden="true"></span><span class="gl" aria-hidden="true"><i></i></span><span class="gl2" aria-hidden="true"><i></i></span><span class="sp" aria-hidden="true"></span>':''}</span>`};
   if(x.lt==='loot'){
     // ── 물욕템: 오른쪽 = 경매장처럼 템 목록, 왼쪽 = 고른 템 (판매했는지 · 판매 수수료 · 분배 금액) ──
     const lootRows=[...L].sort((a,b)=>(b.pending-a.pending)||(a.d<b.d?1:a.d>b.d?-1:0));sxRows=lootRows;
     const unsettled=e=>!e.pending&&e.res!=='꽝'&&!!e.k.settle&&!e.k.settle.done,is=(e,f)=>f==='all'||(f==='pend'?e.pending:f==='settle'?unsettled(e):(e.k.party>1?'party':'solo')===f);
     const lf=x.lf||'all',shown=lootRows.map((e,i)=>({e,i})).filter(o=>is(o.e,lf));
     let si=lootRows.findIndex(e=>sxRowKey(e)===x.lsel);if(si<0&&lootRows.length){si=0;x.lsel=sxRowKey(lootRows[0])}
+    // 목록은 20개씩 (옥션처럼). 다른 곳에서 템을 골라 들어오면 그 템이 있는 쪽으로
+    const LPER=20,lpages=Math.max(1,Math.ceil(shown.length/LPER));if(x.lpgSel!==x.lsel){const ix=shown.findIndex(o=>o.i===si);if(ix>=0)x.lpg=Math.floor(ix/LPER);x.lpgSel=x.lsel}
+    const lpg=Math.min(Math.max(0,x.lpg||0),lpages-1),shownP=shown.slice(lpg*LPER,lpg*LPER+LPER);
     const tag=e=>{const k=e.k;if(e.pending)return '<span class="sx-tag warn">결과 미선택</span>';if(e.res==='꽝')return '<span class="sx-tag">꽝</span>';
       const t=[k.rot?'순환 획득':k.sold?`판매 ${k.fee}%`:'안 팜'];if(k.rot)t.push(k.taker==='me'?'내가 먹음':`${esc(k.takerName)} 먹음`);else if(k.party>1)t.push(`${k.party}인 분배`);return t.map(s=>`<span class="sx-tag">${s}</span>`).join('')};
     const stl=(()=>{if(lf!=='settle')return '';const open=lootRows.filter(unsettled),give={};let get=0;open.forEach(e=>{const st=e.k.settle;if(st.seller==='me')st.give.forEach(g=>{give[g.name]=(give[g.name]||0)+g.amt});else get+=st.get});const gv=Object.entries(give);
@@ -2706,36 +2843,48 @@ function statsView(){
         ${!gv.length&&!get?'<div class="sx-sr"><span class="sx-z">남은 정산이 없어요</span></div>':''}${sxHelpBox('settle2')}</div>`})();
     right=bar([['all','전체',lootRows.length],['pend','미선택',lootRows.filter(e=>e.pending).length],['solo','개인',lootRows.filter(e=>is(e,'solo')).length],['party','파티',lootRows.filter(e=>is(e,'party')).length],['settle','정산 남음',lootRows.filter(unsettled).length]],['all','pend','solo','party','settle'].includes(lf)?lf:'all','sxlf')+stl+
       `<div class="stable sx-table sx-auc"><div class="sx-bhead"><span style="width:40px"></span><span class="c-name">아이템</span><span class="sx-tg">판매</span><span class="sx-m">예상가</span><span class="sx-m">내 수익</span></div>
-      <div class="sx-bbody">${shown.length?shown.map(({e,i})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n;
-        return `<div class="sx-brow sx-arow${i===si?' picked':''}${e.pending?' pend':''}" role="button" tabindex="0" data-sxpick="${i}">${ifr(itn)}<span class="c-name"><b>${esc(itn)}</b><small>${md(e.d)} · ${esc(nm(e.c))} · ${esc(BY[e.id].name)}${e.box&&e.res&&e.res!=='꽝'?` · ${esc(e.n)}`:''}</small></span><span class="sx-tg">${tag(e)}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':e.price==null?'<span class="sx-z">가격 없음</span>':`${coin(13)}${S(e.price)}`}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':M(e.v)}</span></div>`}).join(''):'<div class="sx-empty">이 기간에 먹은 물욕템이 없어요</div>'}</div></div>`;
+      <div class="sx-bbody">${shown.length?shownP.map(({e,i})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n;
+        const tn=tierN(e); // 레드·블랙은 줄 전체를 칠함 (블랙 라벨처럼)
+        return `<div class="sx-brow sx-arow${i===si?' picked':''}${e.pending?' pend':''}${tn==='red'||tn==='black'?' rt-'+tn:''}" role="button" tabindex="0" data-sxpick="${i}">${tn==='black'?'<span class="rgl" aria-hidden="true"><i></i></span>':''}${ifr(itn,e)}<span class="c-name"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${esc(nm(e.c))} · ${esc(BY[e.id].name)}${e.box&&e.res&&e.res!=='꽝'?` · ${esc(e.n)}`:''}</small></span><span class="sx-tg">${tag(e)}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':e.price==null?'<span class="sx-z">가격 없음</span>':`${coin(13)}<span class="sx-tv${tn?' '+tn:''}">${S(e.price)}</span>`}</span><span class="sx-m num">${e.pending?'<span class="sx-z">—</span>':M(e.v)}</span></div>`}).join(''):'<div class="sx-empty">이 기간에 먹은 물욕템이 없어요</div>'}</div>${sxPager(shown.length,LPER,lpg,'sxlpg')}</div>`;
     const seg=(i,f,cur,opts)=>`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${String(cur)===String(v)?'on':''}" data-sxm="${i}|${f}|${v}">${l}</button>`).join('')}</div>`;
     let form='<div class="sx-empty">오른쪽 목록에서 템을 골라 주세요.</div>';
-    if(si>=0){const e=lootRows[si],k=e.k,i=si,bx=e.box&&boxOf(e.n),itn=e.res&&e.res!=='꽝'?e.res:e.n;
-      form=`<div class="sx-sel">${ifr(itn)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.d)} · ${esc(nm(e.c))} · ${esc(BY[e.id].name)}${k.party>1?` · ${k.party}인`:''}</small></span></div>`;
-      if(bx)form+=`<div class="sx-bxr"><span class="bxl">${I.corner}${esc(e.n)}에서 나온 것</span><div class="bxo">${bx.opts.map(([kk,full])=>`<button type="button" class="${e.res===full?'on':''}${kk==='꽝'?' trash':''}" data-sxsub="${i}|${esc(full)}" title="${esc(full)}"><span class="bi">${kk==='꽝'?TRASH.replace(/13/g,'16'):(ITEM_ICONS[full]?`<img src="${ITEM_ICONS[full]}" alt="">`:I.gem)}</span>${esc(kk)}</button>`).join('')}</div>${e.pending?'<span class="sx-hint">결과를 골라야 수익에 들어가요.</span>':''}</div>`;
+    if(si>=0){const e=lootRows[si],k=e.k,i=si,bx=e.box&&boxOf(e.n),itn=e.res&&e.res!=='꽝'?e.res:e.n,adv=!!x.adv; // adv: 상세 설정 (켜면 모든 템에 계속)
+      form=`<div class="sx-sel">${ifr(itn,e)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${esc(nm(e.c))} · ${esc(BY[e.id].name)}${k.party>1?` · ${k.party}인`:''}</small></span></div>`;
+      if(bx)form+=`<div class="sx-bxr"><span class="bxl">${I.corner}${esc(e.n)}에서 나온 것</span><div class="bxo">${bx.opts.map(([kk,full])=>`<button type="button" class="${e.res===full?'on':''}${kk==='꽝'?' trash':''}" data-sxsub="${i}|${esc(full)}" title="${esc(full)}"><span class="bi">${kk==='꽝'?TRASH.replace(/13/g,'16'):(ITEM_ICONS[full]?`<img src="${ITEM_ICONS[full]}" alt="">`:I.gem)}</span>${esc(kk)}</button>`).join('')}</div></div>`;
       if(!e.pending&&e.res!=='꽝'){
         form+=`<div class="frow"><span class="flbl">처리</span>${seg(i,'sell',k.rot?'rot':k.sold?'sold':'keep',[['sold','판매함'],['keep','안 팜'],...(k.party>1?[['rot','순환 획득']]:[])])}</div>`;
-        form+=`<span class="sx-hint">${k.rot?'먹은 사람이 템을 통째로 가져가요. 순환 장부에 쌓여요.':k.sold?'판매 수수료'+(k.party>1?' + 파티원 교환 수수료':'')+'가 붙어요.':k.party>1?'가진 사람이 몫만큼 메소를 보내요. 교환 수수료만 붙어요.':'팔지 않고 가져요. 수수료 없이 시세로 계산해요.'}</span>`;
-        const spRow=()=>`<div class="frow"><span class="flbl">판매한 금액</span><input class="inp sx-spin num" type="text" inputmode="text" data-sxsp="${i}" value="${k.sp!=null?meso(k.sp):''}" placeholder="${e.price!=null?'예상가 '+meso(e.price):'예) 10억 2500만'}" aria-label="판매한 금액 (수수료 떼기 전)"></div><div class="sx-spv"><b class="num" data-sxspv></b><span>숫자 그대로 쳐도 돼요 · 수수료 떼기 전 금액 · 비우면 예상가</span></div>`;
-        if(k.sold)form+=`<div class="frow"><span class="flbl">판매 수수료</span>${seg(i,'fee',k.fee,[[SX_FEE.hi,`${SX_FEE.hi}%`],[SX_FEE.lo,`${SX_FEE.lo}%`]])}</div>`+spRow();
+        const spRow=()=>`<div class="frow"><span class="flbl">판매한 금액</span><input class="inp sx-spin num" type="text" inputmode="text" data-sxsp="${i}" value="${k.sp!=null?meso(k.sp):''}" placeholder="${e.price!=null?'예상가 '+meso(e.price):'예) 10억 2500만'}" aria-label="판매한 금액 (수수료 떼기 전)"></div><div class="sx-spv"><b class="num" data-sxspv></b></div>`;
+        // 기본 칸은 form, 상세 설정 칸은 advH, 정산 상자는 box → 순서: 기본 · [상세 설정 스위치 · 상세 칸] · 정산 상자
+        let advH='',box='';const feeRow=()=>`<div class="frow"><span class="flbl">판매 수수료</span>${seg(i,'fee',k.fee,[[SX_FEE.hi,`${SX_FEE.hi}%`],[SX_FEE.lo,`${SX_FEE.lo}%`]])}</div>`;
+        if(k.sold){form+=spRow();advH+=feeRow()}
         if(k.rot){const opts=[['me','나'],...Array.from({length:k.party-1},(_,j)=>['#'+j,k.pt?sxPMem(k.pt,j).name:sxMembers(e.c,e.id,k.party)[j].name])],who=k.taker;
           form+=`<div class="frow"><span class="flbl">먹은 사람</span>${opts.length<=4?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
             :`<label class="sel sx-tsel" style="margin-left:auto"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`;
           if(who==='me'){form+=`<div class="frow"><span class="flbl">그 다음</span>${seg(i,'after',k.rotSold?'sold':'keep',[['sold','팔았음'],['keep','안 팔았음']])}</div>`;
-            if(k.rotSold)form+=`<div class="frow"><span class="flbl">판매 수수료</span>${seg(i,'fee',k.fee,[[SX_FEE.hi,`${SX_FEE.hi}%`],[SX_FEE.lo,`${SX_FEE.lo}%`]])}</div>`+spRow()}
+            if(k.rotSold){form+=spRow();advH+=feeRow()}}
           const base=k.sp!=null?k.sp:e.price;
-          if(base!=null)form+=`<div class="sx-split"><div class="sx-sh"><span>${k.sp!=null?`판매가 ${M(k.sp)}`:`예상가 ${M(e.price)}`}</span><span>${who!=='me'?'순환 획득 · 파티원이 가져감':k.rotSold?`판매 수수료 ${k.fee}% · ${Mr(k.fees.sale)}`:'순환 획득 · 안 팔고 가짐'}</span></div><div class="sx-sr sx-sfee"><span>${who==='me'?'내가 가져감':'파티원이 가져감'}</span><b class="num" style="color:var(--price)!important">${who==='me'?M(k.v):'0'}</b></div></div>`}
+          if(base!=null)box+=`<div class="sx-split"><div class="sx-sh"><span>${k.sp!=null?`판매가 ${M(k.sp)}`:`예상가 ${M(e.price)}`}</span><span>${who!=='me'?'순환 획득 · 파티원이 가져감':k.rotSold?`판매 수수료 ${k.fee}% · ${Mr(k.fees.sale)}`:'순환 획득 · 안 팔고 가짐'}</span></div><div class="sx-sr sx-sfee"><span>${who==='me'?'내가 가져감':'파티원이 가져감'}</span><b class="num" style="color:var(--price)!important">${who==='me'?M(k.v):'0'}</b></div></div>`}
         else if(e.price!=null||k.sp!=null){
             const st=k.settle;
-            if(st)form+=`<div class="frow"><span class="flbl">${k.sold?'판 사람':'가진 사람'}</span>${seg(i,'seller',st.seller,[['me','나'],['party','파티원']])}</div>`;
-            form+=`<div class="sx-split"><div class="sx-sh"><span>${st?sxQ('settle'):''}${k.sp!=null?`판매가 ${M(k.sp)}${e.price!=null?` <small class="sx-z">예상 ${S(e.price)}</small>`:''}`:`예상가 ${M(e.price)}`}</span><span>${k.sold?`판매 후 ${Mr(k.net)}`:'안 팜 · 판매 수수료 없음'}</span></div>
-              ${st?(st.seller==='me'?st.give.map(g=>`<div class="sx-sr sx-stl${st.done?' done':''}"><span>${esc(g.name)}에게 줄 돈<small>받는 금액 ${Mr(g.recv)} · ${g.fee===SX_FEE.mp?'타섭 메포 1%':`교환 ${g.fee}%`}${g.tax?` · 관세 ${Mr(g.tax)} 따로`:''}</small></span><b class="num">${Mr(g.amt)}</b></div>`).join('')
-                :`<div class="sx-sr sx-stl get${st.done?' done':''}"><span>파티원에게 받을 돈<small>내 몫 ${sxP(k.cut*100)} · 수수료 뺀 금액</small></span><b class="num">${Mr(st.get)}</b></div>`)
+            if(st)advH+=`<div class="frow"><span class="flbl">${k.sold?'판 사람':'가진 사람'}</span>${seg(i,'seller',st.seller,[['me','나'],['party','파티원']])}</div>`;
+            if(k.ms&&k.ms.length)advH+=`<div class="sx-xf"><div class="sx-xfh"><span>보내는 방법</span><small>${k.pt?esc(sxPLabel(k.pt))+' 다음 템에도 그대로':'다음 템에도 그대로'}</small></div>
+              ${k.ms.map((mb,j)=>`<div class="sx-xm"><div class="frow"><span class="flbl sx-xfn">${esc(mb.name)} <small>교환 수수료</small></span>
+              <div class="sx-mseg">${[SX_FEE.hi,SX_FEE.lo].map(f=>`<button type="button" class="${mb.fee===f?'on':''}" data-sxxf="${i}|${j}|${f}">${f}%</button>`).join('')}</div></div>
+              <div class="frow sx-xsub"><span class="flbl">타섭</span><div class="sx-mseg">${[['','없음'],['mp','메포 1%'],['tax','관세 10%']].map(([v,l])=>`<button type="button" class="${(mb.xs||'')===v?'on':''}" data-sxxs="${i}|${j}|${v}">${l}</button>`).join('')}</div></div></div>`).join('')}
+</div>`;
+            box+=`<div class="sx-split">${adv?`<div class="sx-sh"><span>${st?sxQ('settle'):''}${k.sp!=null?`판매가 ${M(k.sp)}${e.price!=null?` <small class="sx-z">예상 ${S(e.price)}</small>`:''}`:`예상가 ${M(e.price)}`}</span><span>${k.sold?`판매 후 ${Mr(k.net)}`:'안 팜 · 판매 수수료 없음'}</span></div>`:''}
+              ${st?(st.seller==='me'?st.give.map(g=>`<div class="sx-sr sx-stl${st.done?' done':''}"><span>${esc(g.name)}에게 줄 돈${adv?`<small>받는 금액 ${Mr(g.recv)} · 교환 ${g.fee}%${g.tax?` · ${g.xs==='mp'?'메포 1%':'관세 10%'} ${Mr(g.tax)} 따로`:''}</small>`:''}</span><b class="num">${Mr(g.amt)}</b></div>`).join('')
+                :`<div class="sx-sr sx-stl get${st.done?' done':''}"><span>파티원에게 받을 돈${adv?`<small>내 몫 ${sxP(k.cut*100)} · 수수료 뺀 금액</small>`:''}</span><b class="num">${Mr(st.get)}</b></div>`)
                 +`<div class="sx-sr sx-sdone"><span>${st.done?'정산 끝났어요':'아직 정산 안 했어요'}</span><button type="button" class="tg-lbl" data-sxm="${i}|settled|${st.done?'0':'1'}" aria-pressed="${st.done}">정산 완료<span class="tg${st.done?' on':''}"></span></button></div>`
                 :k.rows.map(rw=>`<div class="sx-sr me"><span>나</span><b class="num">${Mr(rw.recv)}</b></div>`).join('')}
-              <div class="sx-sr sx-sfee"><span>발생한 수수료</span><b class="num">${Mr(k.fees.all)}</b></div>
-              <div class="sx-sfd">판매 ${Mr(k.fees.sale)}${k.party>1?` · 메소 교환 ${Mr(k.fees.xfer)}${k.fees.tax?` · 관세 ${Mr(k.fees.tax)}`:''}`:''}</div></div>`;
-            if(k.party>1)form+=sxHelpBox('settle')+`<span class="sx-hint">파티원마다 교환 수수료·관세는 파티 관리에서 정해요.</span>`}}
+              <div class="sx-sr sx-sfee"><span>수수료</span><b class="num">${Mr(k.fees.all)}</b></div>
+              ${adv?`<div class="sx-sfd">판매 ${Mr(k.fees.sale)}${k.party>1?` · 메소 교환 ${Mr(k.fees.xfer)}${k.fees.tax?` · 타섭 ${Mr(k.fees.tax)}`:''}`:''}</div>`:''}</div>`;
+            if(k.party>1&&adv)box+=sxHelpBox('settle')}
+        // 상세 설정 켜기/끄기 — 끈 동안은 지금 값을 한 줄로
+        const sum=[];if(k.sold||k.rotSold)sum.push(`판매 ${k.fee}%`);if(k.settle)sum.push(k.settle.seller==='me'?(k.sold?'내가 판매':'내가 가짐'):(k.sold?'파티원이 판매':'파티원이 가짐'));
+        if(!k.rot&&k.ms)k.ms.forEach(mb=>sum.push(`${mb.name} ${mb.fee}%${mb.xs==='mp'?'+메포':mb.xs==='tax'?'+관세':''}`));
+        if(advH)form+=`<div class="sx-advw"><div class="frow sx-advr"><span class="flbl">상세 설정</span>${adv?'':`<small class="sx-advs">${esc(sum.join(' · '))}</small>`}<button type="button" class="tg-lbl" data-sxadv aria-pressed="${adv}" aria-label="상세 설정"><span class="tg${adv?' on':''}"></span></button></div>${adv?`<div class="sx-advg">${advH}</div>`:''}</div>`;
+        form+=box}
       if(k.party>1)form+=`<button type="button" class="sx-item sx-golink" data-sxgop="${k.pt?k.pt.id:'__none'}">${sxPIcon([e.id])}<span class="sx-ln"><b>${k.pt?esc(sxPLabel(k.pt)):'파티 안 정함'}</b><small>파티 관리 · 파티원 · 몫 · 순환 장부</small></span>${I.caret('currentColor')}</button>`}
     sub=`<div class="fsec" style="border:0">${form}</div>`;
   }else if(x.lt==='party'){
@@ -2767,12 +2916,9 @@ function statsView(){
       else{const p=o.p,locked=o.sg.length>0;
         form=`<div class="sx-sel">${sxPIcon(ids(o))}<span class="sx-ln"><b>${esc(sxPLabel(p))}${o.on?'':o.sg.length?'<span class="sx-tag">지난 파티</span>':''}</b><small>${TKO[p.t||'W']} · ${sxPSize(p)}인${o.sg.length?` · ${sxPSpan(o.sg)}`:''}</small></span></div>
           <div class="frow"><span class="flbl">파티 이름</span><input class="inp sx-pname" type="text" maxlength="16" data-sxpnm="${p.id}" value="${esc(p.name||'')}" placeholder="${esc(sxPName({...p,name:''})||'예) 고정팟 (비워도 돼요)')}" aria-label="파티 이름"></div>
-          <div class="fhead" style="margin-top:6px"><b style="color:var(--text2)">파티원</b>${locked?`<span style="font-size:12px;color:var(--muted)">${sxPSize(p)}인</span>`:`<div class="cp-step sx-psz"><button type="button" data-sxpsz="${p.id}|-1" aria-label="파티원 줄이기" ${p.members.length<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${sxPSize(p)}</b>인</span><button type="button" data-sxpsz="${p.id}|1" aria-label="파티원 늘리기" ${p.members.length>=5?'disabled':''}>${I.plus()}</button></div>`}</div>
+<!--sec--><div class="fhead"><b style="color:var(--text2)">파티원</b>${locked?`<span style="font-size:12px;color:var(--muted)">${sxPSize(p)}인</span>`:`<div class="cp-step sx-psz"><button type="button" data-sxpsz="${p.id}|-1" aria-label="파티원 줄이기" ${p.members.length<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${sxPSize(p)}</b>인</span><button type="button" data-sxpsz="${p.id}|1" aria-label="파티원 늘리기" ${p.members.length>=5?'disabled':''}>${I.plus()}</button></div>`}</div>
           <div class="sx-mem">${p.members.map((_,j)=>{const mb=sxPMem(p,j);
-            return `<div class="sx-mrow"><input class="inp sx-mname" type="text" data-sxpmn="${p.id}|${j}" value="${esc((p.members[j].name||'').trim())}" placeholder="${esc(`파티원 ${j+1}`)}" aria-label="파티원 ${j+1} 이름">
-            <div class="sx-mseg">${[SX_FEE.hi,SX_FEE.lo].map(f=>`<button type="button" class="${mb.xs!=='mp'&&mb.fee===f?'on':''}" data-sxpmf="${p.id}|${j}|${f}" ${mb.xs==='mp'?'disabled':''}>${f}%</button>`).join('')}</div>
-            <label class="sel sx-xsel${mb.xs?' on':''}"><span class="t">${mb.xs==='mp'?'메포 1%':mb.xs==='tax'?'관세 10%':'같은 서버'}</span>${I.caret()}<select data-sxpmx="${p.id}|${j}" aria-label="파티원 ${j+1} 보내는 방법">${SX_XS.map(([v,l])=>`<option value="${v}"${mb.xs===v?' selected':''}>${l}</option>`).join('')}</select></label></div>`}).join('')}</div>
-          <span class="sx-hint">교환 수수료 5%·3% · 타섭이면 메이플포인트로 보내면 1%만, 타섭 경매장으로 보내면 관세 10%가 더 붙어요.</span>
+            return `<div class="sx-mrow"><input class="inp sx-mname" type="text" data-sxpmn="${p.id}|${j}" value="${esc((p.members[j].name||'').trim())}" placeholder="${esc(`파티원 ${j+1}`)}" aria-label="파티원 ${j+1} 이름"></div>`}).join('')}</div>
           <span class="sx-hint">${locked?'이름을 고치면 이 파티의 지난 기록에도 그대로 적용돼요. 사람이나 인원이 바뀌었으면 새 파티를 만들어 보스를 옮겨 주세요.':'보스를 넣기 전까지만 인원을 바꿀 수 있어요.'}</span>`;
         // 보스: 들어 있던 기간 · 몫 (누르면 펼침)
         const cand=[];VC.forEach(c=>sxLiveNow(c).forEach(sl=>{if(!BY[sl.boss]||(sl.party||1)!==sxPSize(p)||tOf(sl)!==(p.t||'W'))return;const cp=sxPartyAt(c,sl.boss,sxNowKey(tOf(sl)));if(cp!==p)cand.push({c,sl,cp})}));
@@ -2791,24 +2937,28 @@ function statsView(){
             ${sl.lshare!=null&&sl.party>=3?sxMemShares('l',c,sl):''}
             <button type="button" class="linkish sx-pout" data-sxpout="${c.id}|${sl.boss}">이번 ${tOf(sl)==='M'?'달':'주'}부터 이 파티에서 빼기</button>
           </div>`};
-        form+=`<div class="fhead" style="margin-top:12px"><b style="color:var(--text2)">보스</b><span class="sx-ddw"><button type="button" class="linkish sx-ddb" data-sxdd="padd|${p.id}" ${cand.length?'':'disabled'}>+ 보스 넣기 ${I.caret('currentColor')}</button>
+        form+=`<!--sec--><div class="fhead"><b style="color:var(--text2)">보스</b><span class="sx-ddw"><button type="button" class="linkish sx-ddb" data-sxdd="padd|${p.id}" ${cand.length?'':'disabled'}>+ 보스 넣기 ${I.caret('currentColor')}</button>
             ${sxDD===`padd|${p.id}`?`<div class="sx-dd">${cand.map(q=>`<button type="button" data-sxpadd="${p.id}|${q.c.id}|${q.sl.boss}"><span>${esc(BY[q.sl.boss].name)} · ${esc(nm(q.c))}</span><small>${q.cp?esc(sxPLabel(q.cp))+'에서 옮김':'새로'}</small></button>`).join('')}</div>`:''}</span></div>
           ${rows.length?`<div class="sx-pbl">${rows.map(bo=>{const k=bo.c.id+'|'+bo.id,open=x.pb===k,sl=sxLiveNow(bo.c).find(q=>q.boss===bo.id)||bo.c.slots.find(q=>q.boss===bo.id)||{boss:bo.id,diff:Object.keys(BY[bo.id].diffs)[0]},on=bo.sg.some(z=>!z.to);
             return `<div class="sx-pbw${open?' on':''}${on?'':' off'}"><button type="button" class="sx-pbr" data-sxpb="${esc(k)}" aria-expanded="${open}">${frame(sl,'s32')}<span class="sx-ln"><b>${esc(BY[bo.id].name)} ${sl.diff?dk(sl.diff):''}</b><small>${esc(nm(bo.c))} · ${bo.sg.map(z=>sxRangeTxt(z.from,z.to)).join(', ')}</small></span>${on?`<span class="sx-pbv"><span>결정 <b class="num">${sxP(sl.cshare!=null?+sl.cshare:100/sl.party)}</b></span><span>물욕 <b class="num">${sxP(sl.lshare!=null?+sl.lshare:100/sl.party)}</b></span></span>`:'<span class="sx-tag">끝남</span>'}${I.caret('currentColor')}</button>${open?det(bo):''}</div>`}).join('')}</div>`
             :`<span class="sx-hint">아직 넣은 보스가 없어요. ${cand.length?'+ 보스 넣기로 넣어 주세요.':`${sxPSize(p)}인으로 가는 보스가 없어요. 보스 설정에서 인원을 맞춰 주세요.`}</span>`}`;
         // 순환 장부 (처음부터 지금까지)
         const L2=o.L,amt=p.rot==='amount';
-        form+=`<div class="fhead" style="margin-top:12px"><b style="color:var(--text2)">순환 장부 <small class="sx-z" style="font-weight:400">전체 기간${L2.group.length>1?` · ${[...new Set(L2.group.map(q=>TKO[q.t||'W']))].join('·')} 합침`:''}</small></b><div class="sx-mseg" style="margin-left:0">${[['turn','순번'],['amount','금액']].map(([v,l])=>`<button type="button" class="${(p.rot||'turn')===v?'on':''}" data-sxprot="${p.id}|${v}">${l}</button>`).join('')}</div></div>`;
+        form+=`<!--sec--><div class="fhead"><b style="color:var(--text2)">순환 장부 <small class="sx-z" style="font-weight:400">전체 기간${L2.group.length>1?` · ${[...new Set(L2.group.map(q=>TKO[q.t||'W']))].join('·')} 합침`:''}</small></b><div class="sx-mseg" style="margin-left:0">${[['turn','순번'],['amount','금액']].map(([v,l])=>`<button type="button" class="${(p.rot||'turn')===v?'on':''}" data-sxprot="${p.id}|${v}">${l}</button>`).join('')}</div></div>`;
         if(L2.drops.length){const nxt=L2.next(amt);
           form+=`<div class="sx-ledger2"><div class="sx-lr sx-lh"><span>이름</span><span>먹은 템</span><span>${amt?'몫 대비':'몫 기준'}</span></div>
             ${L2.people.map(pp=>`<div class="sx-lr${pp.key==='me'?' me':''}${pp.key===nxt.key?' next':''}"><span>${esc(pp.name)}${pp.key===nxt.key?'<i>다음</i>':''}</span><span class="num">${pp.n}개 · ${S(pp.v)}</span><span class="num ${amt?(pp.v-pp.fair<0?'minus':'plus'):''}">${amt?`${pp.v-pp.fair<0?'−':'+'}${meso(Math.round(Math.abs(pp.v-pp.fair)/1e4)*1e4)||0}`:`${Math.round(pp.en*10)/10}개`}</span></div>`).join('')}
             <p>다음 드랍은 <b>${nxt.key==='me'?'내':esc(nxt.name)}</b> 차례 (${amt?'몫보다 덜 먹은 금액':'몫보다 덜 먹은 횟수'} 기준)</p></div>
-            <div class="sx-drops">${L2.drops.map(({e,persons,who})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n,opts=[['me','나'],...persons.map(pp=>[pp.key,pp.name])];
-              return `<div class="sx-drop">${ifr(itn)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.d)} · ${S(e.price)} · ${esc(BY[e.id].name)}${L2.group.length>1?` · ${TKO[e.k.pt.t||'W']}`:''}</small></span>${opts.length<=3?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
-                :`<label class="sel sx-tsel"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`}).join('')}</div>`}
+            ${(()=>{const PER=5,pages=Math.ceil(L2.drops.length/PER),pg=Math.min(Math.max(0,x.dpg||0),pages-1);
+              // 드랍 기록: 옥션처럼 쪽 나누기 (한 쪽 5개, 최신부터)
+              return `<div class="fhead sx-dh"><span>드랍 기록</span><span class="num">${L2.drops.length}개</span></div><div class="sx-drops">${L2.drops.slice(pg*PER,pg*PER+PER).map(({e,persons,who})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n,opts=[['me','나'],...persons.map(pp=>[pp.key,pp.name])];
+              return `<div class="sx-drop">${ifr(itn,e)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${S(e.price)} · ${esc(BY[e.id].name)}${L2.group.length>1?` · ${TKO[e.k.pt.t||'W']}`:''}</small></span>${opts.length<=3?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
+                :`<label class="sel sx-tsel"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`}).join('')}</div>
+              ${sxPager(L2.drops.length,PER,pg,'sxdpg')}`})()}`}
         else form+='<span class="sx-hint">순환 획득한 템이 아직 없어요. 물욕 관리에서 "순환 획득"으로 두면 여기 쌓여요.</span>';
         if(!o.sg.length)form+=`<button type="button" class="linkish sx-pdel" data-sxpdel="${p.id}">이 파티 지우기</button>`}}
-    sub=`<div class="fsec" style="border:0">${form}</div><div class="fsec" style="border:0;padding-top:0"><span class="sx-hint">솔로 보스는 분배 없이 전부 내 몫으로 계산해요.</span></div>`;
+    // 구역마다 점선으로 나눔 (보스 설정 폼처럼)
+    sub=form.split('<!--sec-->').map((h,n,a)=>`<div class="fsec"${n===a.length-1?' style="border:0"':''}>${h}</div>`).join('');
   }else{
     const per=c=>sum(everyone.clears.filter(e=>e.c===c&&sxIn(e.d,r)))+sum(everyone.loots.filter(e=>e.c===c&&sxIn(e.d,r))),tot=vis().reduce((t,c)=>t+per(c),0);
     const clist=[{id:'all',v:tot},...vis().map(c=>({id:c.id,c,v:per(c)}))].map(o=>`<button type="button" class="sx-crow${x.cid===o.id?' on':''}" data-sxc="${o.id}">${o.c?ava(o.c):`<span class="sx-all">${SX_ALL}</span>`}<span class="sx-cn"><b>${o.c?esc(nm(o.c)):'전체 캐릭터'}</b><small>${o.c?(cinfo(o.c)?`Lv.${esc(lvS(o.c))} | ${esc(o.c.job||'직업 미확인')}`:''):`${vis().length}명 합계`}</small></span><span class="sx-cv num">${o.v?S(o.v):'0'}</span></button>`).join('');
@@ -2861,6 +3011,14 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();
     set(()=>{const c=e.c;c.lootSub=c.lootSub||{};const m=c.lootSub[e.key]=c.lootSub[e.key]||{};if(m[e.n]===full)delete m[e.n];else m[e.n]=full})});
   v.querySelectorAll('[data-sxm]').forEach(b=>b.onclick=()=>{const[i,f,val]=b.dataset.sxm.split('|'),e=sxRows[+i];if(!e)return;
     set(()=>{const m=sxMeta(e);if(f==='fee')m.fee=+val;else m[f]=val})});
+  v.querySelectorAll('[data-sxadv]').forEach(b=>b.onclick=()=>set(()=>{x.adv=!x.adv}));
+  const xfSet=(i,j,fn)=>{const e=sxRows[+i];if(!e)return;set(()=>{const m=sxMeta(e),mb=(e.k.ms||[])[+j]||{};m.xf=m.xf||{};const o=m.xf[j]={fee:mb.fee,xs:mb.xs||''};fn(o);
+    const pm=e.k.pt?e.k.pt.members[+j]:(((e.c.dist||{})[e.id]||{}).members||[])[+j];if(!pm)return;
+    // 이 템보다 앞선 같은 파티 템은 지금까지 값으로 고정 (기본값이 바뀌어도 지난 정산은 그대로)
+    if(e.k.pt){const old={fee:pm.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,xs:sxXs(pm)};sxCollect(st.chars).loots.forEach(q=>{if(q.k.pt!==e.k.pt||q.d>=e.d||!q.k.ms)return;const m2=sxMeta(q);m2.xf=m2.xf||{};if(!m2.xf[j])m2.xf[j]={...old}})}
+    pm.fee=o.fee;pm.xs=o.xs;delete pm.tax})};
+  v.querySelectorAll('[data-sxxf]').forEach(b=>b.onclick=()=>{const[i,j,f]=b.dataset.sxxf.split('|');xfSet(i,j,o=>{o.fee=+f})});
+  v.querySelectorAll('[data-sxxs]').forEach(b=>b.onclick=()=>{const[i,j,v]=b.dataset.sxxs.split('|');xfSet(i,j,o=>{o.xs=v})});
   v.querySelectorAll('[data-sxsp]').forEach(inp=>{const e=sxRows[+inp.dataset.sxsp];if(!e)return;
     const commit=()=>{const val=sxMeso(inp.value);if(sxSpMsg(inp.value,val)&&inp.value.trim()){toast(sxSpMsg(inp.value,val));inp.value=sxMeta(e).sp!=null?meso(sxMeta(e).sp):'';pv.textContent='';pv.classList.remove('bad');return}const m=sxMeta(e);if((val||null)===(m.sp==null?null:m.sp))return;set(()=>{const m=sxMeta(e);if(val==null||!val)delete m.sp;else m.sp=val})};
     const pv=inp.closest('.frow').nextElementSibling.querySelector('[data-sxspv]');
@@ -2880,7 +3038,8 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();
     set(()=>{if(f==='lmode'){c.slots.forEach(s=>{if(s.boss===id)s.lmode=val})}else{c.dist=c.dist||{};const d=c.dist[id]=c.dist[id]||{};if(f==='tax')d.tax=!!val;else d[f]=val}})});
   const pick=(sel,fn)=>v.querySelectorAll(sel).forEach(r=>{r.onclick=()=>set(()=>fn(r));r.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();set(()=>fn(r))}}});
   pick('[data-sxpick]',r=>{const e=sxRows[+r.dataset.sxpick];if(e)x.lsel=sxRowKey(e)});
-  pick('[data-sxpsel]',r=>{if(x.psel!==r.dataset.sxpsel)x.pb=null;x.psel=r.dataset.sxpsel});
+  pick('[data-sxpsel]',r=>{if(x.psel!==r.dataset.sxpsel){x.pb=null;x.dpg=0}x.psel=r.dataset.sxpsel});
+  v.querySelectorAll('[data-sxdpg]').forEach(b=>b.onclick=()=>set(()=>{x.dpg=+b.dataset.sxdpg}));
   v.querySelectorAll('[data-sxgo]').forEach(b=>b.onclick=()=>set(()=>{x.lt='loot';x.lv='items';x.lf='all';x.lsel=b.dataset.sxgo}));
   v.querySelectorAll('[data-sxgop]').forEach(b=>b.onclick=()=>set(()=>{x.lt='party';x.psel=b.dataset.sxgop;x.pf='now';const p=sxPById(x.psel);if(p&&!sxSegs(p,vis()).some(z=>!z.to))x.pf='past';x.pb=null}));
   // 파티 관리
@@ -2912,7 +3071,8 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();
     set(()=>{const d=((c.dist=c.dist||{})[id]=c.dist[id]||{});d.pname=inp.value.trim().slice(0,16)})});
   v.querySelectorAll('[data-sxpt]').forEach(b=>b.onclick=()=>{const[cid,i,dlt]=b.dataset.sxpt.split('|'),sl=slotOf(cid,i);if(!sl)return;
     set(()=>{sl.party=Math.max(2,Math.min(6,(sl.party||1)+ +dlt))})});
-  v.querySelectorAll('[data-sxlf]').forEach(b=>b.onclick=()=>set(()=>{x.lf=b.dataset.sxlf}));
+  v.querySelectorAll('[data-sxlf]').forEach(b=>b.onclick=()=>set(()=>{x.lf=b.dataset.sxlf;x.lpg=0}));
+  v.querySelectorAll('[data-sxlpg]').forEach(b=>b.onclick=()=>{set(()=>{x.lpg=+b.dataset.sxlpg});const r=document.querySelector('[data-scroll^="sxr-loot"]');if(r)r.scrollTop=0});
   v.querySelectorAll('[data-sxt]').forEach(b=>b.onclick=()=>{const[cid,key,n,val]=b.dataset.sxt.split('::'),c=st.chars.find(c=>c.id===cid);if(!c)return;
     set(()=>{c.lootMeta=c.lootMeta||{};const k=c.lootMeta[key]=c.lootMeta[key]||{};(k[n]=k[n]||{}).taker=val})});
   v.querySelectorAll('[data-sxform]').forEach(b=>b.onclick=()=>set(()=>{x.form=b.dataset.sxform}));
@@ -2931,7 +3091,7 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();
   v.querySelectorAll('[data-sxpick-m]').forEach(b=>b.onclick=()=>{const f=b.dataset.sxpickM;sxCal=null;set(()=>{x.unit='M';x.off=mdiff(f,REAL)})});
   v.querySelectorAll('[data-sxpick-y]').forEach(b=>b.onclick=()=>{const y=+b.dataset.sxpickY;sxCal=null;set(()=>{x.unit='Y';x.off=y-+REAL.slice(0,4)})});
   v.querySelectorAll('[data-sxu]').forEach(b=>b.onclick=()=>set(()=>{x.unit=b.dataset.sxu;x.off=0}));
-  v.querySelectorAll('[data-sxo]').forEach(b=>b.onclick=()=>set(()=>{const d=+b.dataset.sxo;x.off=d===0?0:Math.min(0,x.off+d)}))}
+  v.querySelectorAll('[data-sxo]').forEach(b=>b.onclick=()=>set(()=>{x.lpg=0;const d=+b.dataset.sxo;x.off=d===0?0:Math.min(0,x.off+d)}))}
 // 수익 통계 탭에서 '바로 고르기' → 이 기간의 첫 미선택 상자
 function everyoneFirstPending(){const x=sxState(),r=sxRange(x),chars=x.cid==='all'?vis():st.chars.filter(c=>c.id===x.cid);
   return sxCollect(chars).loots.filter(e=>sxIn(e.d,r)&&e.pending).sort((a,b)=>a.d<b.d?1:-1)[0]}
