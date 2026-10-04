@@ -4,7 +4,9 @@
  *
  * 필요한 설정 (Cloudflare 대시보드 → 이 Worker → 설정 → 변수 및 비밀)
  *   NEXON_API_KEY   (비밀, 필수)  openapi.nexon.com에서 받은 API 키
- *   ALLOWED_ORIGINS (선택)        허용할 사이트 주소, 쉼표로 구분. 비워두면 모든 사이트 허용(테스트용)
+ *   ALLOWED_ORIGINS (선택)        넥슨 조회 응답에 CORS 허용 헤더를 붙일 다른 사이트 주소(쉼표로 구분). 비워두면 모두 허용.
+ *                                 ※ 요청 자체를 막지는 않음 — 막는 건 구글 로그인 + 남발 방지
+ *   RATE_* (선택)                 남발 방지 숫자 (아래). wrangler.toml의 keep_vars 덕분에 대시보드에서 넣은 값이 배포 뒤에도 남음
  *
  * 사이트(public 폴더)도 같이 올리면 이 Worker가 사이트와 API를 한 주소에서 같이 보여줌.
  *
@@ -27,14 +29,19 @@
  *
  * 캐릭터 조회(/api/character, /api/character/basic, /api/scheduler)는 구글 로그인한 사람만 쓸 수 있음
  *   남발 방지: 계정마다 1분 RATE_USER_MIN번 · 하루 RATE_USER_DAY번, 접속 주소(IP)마다 1분 RATE_IP_MIN번 (넘으면 429)
- *   기본값 60 · 3000 · 120 — 대시보드 변수로 바꿀 수 있음. /api/look(외형 그림)은 로그인 없이 되고 IP 제한만
+ *   기본값 60 · 3000 · 120 — 대시보드 변수로 바꿀 수 있음. /api/look(외형 그림)은 로그인 없이 되고 IP 제한만 (따로 1분 RATE_LOOK_MIN번, 기본 600)
+ *   RATE_SITE_DAY를 넣으면 사이트 전체 하루 조회도 그 수에서 멈춤 (넥슨 개발 키 동안 450 추천). 하루는 한국 시간 자정에 바뀜
+ *   그 밖에 로그인은 주소마다 1분 20번, 기록 저장은 계정마다 1분 40번
  *
  * 물욕 시세 (D1 데이터베이스 DB, 비밀값 ADMIN_PASSWORD 필요 — 없으면 시세 고치기는 꺼짐)
  *   GET  /api/loot-prices            날짜별 시세 전체  { hist:[{ d:'2026.10.03', p:{ 템이름: 억 } }] } (누구나)
+ *                                    관리 화면은 '한 벌 시세'(d=2000.01.01)만 저장하고, 저장할 때 예전 날짜 행은 지움
  *   POST /api/admin/login            { password } 비밀번호 확인
- *   POST /api/admin/prices           { password, d, p } 그 날짜 시세를 통째로 저장 (있으면 바꿈)
- *   POST /api/admin/delete           { password, d } 그 날짜 시세 지우기
- *   관리 화면: /admin  (비밀번호를 5번 틀리면 그 주소에서 15분 동안 막힘)
+ *   POST /api/admin/prices           { d, p } 그 날짜 시세를 통째로 저장 (빈 목록은 거절)
+ *   POST /api/admin/delete           { d } 그 날짜 시세 지우기 (관리 쿠키 또는 password 필요)
+ *   POST /api/admin/logout           관리 쿠키 지우기
+ *   관리 화면: /admin  (비밀번호를 5번 틀리면 그 주소에서 15분, 사이트 전체로 1시간에 30번 넘게 틀리면 막힘.
+ *                      맞으면 30분짜리 관리 쿠키를 줘서 그동안은 비밀번호 없이 저장 — 비밀번호는 브라우저에 안 남김)
  */
 
 const NEXON = 'https://open.api.nexon.com/maplestory/v1/';
@@ -87,13 +94,16 @@ export default {
 
     // 외형 이미지는 키가 필요 없음. 넥슨 외형 이미지 주소만 받아서 그대로 전달
     if (url.pathname === '/api/look') {
-      const u = url.searchParams.get('u') || '';
-      if (!u.startsWith('https://open.api.nexon.com/static/maplestory/character/look/')) return fail(400, 'BAD_URL', '외형 이미지 주소가 아니에요', cors);
-      const r = await fetch(u);
-      if (!r.ok) return fail(r.status, 'LOOK', '외형 이미지를 불러오지 못했어요', cors);
+      // 주소를 정리(../ 풀기)한 뒤 넥슨 외형 이미지 경로인지 확인하고, 이미지 응답만 통과 (V2)
+      let lu; try { lu = new URL(url.searchParams.get('u') || ''); } catch { return fail(400, 'BAD_URL', '외형 이미지 주소가 아니에요', cors); }
+      if (lu.protocol !== 'https:' || lu.host !== 'open.api.nexon.com' || !lu.pathname.startsWith('/static/maplestory/character/look/') || lu.username || lu.password)
+        return fail(400, 'BAD_URL', '외형 이미지 주소가 아니에요', cors);
+      let r; try { r = await fetch(lu.toString(), { redirect: 'error' }); } catch { return fail(502, 'LOOK', '외형 이미지를 불러오지 못했어요', cors); }
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok || !/^image\//.test(ct)) return fail(r.ok ? 502 : r.status, 'LOOK', '외형 이미지를 불러오지 못했어요', cors);
       return new Response(r.body, {
         status: 200,
-        headers: { ...cors, 'content-type': r.headers.get('content-type') || 'image/png', 'cache-control': 'public, max-age=86400' },
+        headers: { ...cors, 'content-type': ct, 'cache-control': 'public, max-age=86400', 'x-content-type-options': 'nosniff' },
       });
     }
     if (!env.NEXON_API_KEY) return fail(500, 'NO_KEY', '서버에 NEXON_API_KEY가 설정되지 않았어요', cors);
@@ -231,6 +241,8 @@ async function account(req, env, url) {
   await ensureSchema(env.DB);
 
   if (p === '/api/auth/google' && m === 'POST') {
+    await ensureRateSchema(env.DB);
+    await hit(env.DB, 'login:' + (req.headers.get('CF-Connecting-IP') || 'unknown'), 60, 20, '로그인을 너무 자주 했어요'); // (V7)
     const body = await readJson(req, 16 * 1024);
     const claims = await verifyGoogleIdToken(String(body.credential || ''), env.GOOGLE_CLIENT_ID);
     const now = new Date().toISOString();
@@ -264,6 +276,8 @@ async function account(req, env, url) {
     return json(row ? { data: JSON.parse(row.data), rev: row.rev, updatedAt: row.updated_at } : { data: null, rev: 0, updatedAt: null }, 200, noStore());
   }
   if (p === '/api/state' && m === 'PUT') {
+    await ensureRateSchema(env.DB);
+    await hit(env.DB, 'save:' + me.id, 60, 40, '저장을 너무 자주 했어요'); // 정상 사용은 1분에 몇 번 (V7)
     const text = await req.text();
     if (text.length > MAX_STATE) throw new HttpError(413, 'TOO_BIG', '기록이 너무 커서 저장하지 못했어요');
     let body; try { body = JSON.parse(text); } catch { throw new HttpError(400, 'JSON', '잘못된 요청이에요'); }
@@ -272,7 +286,7 @@ async function account(req, env, url) {
     const data = JSON.stringify(body.data), now = new Date().toISOString();
     // rev가 같을 때만 저장 (다른 기기에서 먼저 저장했으면 덮어쓰지 않음)
     const r = base === 0
-      ? await env.DB.prepare('INSERT INTO user_state (user_id, data, rev, updated_at) VALUES (?1, ?2, 1, ?3) ON CONFLICT(user_id) DO NOTHING').bind(me.id, data, now).run()
+      ? await env.DB.prepare('INSERT INTO user_state (user_id, data, rev, updated_at) SELECT ?1, ?2, 1, ?3 WHERE EXISTS (SELECT 1 FROM users WHERE id = ?1) ON CONFLICT(user_id) DO NOTHING').bind(me.id, data, now).run() // 계정을 막 지운 뒤 들어온 저장은 안 남김 (V8)
       : await env.DB.prepare('UPDATE user_state SET data = ?2, rev = rev + 1, updated_at = ?3 WHERE user_id = ?1 AND rev = ?4').bind(me.id, data, now, base).run();
     if (!r.meta || !r.meta.changes) {
       const row = await env.DB.prepare('SELECT data, rev, updated_at FROM user_state WHERE user_id = ?1').bind(me.id).first();
@@ -298,18 +312,27 @@ async function guardNexon(req, env, needLogin) {
   await ensureRateSchema(env.DB);
   const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
   const lim = (k, d) => { const n = parseInt(env[k], 10); return n > 0 ? n : d; };
+  // 외형 그림(/api/look)은 따로 셈: 캐릭터가 많아도 그림 때문에 캐릭터 조회가 막히지 않게
+  if (!needLogin) { await hit(env.DB, 'ipl:' + ip, 60, lim('RATE_LOOK_MIN', 600), '외형 그림 요청이 너무 많아요'); return; }
   await hit(env.DB, 'ip:' + ip, 60, lim('RATE_IP_MIN', 120), '이 접속 주소에서 요청이 너무 많아요');
-  if (!needLogin) return;
   if (!env.GOOGLE_CLIENT_ID) throw new HttpError(503, 'NO_AUTH', '로그인 기능이 아직 설정되지 않아서 조회할 수 없어요');
   await ensureSchema(env.DB);
   const me = await sessionUser(req, env);
   if (!me) throw new HttpError(401, 'LOGIN', '구글 계정으로 로그인해야 캐릭터를 조회할 수 있어요');
   await hit(env.DB, 'u:' + me.id, 60, lim('RATE_USER_MIN', 60), '조회를 너무 자주 했어요');
   await hit(env.DB, 'ud:' + me.id, 86400, lim('RATE_USER_DAY', 3000), '오늘 조회 횟수를 다 썼어요');
+  // 사이트 전체 하루 한도 (넣었을 때만): 넥슨 개발 키(하루 1,000건) 동안 한 사람이 다 써 버리는 걸 막음 (V3)
+  const site = parseInt(env.RATE_SITE_DAY, 10);
+  if (site > 0) await hit(env.DB, 'site', 86400, site, '오늘 사이트 전체 조회 한도를 다 썼어요');
 }
 // 고정 시간 칸(초)마다 횟수 세기. 넘으면 429 + 몇 초 뒤 다시
 async function hit(db, key, sec, max, msg) {
-  const now = Math.floor(Date.now() / 1000), win = Math.floor(now / sec), k = `${key}:${sec}:${win}`, reset = (win + 1) * sec;
+  // 하루 칸은 한국 시간 자정에 바뀜 (예전엔 UTC 자정 = 오전 9시) (V11)
+  const off = sec >= 86400 ? 9 * 3600 : 0;
+  const now = Math.floor(Date.now() / 1000), win = Math.floor((now + off) / sec), k = `${key}:${sec}:${win}`, reset = (win + 1) * sec - off;
+  // 이미 한도를 넘은 칸이면 DB에 쓰지 않고 바로 거절 (무료 쓰기 한도 아끼기, V7)
+  const cur = await db.prepare('SELECT n FROM api_rate WHERE k = ?1').bind(k).first();
+  if (cur && cur.n >= max) { const wait = reset - now, e = new HttpError(429, 'RATE', `${msg}. ${wait >= 3600 ? Math.ceil(wait / 3600) + '시간' : wait >= 60 ? Math.ceil(wait / 60) + '분' : wait + '초'} 뒤에 다시 시도해 주세요`); e.retry = wait; throw e; }
   const row = await db.prepare('INSERT INTO api_rate (k, n, reset) VALUES (?1, 1, ?2) ON CONFLICT(k) DO UPDATE SET n = n + 1 RETURNING n').bind(k, reset).first();
   if (Math.random() < 0.02) await db.prepare('DELETE FROM api_rate WHERE reset < ?1').bind(now).run(); // 지난 칸 가끔 청소
   if (row && row.n > max) {
@@ -345,49 +368,94 @@ async function lootPrices(req, env, url, cors) {
   if (origin && origin !== url.origin) throw new HttpError(403, 'ORIGIN', '다른 사이트에서는 요청할 수 없어요');
 
   const body = await readJson(req, 64 * 1024);
-  await checkAdmin(req, env, String(body.password || ''));
+  if (p === '/api/admin/logout') return json({ ok: true }, 200, { ...noStore(), 'set-cookie': adminCookie('', 0) });
+  const viaCookie = await adminCookieOk(req, env);
+  if (!viaCookie && !body.password) throw new HttpError(401, 'LOGIN', '다시 로그인해 주세요 (관리 쿠키가 없거나 30분이 지났어요)'); // 틀린 횟수에 안 셈
+  if (!viaCookie) await checkAdmin(req, env, typeof body.password === 'string' ? body.password : '');
+  // 비밀번호로 들어오면 30분짜리 관리 쿠키를 줌 (비밀번호는 브라우저에 남기지 않음)
+  const keep = viaCookie ? {} : { 'set-cookie': adminCookie(await adminToken(env, Date.now() + ADMIN_COOKIE_MIN * 60000), ADMIN_COOKIE_MIN * 60) };
 
-  if (p === '/api/admin/login') return json({ ok: true }, 200, noStore());
+  if (p === '/api/admin/login') return json({ ok: true, min: ADMIN_COOKIE_MIN }, 200, { ...noStore(), ...keep });
   const d = String(body.d || '');
-  if (!/^\d{4}\.(0[1-9]|1[0-2])\.(0[1-9]|[12]\d|3[01])$/.test(d)) throw new HttpError(400, 'DATE', '날짜는 2026.10.03 모양으로 적어 주세요');
+  if (!validDay(d)) throw new HttpError(400, 'DATE', '날짜는 2026.10.03 모양으로 적어 주세요');
 
   if (p === '/api/admin/prices') {
-    const src = body.p && typeof body.p === 'object' ? body.p : null;
+    const src = body.p && typeof body.p === 'object' && !Array.isArray(body.p) ? body.p : null;
     if (!src) throw new HttpError(400, 'PRICES', '저장할 시세가 없어요');
-    const rows = [];
+    const rows = [], seen = new Set();
     for (const [item, v] of Object.entries(src)) {
-      const name = String(item).trim(), n = Number(v);
+      const name = String(item).replace(/\s+/g, ' ').trim(); // 공백만 다른 같은 이름은 하나로 (V5)
       if (!name || name.length > 60) throw new HttpError(400, 'ITEM', '템 이름이 이상해요: ' + name.slice(0, 20));
-      if (v === null || v === '' ) continue; // 빈 칸은 저장 안 함
-      if (!Number.isFinite(n) || n < 0 || n > 100000) throw new HttpError(400, 'PRICE', `${name} 시세가 이상해요 (억 단위 숫자)`);
-      rows.push([name, Math.round(n * 1000) / 1000]);
+      if (v === null || v === '') continue; // 빈 칸은 저장 안 함
+      // 숫자만 받기: 0x10·true·공백 같은 건 거절 (V6)
+      const n = typeof v === 'number' ? v : typeof v === 'string' && /^\s*\d+(\.\d+)?\s*$/.test(v) ? Number(v) : NaN;
+      if (!Number.isFinite(n)) throw new HttpError(400, 'PRICE', `${name} 시세가 숫자가 아니에요 (억 단위 숫자)`);
+      if (n < 0) throw new HttpError(400, 'PRICE', `${name} 시세가 0보다 작아요`);
+      if (n > 100000) throw new HttpError(400, 'PRICE', `${name} 시세가 너무 커요 (억 단위, 10만 억까지)`);
+      if (seen.has(name)) throw new HttpError(400, 'ITEM', `${name}이(가) 두 번 들어 있어요`);
+      seen.add(name); rows.push([name, Math.round(n * 1000) / 1000]);
     }
+    if (!rows.length) throw new HttpError(400, 'EMPTY', '저장할 시세가 없어요. 모두 지우려면 "저장한 값 지우기"를 써 주세요'); // 빈 목록으로 통째로 지워지는 것 막기 (V6)
     if (rows.length > PRICE_MAX_ITEMS) throw new HttpError(400, 'TOO_MANY', '템이 너무 많아요');
     const now = new Date().toISOString();
     await env.DB.batch([
-      env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d),
+      // 한 벌 시세를 저장하면 예전에 쌓인 날짜 행도 같이 지움 — 날짜 행이 남아 있으면 그 값이 이겨서 저장해도 안 바뀌던 문제 (V4)
+      d === ALL_DAY ? env.DB.prepare('DELETE FROM loot_prices') : env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d),
       ...rows.map(([name, n]) => env.DB.prepare('INSERT INTO loot_prices (d, item, price, updated_at) VALUES (?1, ?2, ?3, ?4)').bind(d, name, n, now)),
     ]);
-    return json({ ok: true, d, count: rows.length }, 200, noStore());
+    return json({ ok: true, d, count: rows.length }, 200, { ...noStore(), ...keep });
   }
   if (p === '/api/admin/delete') {
-    await env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d).run();
-    return json({ ok: true, d }, 200, noStore());
+    await (d === ALL_DAY ? env.DB.prepare('DELETE FROM loot_prices') : env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d)).run();
+    return json({ ok: true, d }, 200, { ...noStore(), ...keep });
   }
   throw new HttpError(404, 'NOT_FOUND', '없는 주소예요');
 }
 
-// 비밀번호 확인 + 많이 틀리면 잠깐 막기 (주소마다)
+// 날짜 칸: 관리 화면의 '한 벌 시세'(2000.01.01) 또는 실제 있는 날짜만 (2026.02.31 같은 건 거절, V6)
+const ALL_DAY = '2000.01.01'; // 관리 화면이 저장하는 '모든 날짜에 쓰는 한 벌 시세' 칸
+function validDay(d) {
+  if (d === ALL_DAY) return true;
+  const m = /^(\d{4})\.(\d{2})\.(\d{2})$/.exec(d); if (!m) return false;
+  const t = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return t.getUTCFullYear() === +m[1] && t.getUTCMonth() === +m[2] - 1 && t.getUTCDate() === +m[3];
+}
+// 비밀번호 확인 + 많이 틀리면 잠깐 막기
+//  · 비밀번호를 비교하기 전에 시도 횟수부터 올림 → 한꺼번에 여러 개를 보내도 하나씩 셈 (V1)
+//  · 주소(IP)마다 15분에 5번, 사이트 전체로 1시간에 30번 넘게 틀리면 막힘 (주소를 바꿔 가며 시도하는 것도 막음)
+const FAIL_ALL = 30, FAIL_ALL_MIN = 60;
 async function checkAdmin(req, env, password) {
   const ip = req.headers.get('CF-Connecting-IP') || 'unknown', now = Date.now();
-  const row = await env.DB.prepare('SELECT n, until FROM admin_fail WHERE ip = ?1').bind(ip).first();
-  if (row && row.until && row.until > now) throw new HttpError(429, 'LOCKED', `비밀번호를 여러 번 틀려서 ${Math.ceil((row.until - now) / 60000)}분 동안 막혔어요`);
-  const ok = password && (await sha256(password)) === (await sha256(String(env.ADMIN_PASSWORD)));
-  if (ok) { if (row) await env.DB.prepare('DELETE FROM admin_fail WHERE ip = ?1').bind(ip).run(); return; }
-  const n = (row && !(row.until && row.until <= now) ? row.n : 0) + 1, lock = n >= FAIL_LIMIT;
-  await env.DB.prepare('INSERT INTO admin_fail (ip, n, until) VALUES (?1, ?2, ?3) ON CONFLICT(ip) DO UPDATE SET n = ?2, until = ?3')
-    .bind(ip, lock ? 0 : n, lock ? now + FAIL_LOCK_MIN * 60000 : 0).run();
-  throw new HttpError(401, 'PASSWORD', lock ? `비밀번호를 ${FAIL_LIMIT}번 틀려서 ${FAIL_LOCK_MIN}분 동안 막혔어요` : `비밀번호가 달라요 (${n}/${FAIL_LIMIT})`);
+  const bump = (k, min) => env.DB.prepare(
+    `INSERT INTO admin_fail (ip, n, until) VALUES (?1, 1, ?2)
+     ON CONFLICT(ip) DO UPDATE SET n = CASE WHEN until <= ?3 THEN 1 ELSE n + 1 END, until = CASE WHEN until <= ?3 THEN ?2 ELSE until END
+     RETURNING n, until`).bind(k, now + min * 60000, now).first();
+  if (Math.random() < 0.05) await env.DB.prepare("DELETE FROM admin_fail WHERE until < ?1 AND ip != '*'").bind(now - 864e5).run(); // 하루 지난 실패 기록 정리 (V8)
+  const me = await bump(ip, FAIL_LOCK_MIN);
+  if (me.n > FAIL_LIMIT) throw new HttpError(429, 'LOCKED', `비밀번호를 여러 번 틀려서 ${Math.ceil((me.until - now) / 60000)}분 동안 막혔어요`);
+  const all = await bump('*', FAIL_ALL_MIN);
+  if (all.n > FAIL_ALL) throw new HttpError(429, 'LOCKED', `관리 로그인 시도가 너무 많아서 ${Math.ceil((all.until - now) / 60000)}분 동안 막혔어요`);
+  const ok = password.length > 0 && password.length <= 200 && (await sha256(password)) === (await sha256(String(env.ADMIN_PASSWORD)));
+  if (ok) { // 맞으면 이번 시도는 빼 줌
+    await env.DB.batch([env.DB.prepare('DELETE FROM admin_fail WHERE ip = ?1').bind(ip), env.DB.prepare("UPDATE admin_fail SET n = MAX(n - 1, 0) WHERE ip = '*'")]);
+    return;
+  }
+  const left = FAIL_LIMIT - me.n;
+  throw new HttpError(401, 'PASSWORD', left <= 0 ? `비밀번호를 ${FAIL_LIMIT}번 틀려서 ${FAIL_LOCK_MIN}분 동안 막혔어요` : `비밀번호가 달라요 (${me.n}/${FAIL_LIMIT})`);
+}
+// 30분 관리 쿠키: 만료 시각 + 서명(관리 비밀번호로 만든 HMAC). 비밀번호를 바꾸면 예전 쿠키는 저절로 무효 (V9)
+const ADMIN_COOKIE = 'mepuri_admin', ADMIN_COOKIE_MIN = 30;
+const adminCookie = (v, maxAge) => `${ADMIN_COOKIE}=${v}; Path=/api/admin/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`;
+async function adminSig(env, exp) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode('mepuri-admin|' + String(env.ADMIN_PASSWORD)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return b64url(new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(String(exp)))));
+}
+async function adminToken(env, exp) { return exp + '.' + await adminSig(env, exp); }
+async function adminCookieOk(req, env) {
+  const v = readCookie(req, ADMIN_COOKIE); if (!v) return false;
+  const [exp, sig] = v.split('.'); const e = Number(exp);
+  if (!Number.isFinite(e) || e < Date.now() || e > Date.now() + ADMIN_COOKIE_MIN * 60000 + 60000 || !sig) return false;
+  return sig === await adminSig(env, e);
 }
 
 let priceSchemaReady = false;
@@ -443,7 +511,9 @@ function readCookie(req, name) {
 async function readJson(req, max) {
   const text = await req.text();
   if (text.length > max) throw new HttpError(413, 'TOO_BIG', '요청이 너무 커요');
-  try { return JSON.parse(text); } catch { throw new HttpError(400, 'JSON', '잘못된 요청이에요'); }
+  let o; try { o = JSON.parse(text || '{}'); } catch { throw new HttpError(400, 'JSON', '잘못된 요청이에요'); }
+  if (!o || typeof o !== 'object' || Array.isArray(o)) throw new HttpError(400, 'JSON', '잘못된 요청이에요'); // null·숫자·배열 막기 (V5)
+  return o;
 }
 
 function randomToken() {

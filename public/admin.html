@@ -166,7 +166,7 @@ const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&
 const fmt=v=>v==null||v===''?'':String(+v);
 const BASE=Object.assign({},...BUILTIN.map(s=>s.p)); // 템마다 가장 최근 기본 시세
 const S={pw:'',ok:false,srv:{},vals:{},extra:[],arm:false,busy:false,paste:false,f:'all',sort:'price',q:''};
-try{S.pw=sessionStorage.getItem('mepuri-admin')||'';const o=JSON.parse(localStorage.getItem('mepuri-admin-view')||'{}');if(o.sort)S.sort=o.sort}catch(e){}
+try{sessionStorage.removeItem('mepuri-admin');const o=JSON.parse(localStorage.getItem('mepuri-admin-view')||'{}');if(o.sort)S.sort=o.sort}catch(e){}
 
 // ── 서버 ──
 let demoDB=null;
@@ -174,14 +174,15 @@ async function api(path,body){
   if(DEMO){ // 테스트: 메모리에서 흉내
     if(!demoDB)demoDB=new Map();
     if(path==='/api/loot-prices')return {hist:[...demoDB].map(([d,p])=>({d,p}))};
-    if(body.password!=='test')throw new Error('비밀번호가 달라요 (테스트 비밀번호: test)');
+    if(path==='/api/admin/logout'){demoDB.ck=false;return {ok:true}}
+    if(!demoDB.ck){if(body.password!=='test'){const e=new Error(body.password?'비밀번호가 달라요 (테스트 비밀번호: test)':'로그인해 주세요');e.status=401;throw e}demoDB.ck=true}
     if(path==='/api/admin/login')return {ok:true};
     if(path==='/api/admin/prices'){const p={};Object.entries(body.p).forEach(([k,v])=>{if(v!==''&&v!=null)p[k]=+v});demoDB.set(body.d,p);return {ok:true,count:Object.keys(p).length}}
     if(path==='/api/admin/delete'){demoDB.delete(body.d);return {ok:true}}
   }
   const r=await fetch(path,body?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),cache:'no-store'}:{cache:'no-store'});
   let j=null;try{j=await r.json()}catch(e){}
-  if(!r.ok)throw new Error((j&&j.error&&j.error.message)||('서버 오류 '+r.status));
+  if(!r.ok){const e=new Error((j&&j.error&&j.error.message)||('서버 오류 '+r.status));e.status=r.status;throw e}
   return j;
 }
 async function refresh(){try{const j=await api('/api/loot-prices');const h=(j&&j.hist)||[];S.srv=Object.assign({},...h.sort((a,b)=>a.d<b.d?-1:1).map(s=>s.p))}catch(e){toast('시세를 불러오지 못했어요: '+e.message)}}
@@ -212,8 +213,8 @@ function rowHTML(n){const v=S.vals[n]??'',c=v!==saved(n),np=v==='',ni=noIcon(n);
 function render(){
   const app=$('#app');
   const demo=DEMO?'<div class="demo">테스트 화면이에요. 서버 없이 이 창 안에서만 저장돼요. 비밀번호는 <b>test</b>.</div>':'';
-  if(!S.ok){app.innerHTML=demo+`<div class="card"><form class="row" id="lf"><span class="lbl">비밀번호</span><input class="inp" id="pw" type="password" autocomplete="current-password" style="flex:1;min-width:160px" value="${esc(S.pw)}"><button class="btn pri" ${S.busy?'disabled':''}>확인</button></form><p class="hint" style="margin:8px 0 0">비밀번호를 넣으면 물욕 시세를 고칠 수 있어요. 시세는 억 메소 단위예요.</p></div>`;
-    $('#lf').onsubmit=async e=>{e.preventDefault();S.pw=$('#pw').value;S.busy=true;render();try{await api('/api/admin/login',{password:S.pw});S.ok=true;try{sessionStorage.setItem('mepuri-admin',S.pw)}catch(e){}await refresh();loadVals()}catch(err){toast(err.message)}S.busy=false;render()};
+  if(!S.ok){app.innerHTML=demo+`<div class="card"><form class="row" id="lf"><span class="lbl">비밀번호</span><input class="inp" id="pw" type="password" autocomplete="current-password" style="flex:1;min-width:160px"><button class="btn pri" ${S.busy?'disabled':''}>확인</button></form><p class="hint" style="margin:8px 0 0">${S.exp?'30분이 지나서 다시 로그인해 주세요. ':''}비밀번호를 넣으면 30분 동안 물욕 시세를 고칠 수 있어요. 비밀번호는 이 브라우저에 남기지 않아요. 시세는 억 메소 단위예요.</p></div>`;
+    $('#lf').onsubmit=async e=>{e.preventDefault();const pw=$('#pw').value;S.busy=true;render();try{await api('/api/admin/login',{password:pw});const had=Object.keys(S.vals).length>0;S.ok=true;S.exp=false;await refresh();if(!had)loadVals() /* 시간이 지나 다시 들어온 거면 고치던 값은 그대로 */}catch(err){toast(err.message)}S.busy=false;render()};
     return}
   const all=allNames(),cNop=all.filter(noPrice).length,cNoi=all.filter(noIcon).length,cChg=all.filter(n=>(S.vals[n]??'')!==saved(n)).length,srvOn=Object.keys(S.srv).length>0;
   if(S.reorder||!S.order){S.order=shownNames();S.reorder=false} // 값을 고칠 때는 줄이 움직이지 않게 순서 고정
@@ -239,13 +240,15 @@ function render(){
     catch(e){t.split(/\n/).forEach(l=>{if(!l.trim())return;const m=l.trim().match(/^(.+?)\s*[:=\t,]?\s*([\d.,]+)\s*억?$/);if(!m){bad.push(l);return}const n=m[1].trim().replace(/[:=,]$/,'').trim(),x=parseV(m[2]);if(!n||Number.isNaN(x)){bad.push(l);return}put(n,x)})}
     S.reorder=true;render();toast(`${k}개 넣었어요${bad.length?` · 못 읽은 줄 ${bad.length}개`:''}`)};
   if($('#del'))$('#del').onclick=async()=>{if(!S.arm){S.arm=true;render();setTimeout(()=>{if(S.arm){S.arm=false;render()}},3000);return}
-    try{await api('/api/admin/delete',{password:S.pw,d:ALL_KEY});toast('저장한 값을 지웠어요. 사이트는 페이지의 비상용 시세로 돌아가요');await refresh();loadVals()}catch(e){toast(e.message)}render()};
+    try{await api('/api/admin/delete',{d:ALL_KEY});toast('저장한 값을 지웠어요. 사이트는 페이지의 비상용 시세로 돌아가요');await refresh();loadVals()}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}render()};
   $('#save').onclick=async()=>{const p={},bad=[];Object.entries(S.vals).forEach(([n,v])=>{if(v==='')return;const x=parseV(v);if(Number.isNaN(x))bad.push(n);else p[n]=x});
     if(bad.length){toast(`숫자가 아닌 칸이 있어요: ${bad[0]}`);return}
     if(!Object.keys(p).length){toast('저장할 시세가 없어요');return}
-    S.busy=true;render();try{const r=await api('/api/admin/prices',{password:S.pw,d:ALL_KEY,p});toast(`시세 ${r.count}개를 저장했어요 · 모든 날짜에 적용돼요`);await refresh();loadVals()}catch(e){toast(e.message)}S.busy=false;render()};
+    S.busy=true;render();try{const r=await api('/api/admin/prices',{d:ALL_KEY,p});toast(`시세 ${r.count}개를 저장했어요 · 모든 날짜에 적용돼요`);await refresh();loadVals()}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}S.busy=false;render()};
 }
 function bindRows(){document.querySelectorAll('#rows .inp').forEach(i=>{i.oninput=()=>{S.vals[i.dataset.n]=i.value.trim()};i.onchange=()=>{const y=window.scrollY;render();window.scrollTo(0,y)}})}
+// 30분 관리 쿠키가 남아 있으면 바로 들어감
+(async()=>{if(!DEMO){try{await api('/api/admin/login',{});S.ok=true;await refresh();loadVals()}catch(e){}}render()})();
 render();
 </script>
 </body>
