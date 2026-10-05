@@ -360,6 +360,12 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .cp-l{font-size:12px;font-weight:500;color:var(--muted)}
 .cfgp .sel{height:30px}
 .cp-seg{height:30px;padding:3px;gap:2px}.cp-seg button{font-size:12px;font-weight:700}
+.mchip{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 6px 0 10px;border-radius:999px;border:1px solid var(--input-bd);background:var(--card);font-size:13px;font-weight:600;color:var(--text);max-width:100%}
+.mchip.me{padding-right:10px;background:var(--accent-soft,#FFF3E8);border-color:var(--accent);color:var(--accent);font-weight:700}
+.mchip.anon{border-style:dashed;color:var(--muted);font-weight:500}
+.mrows{display:flex;flex-direction:column;gap:6px;margin-top:8px;min-width:0}.mrow{display:flex;align-items:center;gap:10px;min-width:0}
+.mnum{flex:none;width:60px;font-size:12.5px;color:var(--muted)}.mrow .inp{flex:1;min-width:0;height:30px;font-size:13px}
+.mrow input::-webkit-calendar-picker-indicator{display:none!important;opacity:0}.cfgp .cp-l{white-space:nowrap}.cp-mnote{display:block;margin:4px 0 2px;font-size:12.5px;font-weight:600;color:var(--text)}.cp-mn{height:30px;font-size:13px;min-width:0}.cp-mn::-webkit-calendar-picker-indicator{display:none!important;opacity:0}
 .cp-step{display:flex;align-items:center;height:30px;border-radius:6px;border:1px solid var(--input-bd);overflow:hidden}
 .cp-step button{display:grid;place-items:center;width:30px;height:100%;color:var(--sub)}.cp-step button:hover:not(:disabled){background:var(--soft)}.cp-step button:disabled{opacity:.35}
 .cp-step span{flex:1;text-align:center;font-size:12px;color:var(--sub)}.cp-step b{margin-right:1px;font-size:13px;color:var(--text)}
@@ -1405,6 +1411,9 @@ button.sx-hc{cursor:pointer}
 .sx-tot .sx-smv{display:none}
 @container sxt (max-width:460px){.sx-tot .sx-lgv{display:none}.sx-tot .sx-smv{display:inline}}
 @media (max-width:360px){.sx-mseg button{padding:0 7px;font-size:11.5px}.frow>.flbl{flex-shrink:0}} /* 폴드 겉화면 (U10) */
+.sx-lmrow{gap:10px}.sx-lmates{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;justify-content:flex-end}.sx-lmates .mchip{padding-right:10px;height:26px;font-size:12.5px}
+.sx-pp{display:flex;align-items:center;gap:10px;margin-top:10px}.sx-ppn{font-weight:700;font-size:14px;color:var(--text)}.sx-ppn.anon{font-weight:500;color:var(--muted)}
+.sx-pp .sx-mname{flex:1;min-width:0}.sx-renb{height:30px;padding:0 12px;font-size:12.5px}
 
 </style>
 
@@ -1513,6 +1522,9 @@ const PRICE_HIST=[
   jupiter:{normal:1615000000,hard:4845000000},blackmage:{hard:665000000,extreme:8740000000}}},
  {from:{D:'2026.09.17',W:'2026.09.17',M:'2026.10.01'},label:{D:'26.09.17 ~',W:'26.09.17 ~',M:'26.10.01 ~'},price:null} // null = BOSSES에 적힌 최신 값
 ];
+// 월간 보스는 첫 가격표가 시작된 주(7.30~8.05 = 8월 1주차)의 달부터만 기록 — 7월 월간은 입력도 저장도 안 함
+const MON_START=(()=>{const f=PRICE_HIST[0].from,d=new Date(Date.UTC(+f.slice(0,4),+f.slice(5,7)-1,+f.slice(8,10)+3));return d.getUTCFullYear()+'.'+String(d.getUTCMonth()+1).padStart(2,'0')})();
+const noMon=d=>d.slice(0,7)<MON_START;
 function priceTable(date,type='W'){let t=PRICE_HIST[0];for(const h of PRICE_HIST){const f=typeof h.from==='object'?h.from[type]:h.from;if(date>=f)t=h}return t}
 const tblLabel=(date,type)=>{const l=priceTable(date,type).label;return typeof l==='object'?l[type]:l};
 function priceAt(id,diff,date){const t=priceTable(date||TODAY,BY[id].diffs[diff]||'W');const p=t.price?(t.price[id]||{})[diff]:BY[id].price[diff];return p==null?BY[id].price[diff]??null:p}
@@ -1706,26 +1718,35 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-let st;
-try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null}
+let st,LOAD_LOST=false; // LOAD_LOST: 이 기기 기록을 읽지 못해 새로 시작함 → 계정 기록을 덮어쓰지 않게 동기화 상태도 지움
+try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null;LOAD_LOST=true}
 if(st&&st.v===1){st.cfg={};st.v=2}
 if(st&&st.v===2){const th=st.theme;st=sample();if(th)st.theme=th} // 클리어 기록 구조가 바뀌어 예시 데이터로 한 번 초기화
 if(st&&st.v===3){const r=st.chars.find(c=>c.id==='c1'),l=r&&r.slots.find(s=>s.boss==='lotus'&&s.diff==='extreme');if(l&&!l.tmp)l.tmp={key:pkey('W'),diff:'hard',party:1,cshare:null,lmode:'sell',lshare:null,memo:''};st.chars.forEach(snapClears);st.v=4}
-if(!st||st.v!==4)st=sample();
+if(st&&st.v===undefined&&Array.isArray(st.chars))st.v=4; // 기록 모양 번호가 빠진 기록도 버리지 않음 (예시로 바뀌면 계정 기록까지 덮일 수 있음)
+if(!st||st.v!==4){if(st)LOAD_LOST=true;st=sample()}
 // 불러온 기록 검사: 빠진 칸은 채우고, 없어진 보스·난이도 슬롯은 건너뜀 (패치로 난이도가 빠져도 앱이 멈추지 않게)
-function sanitize(o){if(!o||typeof o!=='object')return sample();if(!Array.isArray(o.chars))o.chars=[];if(!o.cfg||typeof o.cfg!=='object')o.cfg={};if(!Array.isArray(o.presets))o.presets=[];
+function sanitize(o){if(!o||typeof o!=='object')return sample();if(!Array.isArray(o.chars))o.chars=[];if(o.v===undefined)o.v=4;if(!o.cfg||typeof o.cfg!=='object')o.cfg={};if(!Array.isArray(o.presets))o.presets=[];
   o.chars=o.chars.filter(c=>c&&typeof c==='object');o.chars.forEach((c,i)=>{if(!c.id)c.id='c'+Date.now()+i;if(!Array.isArray(c.slots))c.slots=[];['clears','loot'].forEach(k=>{if(!c[k]||typeof c[k]!=='object')c[k]={}});
     c.slots=c.slots.filter(sl=>sl&&BY[sl.boss]);c.slots.forEach(sl=>{const b=BY[sl.boss];if(!b.diffs[sl.diff])sl.diff=Object.keys(b.diffs).find(d=>b.diffs[d]===(sl.t||'W'))||Object.keys(b.diffs)[0];if(!sl.party)sl.party=1;
+      const mf=o=>{if(o&&o.mates!==undefined&&!Array.isArray(o.mates))delete o.mates;else if(o&&o.mates)o.mates=o.mates.map(x=>typeof x==='string'?x.slice(0,16):'').slice(0,5)};mf(sl);(sl.prev||[]).forEach(mf);Object.values(sl.tmps||{}).forEach(mf);
       if(sl.tmps)Object.keys(sl.tmps).forEach(k=>{const t=sl.tmps[k];if(!t||!b.diffs[t.diff])delete sl.tmps[k]});if(sl.tmp&&!b.diffs[sl.tmp.diff])delete sl.tmp;if(sl.prev)sl.prev=sl.prev.filter(x=>x&&b.diffs[x.diff])})});
+  o.chars.forEach(c=>{Object.keys(c.clears).forEach(id=>{const b=BY[id];if(!b||!Array.isArray(c.clears[id]))return;const t=e=>b.diffs[e&&typeof e==='object'&&e.diff?e.diff:Object.keys(b.diffs)[0]];
+      const a=c.clears[id].filter(e=>!(t(e)==='M'&&noMon(typeof e==='string'?e:String(e&&e.d||''))));if(a.length!==c.clears[id].length){if(a.length)c.clears[id]=a;else delete c.clears[id]}});
+    ['loot','lootSub','lootMeta'].forEach(f=>{const m=c[f];if(m&&typeof m==='object')Object.keys(m).forEach(k=>{const pk=k.split('|')[1]||'';if(pk[0]==='M'&&pk.slice(1,8)<MON_START)delete m[k]})})}); // 7월 월간 기록은 지움
   (o.presets||[]).forEach(p=>{if(Array.isArray(p.slots))p.slots=p.slots.filter(sl=>sl&&BY[sl.boss]&&BY[sl.boss].diffs[sl.diff]);else p.slots=[]});
-  if(!o.form||typeof o.form!=='object')o.form=sample().form;if(!o.chars.find(c=>c.id===o.sel))o.sel=o.chars[0]?o.chars[0].id:null;return o}
-try{st=sanitize(st)}catch(e){console.error(e);st=sample()}
+  if(!o.people||typeof o.people!=='object'||Array.isArray(o.people))o.people={};if(!o.pgrp||typeof o.pgrp!=='object'||Array.isArray(o.pgrp))o.pgrp={};
+  if(!o.form||typeof o.form!=='object')o.form=sample().form;if(!o.chars.find(c=>c.id===o.sel))o.sel=o.chars[0]?o.chars[0].id:null;
+  if(window.SX_READY)try{sxMigrateMates(o)}catch(e){console.error(e)} // 예전 '파티' 데이터 → 같이 간 사람 (한 번만)
+  return o}
+try{st=sanitize(st)}catch(e){console.error(e);st=sample();LOAD_LOST=true}
+if(LOAD_LOST)try{localStorage.removeItem('mepuri-cloud')}catch(e){} // 계정에 있는 기록을 빈 기록으로 덮지 않고, 처음 쓰는 기기처럼 계정 기록을 받아 옴
 if(!EMPTY_START&&st.sv!==22&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id))){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
 
 let ui={menu:false,pop:null,popSel:[],popEtc:'',dd:false,ddq:'',modal:null,toast:null,newPreset:null};
 let SAVE_WARN=0;
 let SAVE_N=0; // 저장할 때마다 +1 (계산 캐시 무효화용)
-function save(quiet){SAVE_N++;try{if(typeof sxSync==='function'){sxMigrateParties();sxSync()}}catch(e){console.error(e)}
+function save(quiet){SAVE_N++;try{if(window.SX_READY)sxMigrateMates(st)}catch(e){console.error(e)}
   try{localStorage.setItem(KEY,JSON.stringify(st));localStorage.setItem(KEY+'-at',String(Date.now()))}catch(e){if(Date.now()-SAVE_WARN>60000){SAVE_WARN=Date.now();setTimeout(()=>toast('이 기기 저장 공간이 꽉 차서 저장하지 못했어요. 로그인해 두면 계정에는 저장돼요'),0)}}
   if(!quiet)cloudQueue()} // quiet: 계정에 올리지 않음
 function set(fn){fn&&fn();save();render()}
@@ -1852,7 +1873,7 @@ function setTmp(s,k,v){if(s.tmp){s.tmps=s.tmps||{};if(!s.tmps[s.tmp.key])s.tmps[
 function clearTmpsFrom(s,k){if(s.tmp&&s.tmp.key[0]===k[0]&&s.tmp.key>=k)delete s.tmp;
   if(s.tmps){for(const kk of Object.keys(s.tmps))if(kk[0]===k[0]&&kk>=k)delete s.tmps[kk];if(!Object.keys(s.tmps).length)delete s.tmps}}
 function swapBoss(c,orig,nb,val,span){const i=c.slots.indexOf(orig),t=BY[nb].diffs[val.diff],key=pkey(t);
-  const ns={boss:nb,diff:val.diff,party:val.party,cshare:null,lmode:orig.lmode||'sell',lshare:null,memo:'',swap:orig.only&&orig.swap?orig.swap:orig.boss}; // 바꿔 넣은 보스를 또 바꾸면 처음 원래 보스를 기억
+  const ns={boss:nb,diff:val.diff,party:val.party,...(val.mates?{mates:val.mates}:{}),cshare:null,lmode:orig.lmode||'sell',lshare:null,memo:'',swap:orig.only&&orig.swap?orig.swap:orig.boss}; // 바꿔 넣은 보스를 또 바꾸면 처음 원래 보스를 기억
   if(orig.only){Object.assign(orig,ns);if(span==='keep')delete orig.only;else orig.only=key;delete orig.tmp;delete orig.tmps;return}
   if(span==='once'){addSkip(orig,key);ns.only=key}else{orig.end=key;clearTmpsFrom(orig,key);ns.start=key}
   c.slots.splice(i+1,0,ns)}
@@ -1908,11 +1929,13 @@ const presetMeso=p=>p.slots.reduce((a,s)=>a+(priceAt(s.boss,s.diff)||0)/(s.party
 const presetSlot=s=>({boss:s.boss,diff:s.diff,party:s.party||1,cshare:s.cshare??null,lmode:s.lmode||'sell',lshare:s.lshare??null,memo:s.memo||''});
 function putSlot(c,boss,val,once,key,t,noLink){
   const full=()=>t==='W'&&!isSeason(boss)&&capW(live(c).filter(s=>tOf(s)==='W')).length>=SLOTN.W;
-  const same=x=>x.diff===val.diff&&x.party===val.party&&x.cshare===val.cshare;
+  const same=x=>x.diff===val.diff&&x.party===val.party&&(val.cshare===undefined||x.cshare===val.cshare)&&(val.mates===undefined||sfEq(matesOf(x),matesOf(val)));
   const exL=live(c).find(s=>s.boss===boss),ex=exL?c.slots[exL._i]:null;
   const off=ex?null:c.slots.find(s=>s.boss===boss&&!s.only&&tOf(s)===t);
   if(once){
-    if(ex){if(ex.only)Object.assign(ex,val);else setTmp(ex,key,same(ex)?null:val);return {}}
+    // 그 기간만: 그 기간에 원래 보이던 값(지난 기간이면 그때 설정)과 같으면 '그 기간만' 값을 지우고, 다르면 그 기간 값 전체를 남김
+    if(ex){if(ex.only)Object.assign(ex,val);else{const i=c.slots.indexOf(ex);setTmp(ex,key,null);const e=live(c).find(x=>x._i===i)||ex;
+      if(!same(e))setTmp(ex,key,{diff:e.diff,party:e.party,mates:matesOf(e),cshare:e.cshare??null,lmode:e.lmode||'sell',lshare:e.lshare??null,...val})}return {}}
     if(full())return {full:true};
     if(off&&hasSkip(off,key)){delSkip(off,key);setTmp(off,key,same(off)?null:val);return {}}      // 그 기간에 뺐던 보스 되살리기
     if(off&&off.end&&key>=off.end&&!(off.start&&key<off.start)){addBack(off,key);setTmp(off,key,same(off)?null:val);return {}} // 빠진 뒤의 한 기간만 다시 넣기
@@ -1933,11 +1956,51 @@ const PERIOD={D:'오늘만',W:'이번 주만',M:'이번 달만'},NEXTP={D:'내�
   PWORD={now:[{D:'오늘만',W:'이번 주만',M:'이번 달만'},{D:'내일',W:'다음 주',M:'다음 달'}],past:[{D:'그날만',W:'그 주만',M:'그 달만'},{D:'다음 날',W:'그다음 주',M:'그다음 달'}]},FROMW={D:'오늘부터',W:'이번 주부터',M:'이번 달부터'},SINCEW={now:{D:'오늘부터',W:'이번 주부터',M:'이번 달부터'},past:{D:'그날부터',W:'그 주부터',M:'그 달부터'}};
 /* 기간 말은 네 개만: 이번 주부터 · 이번 주만 · 그 주부터 · 그 주만 (달도 같음) */
 /* '이번 주부터' 계속 바꾸기: 바꾸기 전 설정은 prev=[{until:기간키,...}] 로 남겨서 지난 기간을 볼 때는 그 설정으로 보여 줌 */
-const SLOTF=['diff','party','cshare','lmode','lshare'];
-function applyFrom(s,val,key){const changed=SLOTF.some(k=>val[k]!==undefined&&val[k]!==s[k]);
+const SLOTF=['diff','party','cshare','lmode','lshare','mates'];
+// 설정 값 비교 (같이 간 사람은 이름 배열이라 내용으로)
+const sfEq=(a,b)=>Array.isArray(a)||Array.isArray(b)?JSON.stringify(a||[])===JSON.stringify(b||[]):a===b;
+/* 같이 간 사람(mates): 슬롯 설정이라 난이도처럼 '이번 주부터·이번 주만'을 따라감. 이름은 가나다순, 이름 모르는 사람('')은 뒤로.
+   인원(party) = 같이 간 사람 수 + 1. 예전 데이터·프리셋처럼 이름이 모자라면 빈칸('이름 없음')으로 채움 */
+const normMates=a=>{const nm=[...new Set((a||[]).map(x=>(x||'').trim()).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'ko'));return [...nm,...Array((a||[]).length-nm.length).fill('')]};
+const matesOf=sl=>{const n=Math.max(0,((sl&&sl.party)||1)-1);return normMates((sl&&sl.mates)||[]).concat(Array(n).fill('')).slice(0,n)};
+// 지금까지 적은 이름 (자동완성): 많이 같이 간 순
+function knownMates(){const n={};const add=a=>(a||[]).forEach(x=>{x=(x||'').trim();if(x)n[x]=(n[x]||0)+1});
+  st.chars.forEach(c=>c.slots.forEach(s=>{add(s.mates);(s.prev||[]).forEach(p=>add(p.mates));Object.values(s.tmps||{}).forEach(t=>add(t.mates))}));
+  Object.keys(st.people||{}).forEach(k=>{if(!n[k])n[k]=0});return Object.entries(n).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko')).map(e=>e[0])}
+// 같이 간 사람: 인원은 위 '파티 인원'(+/−)으로 정하고, 아래 칸마다 이름을 적음 (비우면 '이름 없음', 전에 적은 이름은 자동완성)
+//  적는 동안은 칸 순서 그대로 두고, 저장할 때 가나다순으로 정리
+const mateDraft=(party,mates)=>{const n=Math.max(0,(party||1)-1),a=(mates||[]).map(x=>(x||'').trim());return Array.from({length:n},(_,j)=>a[j]||'')};
+function mateRows(key,party,mates,grid){const ms=mateDraft(party,mates);if(!ms.length)return '';
+  const inp=(n,j)=>`<input class="inp" type="text" maxlength="16" list="mate-dl" data-mname="${key}|${j}" value="${esc(n)}" placeholder="이름 (몰라도 돼요)" aria-label="파티원 ${j+1} 이름" autocomplete="off">`;
+  // grid: '다르게 잡았어요'처럼 왼쪽 이름표 칸이 있는 곳은 줄마다 [파티원 n][입력]
+  if(grid)return ms.map((n,j)=>`<span class="cp-l">파티원 ${j+1}</span>${inp(n,j).replace('class="inp"','class="inp cp-mn"')}`).join('')+`<datalist id="mate-dl">${knownMates().map(n=>`<option value="${esc(n)}">`).join('')}</datalist>`;
+  return `<div class="mrows" data-mrows="${key}">${ms.map((n,j)=>`<label class="mrow"><span class="mnum">파티원 ${j+1}</span><input class="inp" type="text" maxlength="16" list="mate-dl" data-mname="${key}|${j}" value="${esc(n)}" placeholder="이름 (몰라도 돼요)" aria-label="파티원 ${j+1} 이름" autocomplete="off"></label>`).join('')}
+    <datalist id="mate-dl">${knownMates().map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>`}
+// 파티원 이름 바꾼 걸 보여 주는 한 줄: '영희, 철수 → 렌났, 철수'
+const mateList=a=>{const n=a.filter(Boolean),u=a.length-n.length;return n.length?n.join(', ')+(u?` 외 ${u}명`:''):a.length?'이름 없음':'솔로'};
+const mateNote=(a,b)=>sfEq(a,b)?'':`<span class="cp-mnote">파티원 ${esc(mateList(a))} → ${esc(mateList(b))}</span>`;
+// 칸을 떠날 때 다시 그림: 버튼을 누르는 중이면 손을 뗀 뒤(그 클릭이 먼저), 다른 이름 칸으로 옮긴 커서는 그대로 둠
+let TAP_DOWN=false,TAP_Q=[];addEventListener('pointerdown',()=>{TAP_DOWN=true},true);
+addEventListener('pointerup',()=>{TAP_DOWN=false;const q=TAP_Q;TAP_Q=[];setTimeout(()=>q.forEach(f=>f()),0)},true);addEventListener('pointercancel',()=>{TAP_DOWN=false},true);
+function afterTap(fn){const run=()=>{const a=document.activeElement,k=a&&a.dataset?a.dataset.mname:null,ss=a&&k?a.selectionStart:null;fn();if(k){const e=document.querySelector(`[data-mname="${k}"]`);if(e){e.focus();try{e.setSelectionRange(ss,ss)}catch(x){}}}};
+  if(TAP_DOWN)TAP_Q.push(run);else setTimeout(run,0)}
+// get(): 지금 칸 값 배열, put(a, done): 값 바꾸기 (done=칸을 떠났을 때 → 저장·다시 그리기)
+function bindMateRows(root,key,get,put){if(!root)return;
+  root.querySelectorAll(`[data-mname^="${key}|"]`).forEach(inp=>{const j=+inp.dataset.mname.split('|')[1];
+    const upd=done=>{const v=inp.value.trim().slice(0,16),a=get().slice();if(v&&a.some((x,i)=>i!==j&&(x||'').trim()===v)){if(done){toast(`${v} 님은 이미 있어요`);inp.value=a[j]||''}return}a[j]=v;put(a,done)};
+    inp.oninput=()=>upd(false);inp.onchange=()=>upd(true);inp.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();inp.blur()}}})}
+function applyFrom(s,val,key){
+  // 지난 기간부터 바꾸는데 그 뒤에 이미 바뀐 설정(prev)이 있으면: 다음에 바뀐 때까지만 바꿈 (그 뒤 기록은 그대로)
+  const later=s.only?null:(s.prev||[]).filter(p=>p.until[0]===key[0]&&p.until>key).sort((a,b)=>a.until<b.until?-1:1)[0];
+  if(later){if(!s.prev.some(p=>p.until===key)){const o={until:key};SLOTF.forEach(k=>o[k]=later[k]);s.prev.push(o)}
+    SLOTF.forEach(k=>{if(val[k]!==undefined)later[k]=val[k]});
+    if(s.tmps){for(const kk of Object.keys(s.tmps))if(kk[0]===key[0]&&kk>=key&&kk<later.until)delete s.tmps[kk];if(!Object.keys(s.tmps).length)delete s.tmps}
+    s.prev=s.prev.filter((p,i,a)=>{const nx=a.filter(q=>q.until>p.until).sort((x,y)=>x.until<y.until?-1:1)[0]||s;return SLOTF.some(k=>!sfEq(p[k],nx[k]))}); // 다음 설정과 같은 기록은 합침
+    if(!s.prev.length)delete s.prev;return}
+  const changed=SLOTF.some(k=>val[k]!==undefined&&!sfEq(val[k],s[k]));
   if(changed&&!s.only){s.prev=s.prev||[];if(!s.prev.some(p=>p.until===key)){const o={until:key};SLOTF.forEach(k=>o[k]=s[k]);s.prev.push(o)}}
   Object.assign(s,val);clearTmpsFrom(s,key);delete s.only;
-  if(s.prev){s.prev=s.prev.filter(p=>SLOTF.some(k=>p[k]!==s[k])||p.until!==key);if(!s.prev.length)delete s.prev}}
+  if(s.prev){s.prev=s.prev.filter(p=>SLOTF.some(k=>!sfEq(p[k],s[k]))||p.until!==key);if(!s.prev.length)delete s.prev}}
 function live(c){
   return c.slots.map((s,i)=>{
     const k0=pkey(BY[s.boss].diffs[s.diff]);
@@ -1967,7 +2030,7 @@ function charStats(c){
   return{earned:eD+eW+eM,eD,eW,eM,left,D:cnt('D'),W:cnt('W'),M:cnt('M')};
 }
 const tmpTag=s=>{const t=tOf(s);if(!s._tmp&&!s._only)return '';if(pastP(t))return ''; // 지난 주·달은 그때 잡은 그대로 보여 줌 (그 주만/원래 표시 없음)
-  let was='';if(s.swap&&(s._only||(s._from&&s._base&&s._base.boss)))was=`원래 ${BY[s.swap].name}`;else if(s._tmp||s._from){const b=s._base;was=b.diff!==s.diff?`원래 ${dk(b.diff)}`:b.party!==s.party?`원래 ${b.party>1?b.party+'인':'솔로'}`:'원래 설정 따로 있음'}
+  let was='';if(s.swap&&(s._only||(s._from&&s._base&&s._base.boss)))was=`원래 ${BY[s.swap].name}`;else if(s._tmp||s._from){const b=s._base;was=b.diff!==s.diff?`원래 ${dk(b.diff)}`:b.party!==s.party?`원래 ${b.party>1?b.party+'인':'솔로'}`:!sfEq(matesOf(b),matesOf(s))?`원래 ${esc(mateList(matesOf(b)))}`:'원래 설정 따로 있음'}
   return `<span class="tmp${s._from?' from':''}">${s._from?FROMW[t]:PERIOD[t]}</span>${was?`<span class="was">${was}</span>`:''}`};
 
 /* ---------- theme ---------- */
@@ -2044,20 +2107,45 @@ function chgBox(from,to,hint){ // from/to: {boss,diff,party} (from=null이면 �
   const img=id=>`<img src="${BY[id].img}" alt="">`,sw=from&&from.boss!==to.boss;
   const L=from?`${sw?img(from.boss):''}${dk(from.diff)}<i>${ptyTxt(from.party)}</i>`:'<span class="cp-empty">빈 슬롯</span>';
   return `<div class="cp-prev"><span class="cp-chg">${L}<em>→</em>${sw||!from?img(to.boss):''}${!from?`<b class="cp-bn">${esc(BY[to.boss].name)}</b>`:''}${dk(to.diff)}<i>${ptyTxt(to.party)}</i></span>${hint?`<span class="cp-h">${hint}</span>`:''}</div>`}
+/* '다르게 잡았어요' 계획 — 고른 기간에 따라 실제로 어느 기간이 어떻게 바뀌는지 먼저 계산 (미리보기·적용 버튼·적용이 모두 이걸 씀)
+   이번 주만(once)  : 보는 주만. 다음 주는 원래대로
+   이번 주부터(keep) : 보는 주부터 계속 — 보스 설정이 바뀜. '이번 주만' 값이 있었으면 그걸 계속으로 바꿈
+   이번 주까지(back) : 보는 주와, 그 앞으로 원래 설정이 같던 주들. 다음 주는 원래대로
+   그 주부터(hist)   : 지난 주를 볼 때. 그 주부터 이번 주 전까지 원래 설정이 같던 주들 — 이번 주까지 같으면 보스 설정도 이번 주부터 바뀜
+   once:[기간 시작일…] 은 그 기간만 바꾸기, keepAt 은 그 기간부터 계속 바꾸기 */
+function cfgPlan(c,s,d){const t=tOf(s),id=s.boss,swapped=d.boss!==id,here=t==='W'?WEEK[0]:t==='M'?MONTH+'.01':TODAY,cur0=t==='W'?REALW:REAL.slice(0,7)+'.01';
+  const eq=e=>!!e&&!swapped&&e.boss===id&&e.diff===d.diff&&(e.party||1)===d.party&&sfEq(matesOf(e),matesOf(d));
+  const at=x=>atDay(x,()=>live(c).find(q=>q.boss===id));
+  let once=[],keepAt=null,sp=t==='D'?(pastV('D')?'once':'keep'):d.span; // 일간은 기간 칸이 없어서 오늘은 '오늘부터', 지난 날은 '그날만'
+  if(sp==='keep')keepAt=here;
+  else if(sp==='once')once=[here];
+  else if(sp==='back')once=histBack(c,id,t,d.boss,true)||[here];
+  else{const r=histDates(c,id,t,d.boss,true);if(r){once=r;if(r.now)keepAt=cur0}else keepAt=here}
+  // 실제로 바뀌는 게 있나: 고른 기간마다 지금 보이는 값과 비교. '계속'은 그 기간에 '그 주만' 값이 있거나 그 주만 넣은 보스면 늘 바뀜(계속으로 바꿈)
+  let noop=once.every(x=>eq(at(x)));if(noop&&keepAt){const e=at(keepAt);noop=eq(e)&&!e._tmp&&!e._only}
+  // 바뀌기 전 값: '이번 주만'이 아닌 기간이면 그 주만 값을 뺀 원래 설정과 비교해서 보여 줌
+  const from=sp!=='once'&&s._tmp?(underSlot(c,id)||s):s;
+  return {t,sp,once,keepAt,noop,swapped,from,cur0}}
+// 미리보기 상자 (이름을 적는 동안에도 이것만 다시 그림)
+function cfgPrevHtml(c,s,d,P){const t=P.t,_pw=pastV(t)?'past':'now',PERIOD=PWORD[_pw][0],NEXTP=PWORD[_pw][1],FROMW=SINCEW[_pw],b=BY[s.boss],nb=BY[d.boss],u=t==='W'?'주':'달',f=P.from;
+  if(P.noop)return '<div class="cp-prev none"><span class="cp-pl">바꿀 내용을 골라 주세요</span></div>';
+  const pty=n=>n>1?n+'인':'솔로',X=DKO[d.diff]+(d.party>1?` ${d.party}인`:''),what=P.swapped?`${nb.name} ${X}`:X;
+  const run=P.once.length?hRange(P.once,t):'',cont=P.keepAt&&P.once.length; // 지난 주부터 이번 주까지 이어서 바꿈
+  let h;
+  if(P.swapped&&P.sp==='keep')h=`${FROMW[t]} ${esc(b.name)} 대신 ${esc(jo(nb.name,'을'))} 잡아요. 보스 설정도 같이 바뀌고, 지난 기록은 그대로 둬요.`;
+  else if(P.sp==='keep'||(P.sp!=='once'&&P.keepAt&&!P.once.length))h=`${FROMW[t]} 계속 ${esc(jo(what,'로'))} 잡아요. 보스 설정도 같이 바뀌고, 지난 기록은 그대로 둬요.${s._tmp&&P.sp==='keep'?` (${PERIOD[t].replace('만','')}만 바꿨던 걸 계속으로 바꿔요)`:''}`;
+  else if(P.sp==='once')h=P.swapped?`${PERIOD[t]} ${esc(b.name)} 대신 ${esc(jo(what,'을'))} 잡은 걸로 기록해요. ${NEXTP[t]}엔 다시 ${esc(jo(b.name,'이에요'))}.`
+    :`${PERIOD[t]} ${esc(jo(what,'로'))} 기록하고 ${NEXTP[t]}엔 원래대로 돌아가요.`;
+  else if(P.sp==='back')h=`${run} 동안 ${P.swapped?`${esc(b.name)} 대신 `:''}${esc(jo(what,'을'))} 잡은 걸로 기록해요.${P.once.length>1?'':` (그 전 ${u}는 이미 다르게 되어 있어요)`} ${pastP(t)?`그다음 ${u}부터는 그대로예요.`:`${NEXTP[t]}엔 원래대로 돌아가요.`}`;
+  else h=cont?`${md(P.once[0])}${t==='W'?' 주':''}부터 계속 ${esc(jo(what,'로'))} 잡아요. 지난 기록(${run})과 보스 설정이 같이 바뀌어요.`
+    :`${run} 동안 ${P.swapped?`${esc(b.name)} 대신 `:''}${esc(jo(what,'을'))} 잡은 걸로 기록해요. ${nextP(P.once[P.once.length-1],t)>=P.cur0?`이번 ${u}는 이미 다르게 되어 있어서 그대로예요.`:`그다음 ${u}는 이미 다르게 되어 있어서 그대로예요.`}`;
+  return `<div class="cp-prev"><span class="cp-chg">${P.swapped?`<img src="${b.img}" alt="">`:''}${dk(f.diff)}<i>${pty(f.party)}</i><em>→</em>${P.swapped?`<img src="${nb.img}" alt="">`:''}${dk(d.diff)}<i>${pty(d.party)}</i></span>${P.swapped?'':mateNote(matesOf(f),matesOf(d))}<span class="cp-h">${h}</span></div>`}
 function cfgPop(c,s,ctx){const t=tOf(s),_pw=pastV(t)?'past':'now',PERIOD=PWORD[_pw][0],NEXTP=PWORD[_pw][1],FROMW=SINCEW[_pw]; /* 지난 날짜면 '그날·그 주' 말 (X6) */const b=BY[s.boss],base=s._tmp||(s._from&&!s.swap)?s._base:s,d=ui.cfgd,nb=BY[d.boss];
   const ds=diffsOf(d.boss,t),once=d.span==='once',back=d.span==='back',swapped=d.boss!==s.boss;
-  const same=!swapped&&d.diff===s.diff&&d.party===s.party;
+  const P=cfgPlan(c,s,d);
   const taken=new Set(live(c).map(x=>x.boss));const bopts=bossesOf(t).filter(x=>x.id===s.boss||!taken.has(x.id));
   const canUndo=s._tmp||(s.swap&&(s._only||s._from));
-  const what=swapped?`${nb.name} ${DKO[d.diff]}`:DKO[d.diff];
-  const hd=d.span==='hist'?histDates(c,s.boss,t,d.boss):back?histBack(c,s.boss,t,d.boss):null;
-  const hint=hd&&back?`${hRange(hd,t)} 동안 ${swapped?`${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))}`:esc(jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요.${hd.length>1?'':` (그 전 ${t==='W'?'주':'달'}는 이미 다르게 되어 있어요)`} ${pastP(t)?`그다음 ${t==='W'?'주':'달'}부터는 그대로예요.`:`${NEXTP[t]}엔 원래대로 돌아가요.`}`
-    :hd?`${hRange(hd,t)} 동안 ${swapped?`${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))}`:esc(jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요.${hd.length>1?'':' (그다음 주는 이미 다르게 되어 있어요)'} 이번 ${t==='W'?'주':'달'} 설정은 그대로예요.`
-    :swapped?(once?`${PERIOD[t]} ${esc(b.name)} 대신 ${esc(jo(what+(d.party>1?` ${d.party}인`:''),'을'))} 잡은 걸로 기록해요. ${NEXTP[t]}엔 다시 ${esc(jo(b.name,'이에요'))}.`
-      :`${FROMW[t]} ${esc(b.name)} 대신 ${esc(jo(nb.name,'을'))} 잡아요. 보스 설정도 같이 바뀌고, 지난 기록은 그대로 둬요.`)
-    :once?`${PERIOD[t]} ${jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'로')} 기록하고 ${NEXTP[t]}엔 원래대로(${DKO[base.diff]}) 돌아가요.`
-    :`${FROMW[t]} 계속 ${jo(DKO[d.diff]+(d.party>1?` ${d.party}인`:''),'로')} 잡아요. 보스 설정도 같이 바뀌고, 지난 기록은 그대로 둬요.`;
-  const pty=n=>n>1?n+'인':'솔로',noChange=same&&!(canUndo&&!once);
+  const pty=n=>n>1?n+'인':'솔로';
   return `<i class="pop-bg" aria-hidden="true"></i><div class="pop cfgp" role="dialog" aria-label="${ctx==='set'?'바꾸기':'다르게 잡았어요'}">
     <div class="cp-hd"><div class="cp-tt"><h4>${ctx==='set'?'바꾸기':'다르게 잡았어요'}</h4>
       <span class="cp-now"><img src="${b.img}" alt="">${esc(b.name)}${dk(s.diff)}<i>${pty(s.party)}</i></span></div>
@@ -2066,11 +2154,11 @@ function cfgPop(c,s,ctx){const t=tOf(s),_pw=pastV(t)?'past':'now',PERIOD=PWORD[_
       <span class="cp-l">보스</span>${bossPicker('cfg',d.boss,bopts)}
       <span class="cp-l">난이도</span><div class="seg cp-seg" role="radiogroup" aria-label="난이도">${ds.map(x=>`<button type="button" role="radio" aria-checked="${d.diff===x}" data-cdiff="${x}" class="${d.diff===x?'sd-'+x:''}">${DKO[x]}</button>`).join('')}</div>
       <span class="cp-l">인원</span><div class="cp-step"><button type="button" data-cparty="-1" aria-label="파티 인원 줄이기" ${d.party<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${d.party}</b>${d.party>1?'인 파티':' 솔로'}</span><button type="button" data-cparty="1" aria-label="파티 인원 늘리기" ${d.party>=6?'disabled':''}>${I.plus()}</button></div>
+      ${mateRows('c',d.party,d.mates,true)}
       ${t==='D'?'':`<span class="cp-l">기간</span><div class="span2 cp-span" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${back}" class="${back?'on':''}" data-cspan="back">${untilW(t)}</button><button type="button" role="radio" aria-checked="${once}" class="${once?'on':''}" data-cspan="once">${PERIOD[t]}</button><button type="button" role="radio" aria-checked="${!once&&!back}" class="${once||back?'':'on'}" data-cspan="${pastP(t)?'hist':'keep'}">${FROMW[t]}</button></div>`}
     </div>
-    <div class="cp-prev${same?' none':''}">${same?'<span class="cp-pl">바꿀 내용을 골라 주세요</span>'
-      :`<span class="cp-chg">${swapped?`<img src="${b.img}" alt="">`:''}${dk(s.diff)}<i>${pty(s.party)}</i><em>→</em>${swapped?`<img src="${nb.img}" alt="">`:''}${dk(d.diff)}<i>${pty(d.party)}</i></span><span class="cp-h">${hint}</span>`}</div>
-    <div class="cp-btns">${canUndo?`<button class="btn out" type="button" data-cundo>원래대로</button>`:''}<button class="btn pri" type="button" data-cok ${same?'disabled':''}>적용</button></div>
+    ${cfgPrevHtml(c,s,d,P)}
+    <div class="cp-btns">${canUndo?`<button class="btn out" type="button" data-cundo>원래대로</button>`:''}<button class="btn pri" type="button" data-cok ${P.noop?'disabled':''}>적용</button></div>
     ${t!=='D'&&ctx!=='set'&&pastP(t)?`<button class="linkish danger-link cp-rm" type="button" data-cprm="${s._i}">${t==='W'?'그 주':'그 달'} 목록에서 빼기</button>`:''}
   </div>`}
 /* 일간·주간·월간 고르기 — 난이도 고르기와 같은 모양, 고른 칸만 종류 색 */
@@ -2133,13 +2221,15 @@ function bossCard(c,s){
   const p=priceAt(s.boss,s.diff);let sub,pr;
   // 파티면 인원만, 분배가 균등(1/N)이 아닐 때만 비율을 따로 적음
   const eq=Math.round(100/s.party),parts=[];
-  if(s.party>1){parts.push(`${s.party}인 파티`);
+  if(s.party>1){const ms=matesOf(s),nn=ms.filter(Boolean);parts.push(nn.length?`${s.party}인 · ${esc(nn.join(', '))}${ms.length>nn.length?` 외 ${ms.length-nn.length}명`:''}`:`${s.party}인 파티`);
     if(s.cshare!=null&&s.cshare!==eq)parts.push(`결정석 내 몫 ${s.cshare}%`);
     if(s.lmode==='sell'&&s.lshare!=null&&s.lshare!==eq)parts.push(`물욕 내 몫 ${s.lshare}%`)}
   const ptxt=parts.length?`<span class="bsub">${parts.join(' · ')}</span>`:'';
   if(t==='D'){const n=hist.filter(inWeek).length;
     sub=`<span class="wkrow"><span class="wk" role="img" aria-label="이번 주 ${n}번 클리어">${WEEK.map((d,i)=>`<i class="${hist.includes(d)?'on':''}${d===TODAY?' now':''}${d>REAL?' fut':''}">${WEEK_KO[i]}</i>`).join('')}</span><span class="wkc">${n}회</span>${parts.length?`<span class="bsub">· ${parts.join(' · ')}</span>`:''}</span>`}
   else sub=ptxt;
+  const nom=t==='M'&&noMon(TODAY); // 7월 월간은 기록 안 함
+  if(nom)sub=`<span class="bsub">${+MON_START.slice(5)}월부터 기록할 수 있어요</span>`;
   // 클리어 완료 버튼에 클리어한 날짜를 씀
   const dLabel=done?(t==='D'?md(TODAY):md(hist.filter(d=>t==='W'?inWeek(d):inMonth(d)).pop()||hist[hist.length-1])):''; // 버튼 폭이 안 바뀌게 날짜만
   const mine=myPrice(s);
@@ -2154,8 +2244,9 @@ function bossCard(c,s){
     <div class="bright">
       <div class="acts">
         <button class="ibtn${ui.cfg===s.boss?' on':''}" type="button" data-cfg="${s.boss}" aria-label="${esc(b.name)} 이번에 다르게 잡았어요" aria-expanded="${ui.cfg===s.boss}" title="다르게 잡았어요">${I.gear}</button>
-        <button class="ibtn${loot.length?' hot':''}" type="button" data-loot="${s.boss}" aria-label="${esc(b.name)} 물욕템 기록" aria-expanded="${open}">${I.gem}${loot.length?`<span class="badge">${loot.length}</span>`:''}</button>
+        <button class="ibtn${loot.length?' hot':''}" type="button" ${nom?'data-mno="1" aria-disabled="true"':`data-loot="${s.boss}"`} aria-label="${esc(b.name)} 물욕템 기록" aria-expanded="${open}">${I.gem}${loot.length?`<span class="badge">${loot.length}</span>`:''}</button>
         ${done?`<button class="btn done${ui.arm===s.boss?' arm':''}" type="button" data-unclear="${s.boss}" aria-label="${esc(b.name)} 클리어 취소" title="누른 채 위아래로 끌면 여러 보스를 한 번에 취소해요 (물욕템을 기록한 보스는 빼요)"><span class="d">${dLabel}</span><span class="u">클리어 취소</span></button>`
+          :nom?`<button class="btn dis" type="button" data-mno="1" aria-disabled="true">클리어</button>`
           :`<button class="btn pri" type="button" data-clear="${s.boss}" title="누른 채 위아래로 끌면 여러 보스를 한 번에 클리어해요">클리어</button>`}
         ${ui.cfg===s.boss?cfgPop(c,s):''}
         ${open?`<i class="pop-bg" aria-hidden="true"></i><div class="pop" role="dialog" aria-label="물욕템 획득 기록">
@@ -2263,20 +2354,29 @@ const DAYC=new Map();
 function dayVals(d){let o=DAYC.get(d);if(!o){const t=dnum(d)*864e5,n=new Date(t),back=(n.getUTCDay()-4+7)%7,t0=t-back*864e5;o={T:d,D:n.getUTCDay(),W:Array.from({length:7},(_,i)=>ymd(new Date(t0+i*864e5))),M:d.slice(0,7)};if(DAYC.size>4000)DAYC.clear();DAYC.set(d,o)}return o}
 function atDay(d,fn){const s={o:VIEW_OFF,T:TODAY,W:WEEK,M:MONTH,D:VIEW_DOW},v=dayVals(d);VIEW_OFF=dnum(d)-dnum(REAL);TODAY=v.T;WEEK=v.W;MONTH=v.M;VIEW_DOW=v.D;syncWords();
   try{return fn()}finally{VIEW_OFF=s.o;TODAY=s.T;WEEK=s.W;MONTH=s.M;VIEW_DOW=s.D;syncWords()}}
-/* '그 주부터'가 닿는 주들: 보고 있는 주부터 이번 주 전까지, 그 보스 설정이 같은 동안 (이미 다르게 기록된 주를 만나면 멈춤) */
-function histDates(c,id,t,tgt){if(t==='D'||!pastP(t))return null;
+// 기간 범위를 잡을 때 비교하는 보스 설정: 보스·난이도·인원·파티원 (+ 바꿔 넣을 보스가 이미 있는지)
+const runSig=(c,id,tgt)=>{const s=live(c).find(x=>x.boss===id);return (s?s.diff+'|'+s.party+'|'+(s.swap||'')+'|'+matesOf(s).join('·'):'-')+'|'+(!!tgt&&tgt!==id&&live(c).some(x=>x.boss===tgt))};
+// 그 기간에만 바꾼 값(이번 주만·그 주만)을 잠깐 빼고 계산 — '원래 설정'
+function withoutTmp(c,id,fn){const t=BY[id]?BY[id].diffs[(c.slots.find(x=>x.boss===id)||{}).diff]||'W':'W',k=pkey(t),st0=[];
+  c.slots.forEach(s=>{if(s.boss!==id)return;if(s.tmps&&s.tmps[k]){st0.push([s,'tmps',s.tmps[k]]);delete s.tmps[k]}if(s.tmp&&s.tmp.key===k){st0.push([s,'tmp',s.tmp]);delete s.tmp}});
+  try{return fn()}finally{st0.forEach(([s,f,v])=>{if(f==='tmp')s.tmp=v;else{s.tmps=s.tmps||{};s.tmps[k]=v}})}}
+const underSlot=(c,id)=>withoutTmp(c,id,()=>live(c).find(x=>x.boss===id));
+/* '그 주부터'가 닿는 주들: 보고 있는 주부터 이번 주 전까지, 그 보스 설정이 같은 동안 (이미 다르게 기록된 주를 만나면 멈춤)
+   under: 보고 있는 주에 '그 주만' 값이 있으면 빼고 원래 설정으로 비교 — 바꾸기 순서와 상관없이 같은 범위
+   돌려주는 배열의 .now = 이번 주도 같은 설정이라 이어짐 (그러면 '그 주부터'는 이번 주부터 보스 설정까지 바꿈) */
+function histDates(c,id,t,tgt,under){if(t==='D'||!pastP(t))return null;
   const nm=d=>{let y=+d.slice(0,4),m=+d.slice(5,7)+1;if(m>12){m=1;y++}return y+'.'+String(m).padStart(2,'0')+'.01'};
   const start=t==='W'?WEEK[0]:MONTH+'.01',end=t==='W'?REALW:REAL.slice(0,7)+'.01';
-  const sig=()=>{const s=live(c).find(x=>x.boss===id);return (s?s.diff+'|'+s.party+'|'+(s.swap||''):'-')+'|'+(!!tgt&&tgt!==id&&live(c).some(x=>x.boss===tgt))};
-  const s0=sig(),out=[start];let d=start;
-  for(let i=0;i<60;i++){d=t==='W'?addD(d,7):nm(d);if(d>=end)break;if(atDay(d,sig)!==s0)break;out.push(d)}
-  return out}
+  const sig=()=>runSig(c,id,tgt);
+  const s0=under?withoutTmp(c,id,sig):sig(),out=[start];let d=start,reach=false;
+  for(let i=0;i<60;i++){d=t==='W'?addD(d,7):nm(d);if(d>=end){reach=true;break}if(atDay(d,sig)!==s0)break;out.push(d)}
+  out.now=reach&&atDay(end,sig)===s0;return out}
 /* '그 주까지'가 닿는 주들: 보고 있는 주부터 거꾸로, 그 보스 설정이 같은 동안 (다르게 기록된 주를 만나면 멈춤) */
-function histBack(c,id,t,tgt){if(t==='D')return null;
+function histBack(c,id,t,tgt,under){if(t==='D')return null;
   const pv=d=>{if(t==='W')return addD(d,-7);let y=+d.slice(0,4),m=+d.slice(5,7)-1;if(m<1){m=12;y--}return y+'.'+String(m).padStart(2,'0')+'.01'};
   const start=t==='W'?WEEK[0]:MONTH+'.01',lo=t==='W'?wStart(minDay()):minDay().slice(0,8)+'01';
-  const sig=()=>{const s=live(c).find(x=>x.boss===id);return (s?s.diff+'|'+s.party+'|'+(s.swap||''):'-')+'|'+(!!tgt&&tgt!==id&&live(c).some(x=>x.boss===tgt))};
-  const s0=sig(),out=[start];let d=start;
+  const sig=()=>runSig(c,id,tgt);
+  const s0=under?withoutTmp(c,id,sig):sig(),out=[start];let d=start;
   for(let i=0;i<60;i++){d=pv(d);if(d<lo)break;if(atDay(d,sig)!==s0)break;out.unshift(d)}
   return out}
 const UNTILW={now:{W:'이번 주까지',M:'이번 달까지'},past:{W:'그 주까지',M:'그 달까지'}},untilW=t=>UNTILW[pastP(t)?'past':'now'][t];
@@ -2332,14 +2432,14 @@ const weekSig=(c,t)=>regSig(live(c).filter(x=>tOf(x)===t&&!isSeason(x.boss)).map
 /* 채우기 물어보기: 칸 단위로 그때그때 계산
    - 채웠거나 '그대로 두기'를 누른 그 상태 그대로면 안 물어봄 → 보스를 빼거나 바꿔서 상태가 달라지면 다시 물어봄
    - 그 기간이 '계속' 목록 그대로이고 뒤에 새로 시작한 보스도 없으면 일부러 그렇게 둔 기간으로 봄 */
-function fillNeed(c,t){if(t==='D'||!pastP(t))return null;const key=pkey(t),sig=weekSig(c,t);
+function fillNeed(c,t){if(t==='D'||!pastP(t)||(t==='M'&&noMon(TODAY)))return null;const key=pkey(t),sig=weekSig(c,t);
   if((c.fillSeen||{})[key]===sig)return null;
   const late=c.slots.some(s=>tOf(s)===t&&!s.only&&s.start&&s.start>key),reg=regAt(c,t).filter(x=>!isSeason(x.boss));
   if(!late&&reg.length&&regSig(reg)===sig)return null;
   const p=fillPlan(c,t);return p&&p.rows.some(r=>(r.k==='add'&&r.pick==='new')||r.k==='swap')?p:null} // 칸이 꽉 찬 기간은 띄우지 않음
 function applyFillOne(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.map(d=>pkOf(d,t))],del=[],fix=[];let k=0;
   const vals=n=>{const o={};SLOTF.forEach(f=>o[f]=n[f]);return o};
-  const differs=(a,n)=>SLOTF.some(f=>(a[f]??null)!==(n[f]??null));
+  const differs=(a,n)=>SLOTF.some(f=>!sfEq(a[f]??null,n[f]??null));
   const drop=e=>{const s=c.slots[e._i];if(s.only===key)del.push(e._i);else addSkip(s,key);
     const a=(c.clears[e.boss]||[]).filter(x=>!(t==='W'?inWeek(dOf(x)):inMonth(dOf(x))));if(a.length)c.clears[e.boss]=a;else delete c.clears[e.boss]};
   const place=n=>{const reg=s=>s.boss===n.boss&&!s.only&&tOf(s)===t;
@@ -2380,7 +2480,7 @@ function bindCfg(v){
   v.querySelectorAll('.cfgp').forEach(p=>p.onclick=e=>e.stopPropagation());
   v.querySelectorAll('[data-cfg]').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=b.dataset.cfg;ui.pop=null;
     if(ui.cfg===id){ui.cfg=null;render();return}
-    const sl=live(cur()).find(x=>x.boss===id);ui.cfg=id;ui.cfgd={boss:id,diff:sl.diff,party:sl.party,span:pastP(tOf(sl))&&tOf(sl)!=='D'?'hist':'keep'};ui.bdd=null;render()});
+    const sl=live(cur()).find(x=>x.boss===id);ui.cfg=id;ui.cfgd={boss:id,diff:sl.diff,party:sl.party,mates:matesOf(sl),span:tOf(sl)==='D'?'keep':sl._tmp||sl._only?'once':pastP(tOf(sl))?'hist':'keep'};ui.bdd=null;render()});
   v.querySelectorAll('.cfgp [data-bdd]').forEach(b=>b.onclick=e=>{e.stopPropagation();ui.bdd=ui.bdd==='cfg'?null:'cfg';render()});
   v.querySelectorAll('.cfgp .bdd').forEach(d=>d.onclick=e=>e.stopPropagation());
   v.querySelectorAll('.cfgp [data-bpick]').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=b.dataset.bpick.split(':')[1],d=ui.cfgd,sl=live(cur()).find(x=>x.boss===ui.cfg);
@@ -2390,7 +2490,11 @@ function bindCfg(v){
   v.querySelectorAll('[data-cclose]').forEach(b=>b.onclick=()=>{ui.cfg=null;ui.bdd=null;render()});
   v.querySelectorAll('[data-cdiff]').forEach(b=>b.onclick=()=>{const d=ui.cfgd,sl=live(cur()).find(x=>x.boss===ui.cfg);d.diff=b.dataset.cdiff;
     if(sl&&d.diff!==sl.diff&&d.party>1){d.party=1;toast('난이도가 바뀌어서 인원을 1인으로 돌렸어요')}render()});
-  v.querySelectorAll('[data-cparty]').forEach(b=>b.onclick=()=>{ui.cfgd.party=Math.max(1,Math.min(6,ui.cfgd.party+ +b.dataset.cparty));render()});
+  v.querySelectorAll('[data-cparty]').forEach(b=>b.onclick=()=>{const d=ui.cfgd;d.party=Math.max(1,Math.min(6,d.party+ +b.dataset.cparty));d.mates=mateDraft(d.party,d.mates);render()});
+  if(ui.cfgd)bindMateRows(v.querySelector('.cfgp'),'c',()=>mateDraft(ui.cfgd.party,ui.cfgd.mates),(a,done)=>{const d=ui.cfgd;d.mates=a;
+    const c=cur(),sl=live(c).find(x=>x.boss===ui.cfg),ok=v.querySelector('[data-cok]'),pv=v.querySelector('.cfgp .cp-prev');
+    if(sl&&ok&&pv){const P=cfgPlan(c,sl,d);ok.disabled=P.noop;pv.outerHTML=cfgPrevHtml(c,sl,d,P)} // 적어 가는 동안에도 미리보기·적용 버튼이 따라오게
+    if(done)afterTap(()=>{if(ui.cfgd===d)render()})});
   v.querySelectorAll('[data-cspan]').forEach(b=>b.onclick=()=>{ui.cfgd.span=b.dataset.cspan;render()});
   v.querySelectorAll('[data-cundo]').forEach(b=>b.onclick=()=>{const id=ui.cfg,d=ui.cfgd;ui.cfg=null;let back=id;
     const l0=live(cur()).find(x=>x.boss===id),hd=d&&l0?(d.span==='hist'?histDates(cur(),id,tOf(l0),null):d.span==='back'?histBack(cur(),id,tOf(l0),null):null):null; // '그 주부터'면 같은 상태인 뒤 주들도 같이 되돌림
@@ -2402,21 +2506,16 @@ function bindCfg(v){
     const go=k=>{let msg='';set(()=>{if(k==='all')c.clears[x.boss]=(c.clears[x.boss]||[]).filter(e=>!inPer(dOf(e),t));msg=rmSlot(i,'once')});if(msg)toast(msg.replace(PERIOD[t],w+'만'))};
     if(!cl.length){go('only');return}
     askModal({title:`${w} 목록에서 ${jo(n,'을')} 뺄까요?`,lead:`${w}에 클리어 기록이 ${cl.length}개 있어요.`,opts:[['all','기록도 같이 지우기','잘못 넣은 보스라면 이쪽'],['only','목록에서만 빼기','클리어 기록은 수익에 그대로 남아요']]},go)});
-  v.querySelectorAll('[data-cok]').forEach(b=>b.onclick=()=>{const id=ui.cfg,d=ui.cfgd;ui.cfg=null;
-    const l0=live(cur()).find(x=>x.boss===id),tt0=l0?tOf(l0):BY[d.boss].diffs[d.diff],hd=d.span==='hist'?histDates(cur(),id,tt0,d.boss):d.span==='back'?histBack(cur(),id,tt0,d.boss):null,span=d.span==='hist'||d.span==='back'?'once':d.span;
-    const each=fn=>hd?hd.forEach(x=>atDay(x,fn)):fn(),when=hd?(d.span==='back'?`${untilW(tt0)} (${hRange(hd,tt0)})`:histSpan(hd,tt0)):(span==="once"?PERIOD:FROMW)[tt0];
-    if(d.boss!==id){set(()=>each(()=>{const c=cur(),lv=live(c).find(x=>x.boss===id),sl=lv?c.slots[lv._i]:c.slots.find(x=>x.boss===id);if(!sl)return;
-        swapBoss(c,sl,d.boss,{diff:d.diff,party:d.party},span);const nl=live(c).find(x=>x.boss===d.boss);if(nl)moveClears(c,id,d.boss,nl)}));
-      toast(`${BY[id].name} 대신 ${BY[d.boss].name} ${DKO[d.diff]} · ${when} 적용했어요`);return}
-    set(()=>each(()=>{const c=cur(),lv0=live(c).find(x=>x.boss===id),sl=lv0?c.slots[lv0._i]:c.slots.find(x=>x.boss===id),t=BY[id].diffs[d.diff],key=pkey(t);if(!sl)return;
-      const val={diff:d.diff,party:d.party};if(d.party!==sl.party){val.cshare=null;val.lshare=null}
-      if(sl.only){Object.assign(sl,val);if(span==='keep')delete sl.only}
-      else if(span==='once'){ // 그 주에 원래 보이던 값(이전 설정 포함)과 같으면 한시 변경을 지우고, 다르면 남김
-        const i=c.slots.indexOf(sl);setTmp(sl,key,null);const e=live(c).find(x=>x._i===i)||sl;
-        if(!(e.diff===val.diff&&e.party===val.party))setTmp(sl,key,{diff:e.diff,party:e.party,cshare:e.cshare,lmode:e.lmode,lshare:e.lshare,memo:sl.memo,...val})}
-      else applyFrom(sl,val,key);
-      fixClear(c,id)}));
-    toast(`${BY[id].name} ${DKO[d.diff]}${d.party>1?` ${d.party}인`:''} · ${when} 적용했어요`)});
+  // 적용: 미리보기와 같은 계획대로 — 그 기간만 바꿀 기간들(once)과, 그 기간부터 계속 바꿀 기간(keepAt)
+  v.querySelectorAll('[data-cok]').forEach(b=>b.onclick=()=>{const id=ui.cfg,d=ui.cfgd,c0=cur(),l0=live(c0).find(x=>x.boss===id);if(!l0||!d)return;const P=cfgPlan(c0,l0,d),t0=P.t;if(P.noop)return;ui.cfg=null;
+    const _pw=pastV(t0)?'past':'now',PW=PWORD[_pw][0],FW=SINCEW[_pw],first=P.once[0];
+    const when=P.sp==='once'?PW[t0]:P.sp==='keep'?FW[t0]:P.sp==='back'?`${untilW(t0)} (${hRange(P.once,t0)})`:P.keepAt&&P.once.length?`${md(first)}${t0==='W'?' 주':''}부터 계속`:`${FW[t0]} (${hRange(P.once,t0)})`;
+    const one=keep=>{const c=cur(),lv=live(c).find(x=>x.boss===id);
+      if(d.boss!==id){const sl=lv?c.slots[lv._i]:c.slots.find(x=>x.boss===id);if(!sl)return;swapBoss(c,sl,d.boss,{diff:d.diff,party:d.party,mates:matesOf(d)},keep?'keep':'once');const nl=live(c).find(x=>x.boss===d.boss);if(nl)moveClears(c,id,d.boss,nl);return}
+      if(!lv)return;const t=BY[id].diffs[d.diff],val={diff:d.diff,party:d.party,mates:matesOf(d)};if(d.party!==(lv.party||1)){val.cshare=null;val.lshare=null}
+      putSlot(c,id,val,!keep,pkey(t),t,true);fixClear(c,id)};
+    set(()=>{P.once.forEach(x=>atDay(x,()=>one(false)));if(P.keepAt)atDay(P.keepAt,()=>one(true))});
+    toast(d.boss!==id?`${BY[id].name} 대신 ${BY[d.boss].name} ${DKO[d.diff]} · ${when} 적용했어요`:`${BY[id].name} ${DKO[d.diff]}${d.party>1?` ${d.party}인`:''} · ${when} 적용했어요`)});
 }
 function bindStatus(){
   const v=document.getElementById('view');
@@ -2448,7 +2547,7 @@ function bindStatus(){
     toast(`${t==='W'?'이 주는':'이 달은'} 지금 목록 그대로 둘게요`)});
   v.querySelectorAll('[data-fill]').forEach(b=>b.onclick=()=>{const p=fillNeed(cur(),b.dataset.fill);if(!p)return;ui.modal={kind:'fill',p,cid:cur().id};renderLayer()});
   // 기록은 지우지 않고 쌓음 (나중에 수익 기록에 씀)
-  const clearOne=(c,id)=>{const s=live(c).find(x=>x.boss===id);if(!s)return;const a=(c.clears[id]||[]).slice();
+  const clearOne=(c,id)=>{const s=live(c).find(x=>x.boss===id);if(!s||(tOf(s)==='M'&&noMon(TODAY)))return;const a=(c.clears[id]||[]).slice();
     if(!a.some(e=>dOf(e)===TODAY))a.push({d:TODAY,diff:s.diff,v:myPrice(s)});a.sort((x,y)=>dOf(x)<dOf(y)?-1:1);c.clears[id]=a};
   v.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>{if(Date.now()-(v._sw||0)<350)return;const id=b.dataset.clear;set(()=>clearOne(cur(),id));toast(`${BY[id].name} 클리어!${VIEW_OFF?` (${md(TODAY)})`:''}`)});
   // 클리어 버튼을 꾹 누르고 (iOS 길게 누르기와 같은 0.5초, 10px 안에서) 위아래로 끌면 시작 줄~지금 줄 사이 보스를 한 번에 클리어
@@ -2493,6 +2592,7 @@ function bindStatus(){
     ui.arm=null;ui.pop=null;
     if((cur().loot[lootKey(cur(),id)]||[]).length){ui.modal={kind:'unclear',id,cid:cur().id};renderLayer();render();return}
     unclear(id)});
+  v.querySelectorAll('[data-mno]').forEach(b=>b.onclick=e=>{e.stopPropagation();toast(`월간 보스는 ${+MON_START.slice(5)}월부터 기록할 수 있어요 (그 전엔 결정석 가격 정보가 없어요)`)});
   v.querySelectorAll('[data-loot]').forEach(b=>b.onclick=e=>{e.stopPropagation();const id=b.dataset.loot;ui.cfg=null;ui.pop=ui.pop===id?null:id;render()});
   bindCfg(v);
   v.querySelectorAll('.pop').forEach(p=>p.onclick=e=>e.stopPropagation());
@@ -2518,8 +2618,8 @@ function bossPicker(key,cur,opts){const b=BY[cur],open=ui.bdd===key;
     ${open?`<div class="dd bdd" role="listbox" aria-label="보스"><div class="opts">${opts.length?opts.map(x=>`<button type="button" role="option" aria-selected="${x.id===cur}" class="opt${x.id===cur?' on':''}" data-bpick="${key}:${x.id}"><img class="bico" src="${x.img}" alt="">${esc(x.name)}</button>`).join(''):'<span style="padding:10px;font-size:12px;color:var(--muted)">찾는 보스가 없어요</span>'}</div></div>`:''}
   </div>`}
 function pickSlot(id){const f=st.form,c=cur(),sl=live(c).find(x=>x.boss===id);if(!sl)return;
-  Object.assign(f,{type:tOf(sl),slot:id,boss:id,diff:sl.diff,party:sl.party,ceq:sl.cshare==null,cshare:sl.cshare??Math.round(100/sl.party),lmode:sl.lmode||'sell',leq:sl.lshare==null,lshare:sl.lshare??Math.round(100/sl.party),memo:sl.memo||'',span:sl._tmp||sl._only?'once':'keep',targets:[c.id]});st.stab='form'}
-function pickEmpty(t){const f=st.form;Object.assign(f,{type:t,slot:null,span:'keep',targets:[cur().id],memo:'',party:1,ceq:true,cshare:100,lmode:'sell',leq:true,lshare:100});st.stab='form';fixForm();const ds=diffsOf(f.boss,t);if(!ds.includes(f.diff))f.diff=ds[ds.length>1?1:0]}
+  Object.assign(f,{type:tOf(sl),slot:id,boss:id,diff:sl.diff,party:sl.party,ceq:sl.cshare==null,cshare:sl.cshare??Math.round(100/sl.party),lmode:sl.lmode||'sell',leq:sl.lshare==null,lshare:sl.lshare??Math.round(100/sl.party),memo:sl.memo||'',span:sl._tmp||sl._only?'once':'keep',targets:[c.id],mates:matesOf(sl)});st.stab='form'}
+function pickEmpty(t){const f=st.form;Object.assign(f,{type:t,slot:null,span:'keep',mates:[],targets:[cur().id],memo:'',party:1,ceq:true,cshare:100,lmode:'sell',leq:true,lshare:100});st.stab='form';fixForm();const ds=diffsOf(f.boss,t);if(!ds.includes(f.diff))f.diff=ds[ds.length>1?1:0]}
 function formPanel(){
   const f=st.form;fixForm();const b=BY[f.boss];const ds=diffsOf(f.boss,f.type);
   const tg=f.targets.map(id=>st.chars.find(c=>c.id===id));
@@ -2528,6 +2628,8 @@ function formPanel(){
   const opts=bossesOf(f.type).filter(x=>(!q||x.name.includes(q))&&(!slotMode||x.id===f.slot||!takenB.has(x.id)));
   const exS=editing?live(C).find(x=>x.boss===f.slot):null,slotNo=editing?live(C).filter(x=>tOf(x)===f.type).findIndex(x=>x.boss===f.slot)+1:0;
   const swapping=editing&&f.boss!==f.slot;
+  // 고친 게 없는지: 값이 지금과 같아도 '이번 주만' 값이 있는 주를 '이번 주부터'로 고르면 계속으로 바뀌니 바꿀 게 있음
+  const fSame=editing&&!swapping&&exS&&f.diff===exS.diff&&f.party===exS.party&&sfEq(matesOf(exS),matesOf(f)),fNoop=fSame&&(f.span==='once'||!(exS._tmp||exS._only));
   const full=f.type==='W'&&!editing?tg.filter(c=>live(c).filter(s=>tOf(s)==='W').length>=12&&!c.slots.find(s=>s.boss===f.boss)):[];
   const once=f.span==='once',ex1=tg.length===1?tg[0].slots.find(s=>s.boss===f.boss&&!s.only):null;
   const spanHint=!once?'':swapping?`${PERIOD[f.type]} ${esc(BY[f.slot].name)} 대신 ${esc(jo(b.name+' '+DKO[f.diff],'을'))} 잡아요. ${NEXTP[f.type]}엔 다시 ${esc(jo(BY[f.slot].name,'이에요'))}.`:ex1?`${esc(jo(tg[0].name,'은'))} 원래 ${esc(b.name)} ${jo(DKO[ex1.diff]+(ex1.party>1?` ${ex1.party}인`:''),'이에요')}. ${PERIOD[f.type]} ${jo(DKO[f.diff]+(f.party>1?` ${f.party}인`:''),'로')} 바꾸고 ${NEXTP[f.type]}엔 원래대로 돌아가요.`
@@ -2543,6 +2645,7 @@ function formPanel(){
         <div class="seg" role="radiogroup" aria-label="난이도">${ds.map(d=>`<button type="button" role="radio" aria-checked="${f.diff===d}" data-diff="${d}" class="${f.diff===d?'sd-'+d:''}">${DKO[d]}</button>`).join('')}</div></div>
       <div class="frow"><span class="flbl">파티 인원</span>
         <div class="cp-step fstep"><button type="button" data-party="-1" aria-label="파티 인원 줄이기" ${f.party<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${f.party}</b>${f.party>1?'인 파티':' 솔로'}</span><button type="button" data-party="1" aria-label="파티 인원 늘리기" ${f.party>=6?'disabled':''}>${I.plus()}</button></div></div>
+      ${mateRows('f',f.party,f.mates)}
     </div>
     ${f.party>1?`<div class="fsec">
       <div class="fblock"><div class="fhead">결정석 분배<button class="tg-lbl" type="button" id="ceq" aria-pressed="${f.ceq}">균등<span class="tg${f.ceq?' on':''}"></span></button></div>
@@ -2552,19 +2655,19 @@ function formPanel(){
     <div class="fsec"><div class="frow"><span class="flbl">메모</span><input class="inp" id="memo" type="text" placeholder="예) 토요일 21시 고정 파티" value="${esc(f.memo)}" style="flex:1"></div></div>
     ${slotMode?(()=>{const to={boss:f.boss,diff:f.diff,party:f.party},t=f.type,key=pkey(t);
       const hd=f.span==='hist'&&pastP(t)?histDates(C,editing?f.slot:f.boss,t,swapping?f.boss:null):null,hs=hd?hRange(hd,t):'',keepNow=' 이번 '+(t==='W'?'주':'달')+' 설정은 그대로예요.';
-      if(editing){const same=!swapping&&f.diff===exS.diff&&f.party===exS.party;if(same&&!once)return `<div class="cp-prev none"><span class="cp-pl">바꿀 내용을 골라 주세요</span></div>`;
-        const base=exS._tmp?exS._base:exS,dd=jo(DKO[f.diff]+(f.party>1?` ${f.party}인`:''),'로');
+      if(editing){if(fNoop)return `<div class="cp-prev none"><span class="cp-pl">바꿀 내용을 골라 주세요</span></div>`;
+        const base=exS._tmp?exS._base:exS,dd=jo(DKO[f.diff]+(f.party>1?` ${f.party}인`:''),'로'),src=!once&&exS._tmp?(underSlot(C,exS.boss)||exS):exS; // '이번 주부터'는 이번 주만 값을 뺀 원래 설정에서 바뀜
         const h=hd?(swapping?`${hs} 동안 ${esc(BY[f.slot].name)} 대신 ${esc(jo(b.name+' '+DKO[f.diff],'을'))} 잡은 걸로 기록해요.${keepNow}`:`${hs} 동안 ${jo(DKO[f.diff]+(f.party>1?` ${f.party}인`:''),'로')} 잡은 걸로 기록해요.${keepNow}`)
           :swapping?(once?spanHint:`${FROMW[t]} ${esc(BY[f.slot].name)} 대신 ${esc(jo(b.name,'을'))} 잡아요. 지난 기록은 그대로 둬요.`)
-          :once?`${PERIOD[t]} ${dd} 기록하고 ${NEXTP[t]}엔 원래대로(${DKO[base.diff]}) 돌아가요.`:`${FROMW[t]} 계속 ${dd} 잡아요. 지난 기록은 그대로 둬요.`;
-        return chgBox({boss:exS.boss,diff:exS.diff,party:exS.party},to,h)}
+          :once?`${PERIOD[t]} ${dd} 기록하고 ${NEXTP[t]}엔 원래대로 돌아가요.`:`${FROMW[t]} 계속 ${dd} 잡아요. 지난 기록은 그대로 둬요.${exS._tmp?` (${PERIOD[t].replace('만','')}만 바꿨던 걸 계속으로 바꿔요)`:''}`;
+        return chgBox({boss:exS.boss,diff:src.diff,party:src.party},to,(swapping?'':mateNote(matesOf(src),matesOf(f)))+h)}
       const gone=C.slots.find(x=>((x.end===key&&!hasBack(x,key))||(once&&hasSkip(x,key)))&&tOf(x)===t&&x.boss!==f.boss&&!C.slots.some(y=>y.swap===x.boss&&(y.start===key||y.only===key)));
       if(gone)return chgBox({boss:gone.boss,diff:gone.diff,party:gone.party},to,`${PERIOD[t].replace('만','')}에 뺀 ${esc(BY[gone.boss].name)} 대신 넣은 걸로 기록해요.${once?` ${NEXTP[t]}엔 ${esc(jo(BY[gone.boss].name,'이'))} 돌아와요.`:''}`);
       return chgBox(null,to,hd?`${hs} 동안 목록에 넣어요.${keepNow}`:once?`${PERIOD[t]} 넣고 ${NEXTP[t]} 초기화 때 저절로 빠져요.`:`${FROMW[t]} 계속 잡아요.`)})()
     :once?`<div class="once-note">${I.info}<span>${spanHint}</span></div>`:''}
     ${full.length?`<div class="warn">${I.info}${esc(full.map(nm).join(', '))}의 주간 슬롯이 가득 찼어요. 하나를 빼 주세요.</div>`:''}
   </div>
-  <div class="fbtns">${editing?(exS.swap&&exS._only?(ui.rv&&ui.rv.i===exS._i&&ui.rv.at==='form'?`<button class="btn danger lg" type="button" data-rvok>정말 돌릴까요?</button>`:`<button class="btn out lg" type="button" data-rvask="${exS._i}" data-at="form">원래대로</button>`):ui.rm&&ui.rm.i===exS._i&&ui.rm.at==='form'?`<button class="btn danger lg" type="button" data-rmok>정말 뺄까요?</button>`:`<button class="btn out lg" type="button" data-rmask="${exS._i}" data-at="form">빼기</button>`)+`<button class="btn dark lg" type="button" id="add-slot">${once?`${PERIOD[f.type]} 바꾸기`:'바꾸기'}</button>`
+  <div class="fbtns">${editing?(exS.swap&&exS._only?(ui.rv&&ui.rv.i===exS._i&&ui.rv.at==='form'?`<button class="btn danger lg" type="button" data-rvok>정말 돌릴까요?</button>`:`<button class="btn out lg" type="button" data-rvask="${exS._i}" data-at="form">원래대로</button>`):ui.rm&&ui.rm.i===exS._i&&ui.rm.at==='form'?`<button class="btn danger lg" type="button" data-rmok>정말 뺄까요?</button>`:`<button class="btn out lg" type="button" data-rmask="${exS._i}" data-at="form">빼기</button>`)+`<button class="btn dark lg" type="button" id="add-slot" ${fNoop?'disabled':''}>${once?`${PERIOD[f.type]} 바꾸기`:'바꾸기'}</button>`
     :`${f.type==='W'?'<button class="btn out lg" type="button" id="to-preset">프리셋으로 저장</button>':''}<button class="btn dark lg" type="button" id="add-slot" ${full.length===tg.length?'disabled':''}>${f.span==='once'?`${PERIOD[f.type]} 적용`:slotMode?'슬롯에 넣기':'목록에 추가'}</button>`}</div>`;
 }
 /* 프리셋 = 주간 보스 목록만 */
@@ -2679,12 +2782,16 @@ function bindSettings(){
   v.querySelectorAll('[data-stab]').forEach(b=>b.onclick=()=>{ui.dd=false;ui.bdd=null;set(()=>{st.stab=b.dataset.stab})});
   liveSearch('q',v=>{st.q=v});
   const qc=document.getElementById('q-clear');if(qc)qc.onclick=()=>set(()=>{st.q=''});
-  v.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>set(()=>{if(f.type!==b.dataset.type){f.party=1;f.ceq=true;f.leq=true} /* 종류를 바꾸면 인원은 솔로부터 (X10) */f.type=b.dataset.type;f.slot=null;fixForm();if(st.sfilter&&st.sfilter!=='all')st.sfilter=f.type}));
+  v.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>set(()=>{if(f.type!==b.dataset.type){f.party=1;f.mates=[];f.ceq=true;f.leq=true} /* 종류를 바꾸면 인원은 솔로부터 (X10) */f.type=b.dataset.type;f.slot=null;fixForm();if(st.sfilter&&st.sfilter!=='all')st.sfilter=f.type}));
   v.querySelectorAll('[data-sfilter]').forEach(b=>b.onclick=()=>set(()=>{st.sfilter=b.dataset.sfilter}));
   // 칸을 고칠 때 보스·난이도를 바꾸면 인원은 1인으로 (다른 보스·난이도는 보통 다른 파티)
-  const soloF=why=>{if(!f.slot||(f.party||1)<2)return;Object.assign(f,{party:1,ceq:true,cshare:100,leq:true,lshare:100});toast(why+' 바뀌어서 인원을 1인으로 돌렸어요')};
+  const soloF=why=>{if(!f.slot||(f.party||1)<2)return;Object.assign(f,{party:1,mates:[],ceq:true,cshare:100,leq:true,lshare:100});toast(why+' 바뀌어서 인원을 1인으로 돌렸어요')};
   v.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>set(()=>{const ex=live(cur()).find(x=>x.boss===f.slot);f.diff=b.dataset.diff;if(ex&&f.boss===ex.boss&&f.diff!==ex.diff)soloF('난이도가')}));
-  v.querySelectorAll('[data-party]').forEach(b=>b.onclick=()=>set(()=>{f.party=Math.max(1,Math.min(6,f.party+ +b.dataset.party))}));
+  v.querySelectorAll('[data-party]').forEach(b=>b.onclick=()=>set(()=>{f.party=Math.max(1,Math.min(6,f.party+ +b.dataset.party));f.mates=mateDraft(f.party,f.mates)}));
+  bindMateRows(v,'f',()=>mateDraft(f.party,f.mates),(a,done)=>{f.mates=a;
+    const ab=document.getElementById('add-slot'),e=f.slot?live(cur()).find(x=>x.boss===f.slot):null; // 적는 동안에도 바꾸기 버튼이 따라오게
+    if(ab&&e&&f.boss===f.slot){const sm=f.diff===e.diff&&f.party===e.party&&sfEq(matesOf(e),matesOf(f));ab.disabled=sm&&(f.span==='once'||!(e._tmp||e._only))}
+    if(done)afterTap(()=>set(()=>{}))});
   const ceq=document.getElementById('ceq');if(ceq)ceq.onclick=()=>set(()=>{f.ceq=!f.ceq;if(!f.ceq)f.cshare=Math.round(100/f.party)});
   const leq=document.getElementById('leq');if(leq)leq.onclick=()=>set(()=>{f.leq=!f.leq;if(!f.leq)f.lshare=Math.round(100/f.party)});
   const cs=document.getElementById('cshare');if(cs)cs.onchange=()=>{const raw=cs.value.trim(),n=raw===''?f.cshare:Math.max(1,Math.min(100,Math.round(+raw*10)/10||1));cs.value=n;if(n===f.cshare)return;set(()=>{f.cshare=n})}; // 0·빈칸·이상한 값은 칸에도 고친 값으로
@@ -2705,21 +2812,21 @@ function bindSettings(){
     const each=(dates,fn)=>dates?dates.forEach(x=>atDay(x,fn)):fn();
     if(!mode&&!hist){const q=formClearQ();if(q){ui.modal={kind:'mvq',...q,once};renderLayer();return}}
     ui.fsheet=false; // 적용하면 시트 닫기
-    if(mode==='next'){const nd=nextStart(f.type),val={diff:f.diff,party:f.party,cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo};
-      if(f.slot&&f.boss!==f.slot){const from=f.slot,to=f.boss;set(()=>{const c=cur();atDay(nd,()=>{const lf=live(c).find(x=>x.boss===from),sl=lf?c.slots[lf._i]:null;if(!sl)return;swapBoss(c,sl,to,{diff:f.diff,party:f.party},'keep');
+    if(mode==='next'){const nd=nextStart(f.type),val={diff:f.diff,party:f.party,mates:matesOf(f),cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo};
+      if(f.slot&&f.boss!==f.slot){const from=f.slot,to=f.boss;set(()=>{const c=cur();atDay(nd,()=>{const lf=live(c).find(x=>x.boss===from),sl=lf?c.slots[lf._i]:null;if(!sl)return;swapBoss(c,sl,to,{diff:f.diff,party:f.party,mates:matesOf(f)},'keep');
           const ns=c.slots.find(x=>x.boss===to&&x.swap===from);if(ns)Object.assign(ns,{cshare:val.cshare,lmode:val.lmode,lshare:val.lshare,memo:val.memo})})});
         toast(`${BY[from].name}${pp(BY[from].name,'은')} ${PERIOD[f.type].replace('만','')}까지, ${NEXTP[f.type]}부터 ${BY[to].name} ${DKO[f.diff]}${pp(DKO[f.diff],'로')} 바꿔요`);return}
       set(()=>{f.targets.forEach(id=>{const c=st.chars.find(x=>x.id===id);if(c)atDay(nd,()=>putSlot(c,f.boss,val,false,pkey(f.type),f.type))})});
       toast(`${BY[f.boss].name} ${NEXTP[f.type]}부터 ${DKO[f.diff]}${pp(DKO[f.diff],'로')} 바꿔요`);return}
     if(f.type!=='D'&&f.slot&&f.boss!==f.slot){const from=f.slot,to=f.boss; // 슬롯의 보스를 다른 보스로 바꾸기
       const hd=hist?histDates(cur(),from,f.type,to):null;
-      set(()=>{each(hd,()=>{const c=cur(),lf=live(c).find(x=>x.boss===from),sl=lf?c.slots[lf._i]:null;if(!sl)return;swapBoss(c,sl,to,{diff:f.diff,party:f.party},once?'once':f.span);
+      set(()=>{each(hd,()=>{const c=cur(),lf=live(c).find(x=>x.boss===from),sl=lf?c.slots[lf._i]:null;if(!sl)return;swapBoss(c,sl,to,{diff:f.diff,party:f.party,mates:matesOf(f)},once?'once':f.span);
         const nl0=live(c).find(x=>x.boss===to),ns=nl0?c.slots[nl0._i]:c.slots.find(x=>x.boss===to);Object.assign(ns,{cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo});
         const nl=live(c).find(x=>x.boss===to);if(nl&&mode!=='keep')moveClears(c,from,to,nl)});f.slot=to});
       toast(`${BY[from].name} 대신 ${BY[to].name} ${DKO[f.diff]}${hd?` · ${histSpan(hd,f.type)}`:once?` · ${PERIOD[f.type]}`:''} 바꿨어요`);return}
     const wasEdit=f.type!=='D'&&!!f.slot;
     let HD=null;const names=[],linked=[];set(()=>{f.targets.forEach(id=>{const c=st.chars.find(x=>x.id===id);
-      const val={diff:f.diff,party:f.party,cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo};
+      const val={diff:f.diff,party:f.party,mates:matesOf(f),cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo};
       if(hist){const hd=histDates(c,f.boss,f.type,null);let ok=false;HD=hd;
         for(const x of hd){const r=atDay(x,()=>putSlot(c,f.boss,val,true,pkey(f.type),f.type));if(r.full)break;ok=true;if(r.linked&&!linked.includes(r.linked))linked.push(r.linked)}
         if(ok)names.push(c.name);return}
@@ -2869,7 +2976,7 @@ function sxMembers(c,id,party){const d=(c.dist||{})[id]||{},ms=d.members||[];ret
 // 파티원 몫(dist.lm·cm)은 '이번 주부터·다음 주부터'로 바꾼 기록(hist)이 있으면 그 기간 값으로
 function sxDistAt(c,id,pk){const d=((c.dist||{})[id])||{};if(!d.hist||!pk)return d;const h=d.hist.filter(x=>x.until[0]===pk[0]&&sxKD(pk)<sxKD(x.until)).sort((a,b)=>sxKD(a.until)<sxKD(b.until)?-1:1)[0];return h?{...d,lm:h.lm,cm:h.cm}:d}
 function sxLootCalc(c,id,key,n,P,sl,nores){
-  const pt0=sxPartyAt(c,id,key.split('|')[1]),pt=pt0&&sxPSize(pt0)===(sl.party||1)?pt0:null,same=true; // 그 주 보스 설정 인원이 파티와 다르면(그 주만 솔로 등) 파티 없이 계산
+  const pt=sxVPof(c,sl),same=true; // 그 주 보스 설정의 같이 간 사람 = 그 드랍의 파티
   const m=((c.lootMeta||{})[key]||{})[n]||{},party=pt?sxPSize(pt):(sl.party||1),rot=party>1&&m.sell==='rot',sold=m.sell!=='keep'&&m.sell!=='rot',fee=m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,saleFee=sold?fee:0,taker=rot?sxTk(pt,m.taker):(m.taker||'me');
   const sp=sxSplit(party,party<=1?100:same?sl.lshare:null,same?sxDistAt(c,id,key.split('|')[1]).lm:null),my=party<=1?1:sp.me/100;
   const rotSold=rot&&taker==='me'&&m.after!=='keep', /* 순환 획득 '그 다음' 기본값은 팔았음 */sold$=(sold||rotSold||(rot&&taker!=='me'))&&m.sp!=null?+m.sp:null; // 파티원이 먹은 템도 판 금액은 기록
@@ -2958,105 +3065,137 @@ function sxMerge(used){const tiers=used.filter(g=>g.k!=='m'),cap=SX_MAX-1-(tiers
   return [{k:'lo',name:top.lo+' 이하',c:top.c,of:low,tip:low.map(g=>`${g.name} — ${g.tip}`).join('\n')},...used.slice(n).map(g=>({...g,of:[g]}))]}
 const SX_ALL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg>';
 const SX_LOOT={name:'물욕템',c:'repeating-linear-gradient(135deg,#E0588A 0 3px,#F6A5C4 3px 6px)'};
-// 결정석 가격이 바뀐 날 (가격표에서 자동으로, 첫 표 시작일 = 7.30 조정 포함)
-function sxMarks(unit){const out=[];PRICE_HIST.forEach(h=>{const f=h.from;const ds=typeof f==='object'?[...new Set(Object.values(f))]:[f];
+// 결정석 가격이 바뀐 날 (가격표에서 자동으로) — 첫 표 시작일(7.30)은 기록 시작일일 뿐 조정이 아니라 빼고
+function sxMarks(unit){const out=[];PRICE_HIST.forEach((h,i)=>{if(!i)return;const f=h.from;const ds=typeof f==='object'?[...new Set(Object.values(f))]:[f];
   ds.forEach(d=>{if(unit==='W'&&typeof f==='object'&&f.M===d&&f.W!==d)return;out.push({d,label:typeof f==='object'&&f.M===d&&f.W!==d?'월간 결정석 조정':'결정석 조정'})})});return out}
 // 파티원 이름 모음: 같이 간 횟수 순 이름 목록 + 인원별 파티 조합
-function sxKnown(){const nm={},cb={};st.chars.forEach(c=>live(c).forEach(sl=>{if((sl.party||1)<2)return;const raw=(((c.dist||{})[sl.boss]||{}).members||[]).slice(0,sl.party-1),ns=Array.from({length:sl.party-1},(_,j)=>((raw[j]||{}).name||'').trim());
-  ns.filter(Boolean).forEach(n=>nm[n]=(nm[n]||0)+1);if(ns.every(Boolean)){const k=[...ns].sort().join('·');(cb[ns.length]=cb[ns.length]||{})[k]=(cb[ns.length][k]||0)+1}}));
-  return{names:Object.entries(nm).sort((a,b)=>b[1]-a[1]),combos:cb}}
-// ── 파티: 직접 만든 파티(st.parties = [{id,name,members:[{name,fee,tax}],rot}])에 보스를 넣음
-//    보스가 언제부터 어느 파티였는지 기간키로 기록: c.dist[보스].pt = [{pid, from}] (pid=null 이면 그때부터 파티 없음)
-//    인원이나 사람이 바뀌면 새 파티를 만들어 옮김 → 예전 파티는 장부와 함께 '지난 파티'로 남음
+// ── 파티 = 같이 간 사람 묶음 (자동). 기준은 보스 설정의 '같이 간 사람'(slot.mates) — 그 기간 설정을 그대로 따라감
+//    같은 사람들이면 한 파티(gk = 이름 가나다순 '·'). 파티 이름은 별명(st.pgrp[gk].name), 순번·금액 방식도 묶음마다(st.pgrp[gk].rot)
+//    사람마다 보내는 방법(교환 수수료·타섭)은 st.people[이름] — 어느 파티에서 고쳐도 같은 사람이면 같이 바뀜
+//    이름을 모르는 사람이 낀 파티는 그 캐릭터·보스만의 파티로 따로 봄 (장부 없음)
 const sxPSize=p=>p.members.length+1;
 const sxPName=p=>{if(p.name&&p.name.trim())return p.name.trim();const ns=p.members.map(m=>(m.name||'').trim()).filter(Boolean);if(!ns.length)return '';const rest=p.members.length-ns.length;return `${ns.slice(0,3).join('·')}${ns.length>3?` 외 ${ns.length-3+rest}명`:rest>0?` 외 ${rest}명`:''} 파티`};
-const sxPLabel=p=>sxPName(p)||`이름 없는 ${TKO[p.t||'W']} 파티 (${sxPSize(p)}인)`;
+const sxPLabel=p=>sxPName(p)||`이름 없는 ${sxPSize(p)}인 파티${p.boss&&BY[p.boss]?` · ${BY[p.boss].name}`:''}`;
 // 파티원 보내는 방법: 교환 수수료 5·3%는 늘 붙고, 타섭이면 더 붙음 — 메포(메소→메이플포인트) 1% / 관세(타섭 경매장) 10%
 const sxXs=m=>m.xs==='mp'||m.xs==='tax'?m.xs:m.tax?'tax':'';
 const sxXP=xs=>xs==='mp'?SX_FEE.mp:xs==='tax'?SX_FEE.tax:0; // 타섭으로 더 붙는 %
 const sxPMem=(p,j)=>{const m=p.members[j]||{},xs=sxXs(m);return{name:(m.name||'').trim()||`파티원 ${j+1}`,xs,fee:m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,ex:sxXP(xs)}};
 const SX_XS=[['','없음'],['mp','메포 1%'],['tax','관세 10%']];
-const sxPById=id=>(st.parties||[]).find(p=>p.id===id)||null;
-const sxPT=(c,id)=>(((c.dist||{})[id]||{}).pt)||[];
 const sxKD=k=>sxKeyDate(k);
 // 지금(오늘) 기준 기간키 · 보스 목록 — 보스 현황에서 지난 날짜를 보고 있어도 오늘 기준
 const sxNowKey=t=>t==='M'?'M'+REAL.slice(0,7):t==='D'?'D'+REAL:'W'+REALW;
 const sxLiveNow=c=>VIEW_OFF===0?live(c):atDay(REAL,()=>live(c));
-function sxPartyAt(c,id,pk){if(!pk)return null;let pid=null;sxPT(c,id).forEach(e=>{if(e.from[0]===pk[0]&&sxKD(e.from)<=sxKD(pk))pid=e.pid});return pid?sxPById(pid):null}
-// 먹은 사람: 'me' | '#번호'(파티원 순서). 예전에 이름으로 적힌 건 이름으로 찾아서 번호로
+const sxKStep=(k,n)=>k[0]==='M'?'M'+sxMonthAdd(k.slice(1)+'.01',n).slice(0,7):k[0]+sxAdd(k.slice(1),n*(k[0]==='W'?7:1));
+// 가상 파티 (같은 묶음이면 같은 객체 — 장부·목록에서 같은 파티로 셈)
+const SX_VP=new Map();
+const sxUKey=(t,cid,id,ms)=>`${t}:u:${cid}|${id}:${ms.filter(Boolean).join('·')}:${ms.length}`;
+function sxVP(t,mates,c,id){const ms=normMates(mates),gk=ms.length&&ms.every(Boolean)?ms.join('·'):'',pid=gk?t+':'+gk:sxUKey(t,c.id,id,ms);
+  let p=SX_VP.get(pid);if(!p){p={id:pid,t};SX_VP.set(pid,p)}
+  const g=(st.pgrp||{})[gk||pid]||{};
+  Object.assign(p,{gk,boss:gk?null:id,cid:gk?null:c.id,name:g.name||'',rot:g.rot==='amount'?'amount':'turn',members:ms.map(n=>{const o=(st.people||{})[n]||{};return{name:n,fee:o.fee,xs:o.xs}})});return p}
+const sxGK=p=>p.gk||p.id; // 별명·순환 방식 저장 키
+const sxPById=id=>SX_VP.get(id)||null;
+const sxVPof=(c,sl)=>sl&&(sl.party||1)>1&&BY[sl.boss]&&BY[sl.boss].diffs[sl.diff]?sxVP(tOf(sl),matesOf(sl),c,sl.boss):null;
+function sxPartyAt(c,id,pk){if(!pk)return null;return sxVPof(c,sxSlotAt(c,id,sxKD(pk)))}
+// 먹은 사람: 'me' | 이름 | '#번호'(이름 없는 파티원 순서). 계산할 땐 그 파티의 '#번호'로 바꿔 씀
 const sxTk=(p,tk)=>{if(!tk||tk==='me')return 'me';if(tk==='party')return '#0';if(/^#\d+$/.test(tk))return tk;const j=p?p.members.findIndex(m=>(m.name||'').trim()===tk):-1;return j>=0?'#'+j:'#0'};
-// 그 보스의 가장 이른 기록 (처음 파티에 넣을 때 그때부터로)
+// 고를 때 저장하는 값: 이름이 있으면 이름(파티 사람이 바뀌어도 그 사람으로 남음)
+const sxTkVal=(p,j)=>{const n=p&&p.members[j]?(p.members[j].name||'').trim():'';return n||'#'+j};
+// 그 보스의 가장 이른 기록 기간키
 function sxFirstKey(c,id,t){let m=null;const lt=k=>!m||sxKD(k)<sxKD(m);
   Object.keys(c.loot||{}).forEach(k=>{const[b,pk]=k.split('|');if(b===id&&pk&&pk[0]===t&&(c.loot[k]||[]).length&&lt(pk))m=pk});
   ((c.clears||{})[id]||[]).forEach(e=>{const d=dOf(e),k=t==='M'?'M'+d.slice(0,7):t==='D'?'D'+d:'W'+sxWeek(d);if(lt(k))m=k});return m}
-function sxSetPT(c,id,pid,from){c.dist=c.dist||{};const d=c.dist[id]=c.dist[id]||{},a=(d.pt||[]).filter(e=>e.from!==from);a.push({pid,from});a.sort((x,y)=>sxKD(x.from)<sxKD(y.from)?-1:1);
-  const out=[];a.forEach(e=>{if(!out.length&&!e.pid)return;if(out.length&&out[out.length-1].pid===e.pid)return;out.push(e)});d.pt=out}
-// 보스를 파티에 넣기/빼기: 처음 넣는 보스는 지난 기록부터, 그 다음부터는 이번 주(달)부터
-function sxAssign(c,id,pid){const sl=sxLiveNow(c).find(s=>s.boss===id)||c.slots.find(s=>s.boss===id),t=sl?tOf(sl):'W',now=sxNowKey(t);
-  const a=sxPT(c,id),last=a[a.length-1];
-  if(!pid&&last&&last.from===now){c.dist[id].pt=a.slice(0,-1);return} // 이번 주에 넣은 걸 빼면 넣기 전으로
-  sxSetPT(c,id,pid,!a.length&&pid?(sxFirstKey(c,id,t)||now):now)}
-// 처음 한 번: 예전 방식(보스마다 적은 파티원)을 파티로 옮김 — 이름이 다 같은 건 한 파티로
-// 파티 종류(주간·월간)가 없는 파티: 들어 있던 보스로 정하고, 섞여 있으면 종류별로 나눔 (장부는 보스 기록이라 그대로)
-function sxFixTypes(){(st.parties||[]).forEach(p=>{if(p.t)return;const ts=[...new Set(sxSegs(p,st.chars).map(z=>z.from[0]))];p.t=ts[0]||'W';
-  ts.slice(1).forEach(t=>{const q={...p,id:'p'+Math.random().toString(36).slice(2,9),t,members:p.members.map(m=>({...m}))};st.parties.push(q);
-    st.chars.forEach(c=>Object.values(c.dist||{}).forEach(d=>(d.pt||[]).forEach(e=>{if(e.pid===p.id&&e.from[0]===t)e.pid=q.id})))})})}
-function sxMigrateParties(){if(st.parties){sxFixTypes();return}st.parties=[];const G={},FB={};const conf=[]; // conf: 같은 이름 파티원인데 보스마다 수수료·관세가 다른 것 (D16 — 나중에 물어봄)
-  st.chars.forEach(c=>{const seen=new Set();c.slots.forEach(raw=>{const id=raw.boss;if(seen.has(id)||!BY[id]||(raw.party||1)<2)return;seen.add(id);
-    const d=(c.dist||{})[id]||{},ms=Array.from({length:raw.party-1},(_,j)=>{const m=(d.members||[])[j]||{};return{name:(m.name||'').trim(),fee:m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,tax:!!m.tax}});
-    const t=tOf(raw),key=ms.every(m=>m.name)?t+raw.party+':'+ms.map(m=>m.name).sort().join('·'):null;let p=key&&G[key];
-    if(!p){p={id:'p'+Math.random().toString(36).slice(2,9),t,name:(d.pname||'').trim(),members:ms,rot:d.rot==='amount'?'amount':'turn'};st.parties.push(p);if(key)G[key]=p;FB[p.id]=id}
-    else{if(!p.name&&d.pname)p.name=d.pname.trim();
-      ms.forEach(m=>{const pm=p.members.find(x=>x.name===m.name);if(pm&&(pm.fee!==m.fee||pm.tax!==m.tax)&&!conf.some(q=>q.pid===p.id&&q.name===m.name))conf.push({pid:p.id,name:m.name,a:{fee:pm.fee,tax:pm.tax,boss:FB[p.id]},b:{fee:m.fee,tax:m.tax,boss:id}})})}
-    c.dist=c.dist||{};const dd=c.dist[id]=c.dist[id]||{};dd.pt=[{pid:p.id,from:sxFirstKey(c,id,t)||sxNowKey(t)}];if(raw.end)dd.pt.push({pid:null,from:raw.end})})});
-  if(conf.length)st.ptConf=conf}
-// 합친 파티원 설정이 보스마다 달랐으면 하나씩 물어봄 (D16)
-const sxFeeTxt=o=>`수수료 ${o.fee}% · ${o.tax?'관세 있음':'관세 없음'}`;
-function sxAskConf(){const q=(st.ptConf||[])[0];if(!q||ui.modal||ui.confAsked===q.pid+q.name)return;ui.confAsked=q.pid+q.name; // 닫으면 이번 접속 동안은 다시 안 물음 (처음 설정 그대로)
-  const p=st.parties.find(x=>x.id===q.pid),pm=p&&p.members.find(m=>m.name===q.name);if(!pm){st.ptConf.shift();save();return}
-  const bn=id=>BY[id]?BY[id].name:id;
-  askModal({title:`${q.name} 님 설정이 보스마다 달라요`,lead:`${sxPLabel(p)}로 합치면서 같은 사람으로 묶었어요. 어느 설정을 쓸까요?`,opts:[['a',`${bn(q.a.boss)} 설정`,sxFeeTxt(q.a)],['b',`${bn(q.b.boss)} 설정`,sxFeeTxt(q.b)]]},k=>{const o=k==='b'?q.b:q.a;pm.fee=o.fee;pm.tax=o.tax;st.ptConf.shift();if(!st.ptConf.length)delete st.ptConf;save();render()})}
-// 저장할 때마다: 보스를 뺐거나 인원이 파티와 달라지면 그 주(달)부터 파티에서 빠짐
-// 지난 기간까지 확인: 파티에 들어 있던 기간 중 그때 보스 설정(인원)이 파티와 안 맞는 앞뒤 기간은 잘라냄
-//  예) 지난 주들을 채우다 2인으로 잘못 넣었다가 1인으로 고친 경우 → 그 기간은 파티에서 빠짐
-// 그 기간에만 뺐거나(skip) 그 기간만 인원을 바꾼(tmp) 경우: 평소 설정 인원이 파티와 같으면 파티에서 빼지 않음
-function sxTempOff(c,id,k,size){const raw=c.slots.find(x=>x.boss===id&&!x.only);if(!raw)return false;
-  const ended=raw.end&&sxKD(k)>=sxKD(raw.end)&&!hasBack(raw,k);if(ended||(raw.start&&sxKD(k)<sxKD(raw.start)))return false;
-  return (raw.party||1)===size&&(hasSkip(raw,k)||!!tmpAt(raw,k))}
-const sxStepK=k=>k[0]==='M'?'M'+sxMonthAdd(k.slice(1)+'.01',1).slice(0,7):'W'+sxAdd(k.slice(1),7);
-function sxPrune(){if(!st.parties||typeof atDay!=='function')return;
-  st.chars.forEach(c=>Object.keys(c.dist||{}).forEach(id=>{const a=sxPT(c,id);if(!a.length||!BY[id])return;
-    a.slice().forEach((e,i)=>{if(!e.pid||e.from[0]==='D')return;const p=sxPById(e.pid);if(!p)return;const t=e.from[0],now=sxNowKey(t),nx=a[i+1]?a[i+1].from:null,ks=[];
-      for(let k=e.from,g=0;g<120&&sxKD(k)<=sxKD(now)&&(!nx||sxKD(k)<sxKD(nx));g++,k=sxStepK(k))ks.push(k);if(!ks.length)return;
-      const ok=ks.map(k=>{const sl=atDay(sxKD(k),()=>live(c).find(s=>s.boss===id));return (!!sl&&(sl.party||1)===sxPSize(p))||sxTempOff(c,id,k,sxPSize(p))}),f=ok.indexOf(true),l=ok.lastIndexOf(true);
-      if(f<0){sxSetPT(c,id,null,e.from);return}
-      if(l<ks.length-1)sxSetPT(c,id,null,ks[l+1]);
-      if(f>0){sxSetPT(c,id,null,e.from);sxSetPT(c,id,e.pid,ks[f])}})}));
-  // 보스가 하나도 없고 이름·파티원도 안 적힌 자동 파티는 지움
-  st.parties=st.parties.filter(p=>p.manual||sxSegs(p,st.chars).length||(p.name||'').trim()||p.members.some(m=>(m.name||'').trim()))}
-function sxSync(){if(!st.parties)return;sxPrune();st.chars.forEach(c=>{const lv=sxLiveNow(c);Object.keys(c.dist||{}).forEach(id=>{const a=sxPT(c,id);if(!a.length)return;const last=a[a.length-1];if(!last.pid)return;
-  const p=sxPById(last.pid),sl=lv.find(s=>s.boss===id),t=sl?tOf(sl):last.from[0];if(!p||!sl||(sl.party||1)!==sxPSize(p)){if(p&&sxTempOff(c,id,sxNowKey(t),sxPSize(p)))return;sxSetPT(c,id,null,sxNowKey(t))}})})}
-// 파티가 들어 있던 기간들 [{c,id,from,to}] (to=null 이면 지금도 진행 중)
-function sxSegs(p,chars){const out=[];chars.forEach(c=>Object.keys(c.dist||{}).forEach(id=>{if(!BY[id])return;const a=sxPT(c,id);a.forEach((e,i)=>{if(e.pid===p.id)out.push({c,id,from:e.from,to:a[i+1]?a[i+1].from:null})})}));return out}
+// 파티 목록: 슬롯 설정 기록(지금 설정 · 이전 설정 prev · 그 기간만 tmps)에서 같이 간 사람 묶음과 기간을 모음
+//  → [{p, segs:[{c,id,from,to}]}] (to=null 이면 끝 없이 진행 중, to가 아직 안 온 기간이면 지금 그 파티로 가는 중)
+//  그 기간만 다르게 잡았거나(tmps) 뺀(skips) 기간은 원래 파티 기간에서 빼고, 같은 캐릭터·보스의 이어지는 기간은 하나로 합침
+function sxGroups(chars){const G=new Map(),NK={},nk=t=>NK[t]||(NK[t]=sxNowKey(t)),lt=(a,b)=>sxKD(a)<sxKD(b);
+  chars.forEach(c=>c.slots.forEach(s=>{if(!BY[s.boss]||!BY[s.boss].diffs[s.diff])return;const t=tOf(s),f0=()=>sxFirstKey(c,s.boss,t)||nk(t);
+    const tks=[...Object.keys(s.tmps||{}),...(s.tmp&&s.tmp.key?[s.tmp.key]:[])].filter(k=>k[0]===t),holes=[...new Set([...tks,...(s.skips||[]),...(s.skip?[s.skip]:[])])].sort((x,y)=>lt(x,y)?-1:1);
+    const add=(p,z)=>{let g=G.get(p.id);if(!g)G.set(p.id,g={p,segs:[]});g.segs.push(z)};
+    const push=(o,from,to,whole)=>{if((o.party||1)<2)return;from=from||f0();if(to&&!lt(from,to))return;const p=sxVP(t,matesOf(o),c,s.boss);
+      if(whole){add(p,{c,id:s.boss,from,to});return}
+      let a=from;holes.filter(h=>!lt(h,a)&&(!to||lt(h,to))).forEach(h=>{if(lt(a,h))add(p,{c,id:s.boss,from:a,to:h});a=sxKStep(h,1)});
+      if(!to||lt(a,to))add(p,{c,id:s.boss,from:a,to})};
+    if(s.only){push(s,s.only,sxKStep(s.only,1),true);return}
+    let lo=s.start||null;[...(s.prev||[])].sort((a,b)=>lt(a.until,b.until)?-1:1).forEach(v=>{push(v,lo,v.until);lo=v.until});
+    push(s,lo,s.end||null);
+    Object.entries(s.tmps||{}).forEach(([k,o])=>{if(o)push({...s,...o},k,sxKStep(k,1),true)});if(s.tmp&&s.tmp.key)push({...s,...s.tmp},s.tmp.key,sxKStep(s.tmp.key,1),true)}));
+  G.forEach(g=>{const by={};g.segs.forEach(z=>{(by[z.c.id+'|'+z.id]=by[z.c.id+'|'+z.id]||[]).push(z)});g.segs=[];
+    Object.values(by).forEach(a=>{a.sort((x,y)=>lt(x.from,y.from)?-1:1);const out=[];
+      a.forEach(z=>{const l=out[out.length-1];if(l&&(!l.to||!lt(l.to,z.from))){if(l.to&&(!z.to||lt(l.to,z.to)))l.to=z.to}else out.push({...z})});g.segs.push(...out)})});
+  return [...G.values()]}
+// 지금 그 파티로 가는 중인 기간인가 (끝이 없거나, 끝나는 기간이 아직 안 옴 — 이번 주만 바꾼 파티도 이번 주엔 '지금 파티')
+const sxSegOn=z=>!z.to||lt0(sxNowKey(z.from[0]),z.to);const lt0=(a,b)=>sxKD(a)<sxKD(b);
 const sxKFmt=k=>k[0]==='M'?`${+k.slice(6,8)}월`:md(k.slice(1));
 const sxKEnd=k=>{const d=sxAdd(sxKD(k),-1);return k[0]==='M'?`${+d.slice(5,7)}월`:md(d)};
 const sxRangeTxt=(from,to)=>`${sxKFmt(from)} ~ ${to?sxKEnd(to):'진행 중'}`;
 function sxPSpan(segs){if(!segs.length)return '';const f=segs.reduce((a,s)=>sxKD(s.from)<sxKD(a.from)?s:a);const on=segs.some(s=>!s.to);
   return on?sxRangeTxt(f.from,null):sxRangeTxt(f.from,segs.reduce((a,s)=>sxKD(s.to)>sxKD(a.to)?s:a).to)}
+// 예전 '파티'(st.parties + 보스별 기간 dist.pt, 더 예전엔 dist.members) → 슬롯의 같이 간 사람(mates)으로 한 번 옮김
+//  - 설정 기록(prev)마다 그때 파티 이름으로 채움. 파티가 설정 중간에 바뀌었으면 그 경계에서 설정 기록을 나눔
+//  - 파티를 늦게 정해서 비어 있던 앞 기간은 그 뒤에 만난 같은 인원 파티로 채움
+//  - 먹은 사람('#번호')은 이름으로, 파티원 몫 배열(cm·lm)은 가나다순 자리로 옮김
+function sxMigrateMates(S){if(!S||S.mv>=2||!Array.isArray(S.chars))return false;
+  const P=Array.isArray(S.parties)?S.parties:[],byId=id=>P.find(p=>p.id===id)||null;S.people=S.people||{};S.pgrp=S.pgrp||{};const seen=new Set();
+  const person=m=>{const n=((m||{}).name||'').trim();if(!n||seen.has(n))return;seen.add(n);const o=S.people[n]=S.people[n]||{};if(m.fee===SX_FEE.lo)o.fee=SX_FEE.lo;const xs=sxXs(m);if(xs)o.xs=xs};
+  const alias=(key,name,rot)=>{if(!key)return;const g=S.pgrp[key]=S.pgrp[key]||{};if(name&&name.trim()&&!g.name)g.name=name.trim();if(rot==='amount'&&!g.rot)g.rot='amount';if(!Object.keys(g).length)delete S.pgrp[key]};
+  P.forEach(p=>(p.members||[]).forEach(person));
+  S.chars.forEach(c=>{if(!c||!Array.isArray(c.slots))return;const D=c.dist||{};
+    c.slots.forEach(s=>{const id=s&&s.boss;if(!BY[id]||!BY[id].diffs[s.diff])return;const t=BY[id].diffs[s.diff],d=D[id]||{},pt=(d.pt||[]).filter(e=>e&&e.from&&e.from[0]===t),leg=d.members||[];leg.forEach(person);
+      const at=(k,n)=>{let pid=null;pt.forEach(e=>{if(sxKD(e.from)<=sxKD(k))pid=e.pid});const p=pid&&byId(pid);return p&&(!n||p.members.length+1===n)?p:null};
+      const later=(k,n)=>{for(const e of pt){if(sxKD(e.from)<=sxKD(k)||!e.pid)continue;const p=byId(e.pid);if(p&&p.members.length+1===n)return p}return null};
+      const nm=(p,n)=>Array.from({length:n-1},(_,j)=>(((p?p.members:leg)[j]||{}).name||'').trim());
+      const pick=(k,n,a)=>at(k,n)||later(k,n)||(a?at(a,n):null);
+      const has=o=>Array.isArray(o.mates)&&o.mates.length;
+      const fill=(o,k)=>{const n=o.party||1;if(n<2||has(o))return;o.mates=normMates(nm(pick(k,n),n))};
+      if(s.only)fill(s,s.only);
+      else{const vs=(s.prev||[]).slice().sort((a,b)=>sxKD(a.until)<sxKD(b.until)?-1:1),np=[];let lo=s.start||null;
+        const cuts=(a,b)=>{const ks=[...new Set(pt.map(e=>e.from).filter(f=>(!a||sxKD(f)>sxKD(a))&&(!b||sxKD(f)<sxKD(b))))].sort((x,y)=>sxKD(x)<sxKD(y)?-1:1);
+          const out=[];let s0=a;ks.forEach(f=>{out.push({a:s0,b:f});s0=f});out.push({a:s0,b});return out};
+        const ver=(o,a,b,base)=>{const n=o.party||1;if(n<2||has(o)){if(!base)np.push(o);return}
+          const mg=[];cuts(a,b).forEach(z=>{const m=normMates(nm(pick(z.b?sxKStep(z.b,-1):sxNowKey(t),n,z.a),n)),l=mg[mg.length-1];if(l&&sfEq(l.m,m))l.b=z.b;else mg.push({...z,m})});
+          mg.forEach((z,i)=>{const last=i===mg.length-1;if(last&&base){s.mates=z.m;return}np.push({...o,mates:z.m,until:last?o.until:z.b})})};
+        vs.forEach(v=>{ver(v,lo,v.until,false);lo=v.until});const b={};SLOTF.forEach(f=>{if(f!=='mates')b[f]=s[f]});ver(b,lo,null,true);
+        if(np.length)s.prev=np;else delete s.prev}
+      Object.entries(s.tmps||{}).forEach(([k,o])=>{if(!o)return;const n=o.party||s.party||1;if(n>1&&!has(o))o.mates=normMates(nm(pick(k,n),n))});
+      if(s.tmp&&s.tmp.key&&(s.tmp.party||1)>1&&!has(s.tmp))s.tmp.mates=normMates(nm(pick(s.tmp.key,s.tmp.party),s.tmp.party));
+      // 별명 · 순환 방식 (지금 파티 기준)
+      const pn=at(sxNowKey(t))||pt.reduce((q,e)=>byId(e.pid)||q,null),n0=s.party||1;
+      if(n0>1){const ms=matesOf(s),gk=ms.every(Boolean)?ms.join('·'):sxUKey(t,c.id,id,ms);alias(gk,pn?pn.name:d.pname,pn?pn.rot:d.rot)}
+      // 파티원 몫 배열: 예전 파티원 순서 → 가나다순 자리
+      const old=nm(pn&&pn.members.length+1===n0?pn:null,n0),neu=normMates(old),used=new Set(),perm=neu.map(x=>{let i=old.findIndex((y,j)=>!used.has(j)&&y===x);if(i<0)i=old.findIndex((y,j)=>!used.has(j));used.add(i);return i});
+      const re=a=>Array.isArray(a)&&a.length?perm.map(i=>a[i]):a;if(n0>1&&perm.some((v,j)=>v!==j)){d.cm=re(d.cm);d.lm=re(d.lm);(d.hist||[]).forEach(h=>{h.cm=re(h.cm);h.lm=re(h.lm)})}});
+    // 먹은 사람 '#번호' → 이름, 파티원별 보내는 방법(xf)도 이름 자리로
+    Object.entries(c.lootMeta||{}).forEach(([key,items])=>{const[id,pk]=key.split('|');if(!pk||!items)return;const d=D[id]||{},pt=(d.pt||[]).filter(e=>e&&e.from&&e.from[0]===pk[0]);
+      let pid=null;pt.forEach(e=>{if(sxKD(e.from)<=sxKD(pk))pid=e.pid});if(!pid){const nx=pt.find(e=>e.pid&&sxKD(e.from)>sxKD(pk));if(nx)pid=nx.pid} // 파티를 늦게 정한 앞 기간은 뒤 파티로
+      const p=byId(pid),ms=p?p.members.map(m=>(m.name||'').trim()):(d.members||[]).map(m=>((m||{}).name||'').trim()),neu=normMates(ms);
+      Object.values(items).forEach(m=>{if(!m||typeof m!=='object')return;let tk=m.taker;if(tk==='party')tk='#0';
+        if(typeof tk==='string'&&/^#\d+$/.test(tk)&&ms[+tk.slice(1)])m.taker=ms[+tk.slice(1)];
+        if(m.xf&&typeof m.xf==='object'){const nx={};Object.entries(m.xf).forEach(([j,v])=>{const n=ms[+j],i=n?neu.indexOf(n):+j;nx[i<0?j:i]=v});m.xf=nx}})});
+    Object.values(D).forEach(d=>{if(d&&typeof d==='object'){delete d.pt;delete d.members;delete d.pname;delete d.rot}})});
+  delete S.parties;delete S.ptConf;S.mv=2;return true}
+// 사람 이름 바꾸기: 모든 설정 기록(지금·이전·그 기간만)의 같이 간 사람, 먹은 사람, 사람 설정, 파티 별명 키를 같이 바꿈
+//  가나다순 자리가 바뀌면 파티원 몫 배열(cm·lm)도 같은 자리로 옮김. 이미 있는 이름이면 그 사람과 합쳐짐
+function sxRename(old,neu){const sw=a=>Array.isArray(a)?a.map(n=>(n||'').trim()===old?neu:n):a,gk=k=>k.split('·').map(n=>n===old?neu:n);
+  st.chars.forEach(c=>{c.slots.forEach(s=>{const b0=matesOf(s);[s,...(s.prev||[]),...Object.values(s.tmps||{}),s.tmp].forEach(o=>{if(o&&o.mates)o.mates=normMates(sw(o.mates))});
+      const b1=matesOf(s),d=(c.dist||{})[s.boss];if(d&&b0.join('·')!==b1.join('·')){const used=new Set(),perm=b1.map(n=>{let i=b0.map(x=>x===old?neu:x).findIndex((y,j)=>!used.has(j)&&y===n);if(i<0)i=b0.findIndex((y,j)=>!used.has(j));used.add(i);return i});
+        const re=a=>Array.isArray(a)&&a.length?perm.map(i=>a[i]):a;d.cm=re(d.cm);d.lm=re(d.lm);(d.hist||[]).forEach(h=>{h.cm=re(h.cm);h.lm=re(h.lm)})}});
+    Object.values(c.lootMeta||{}).forEach(items=>Object.values(items||{}).forEach(m=>{if(m&&m.taker===old)m.taker=neu}))});
+  const P=st.people||{};if(P[old]){if(!P[neu])P[neu]=P[old];delete P[old]}
+  const G=st.pgrp||{};Object.keys(G).forEach(k=>{if(!k.split('·').includes(old)||k.includes(':'))return;const nk=normMates(gk(k)).join('·');if(!G[nk])G[nk]=G[k];delete G[k]})}
 // 순환 장부: 그 파티로 간 동안의 순환 획득 템 (전체 기간)
-//  파티원 이름이 다 적혀 있고 똑같은 파티끼리(주간 파티 · 월간 파티)는 장부를 합침 — 사람은 이름으로 맞춤
-const sxMemKey=p=>{const ns=p.members.map(m=>(m.name||'').trim());return ns.every(Boolean)?ns.slice().sort().join('·'):null};
-const sxLGroup=p=>{const k=sxMemKey(p);return k?(st.parties||[]).filter(q=>q===p||sxMemKey(q)===k):[p]};
-function sxLedger(everyone,p){const G=sxLGroup(p),ms=p.members.map((_,j)=>({key:'#'+j,name:sxPMem(p,j).name}));
+//  같은 사람들(주간 · 월간 파티 모두)은 장부를 합침 — 사람은 이름으로 맞춤
+const sxMemKey=p=>p.gk||null;
+function sxLedger(everyone,p){const ms=p.members.map((_,j)=>({key:'#'+j,name:sxPMem(p,j).name})),same=q=>q===p||(!!p.gk&&q.gk===p.gk),G=new Set([p]);
   const P={me:{key:'me',name:'나',n:0,v:0,fair:0,en:0}};ms.forEach(pp=>{P[pp.key]={...pp,n:0,v:0,fair:0,en:0}});const drops=[];
   const map=(q,j)=>{if(q===p)return '#'+j;const i=p.members.findIndex(m=>(m.name||'').trim()===(q.members[j].name||'').trim());return '#'+(i<0?j:i)};
-  everyone.loots.forEach(e=>{const q=e.k.pt;if(!e.k.rot||e.k.fair==null||!q||!G.includes(q))return;const my=e.k.cut,sl=e.sl||sxSlot(e.c,e.id)||{},same=(sl.party||1)===sxPSize(q);
-    const spl=sxSplit(sxPSize(q),same?sl.lshare:null,same?sxDistAt(e.c,e.id,e.key.split('|')[1]).lm:null),tk=e.k.taker,who=tk==='me'?'me':(P[map(q,+tk.slice(1))]?map(q,+tk.slice(1)):'#0');
+  everyone.loots.forEach(e=>{const q=e.k.pt;if(!e.k.rot||e.k.fair==null||!q||!same(q))return;G.add(q);const my=e.k.cut,sl=e.sl||sxSlot(e.c,e.id)||{},same2=(sl.party||1)===sxPSize(q);
+    const spl=sxSplit(sxPSize(q),same2?sl.lshare:null,same2?sxDistAt(e.c,e.id,e.key.split('|')[1]).lm:null),tk=e.k.taker,who=tk==='me'?'me':(P[map(q,+tk.slice(1))]?map(q,+tk.slice(1)):'#0');
     const val=e.k.sp!=null?e.k.sp:e.price; // 판 금액을 적었으면 그걸로
     P.me.fair+=val*my;P.me.en+=my;q.members.forEach((_,j)=>{const ot=spl.others[j]/100,k=map(q,j);P[k].fair+=val*ot;P[k].en+=ot});P[who].n++;P[who].v+=val;
-    drops.push({e,persons:q.members.map((_,j)=>({key:'#'+j,name:sxPMem(q,j).name})),who:tk==='me'?'me':tk,q})});
+    drops.push({e,persons:q.members.map((_,j)=>({key:'#'+j,name:sxPMem(q,j).name,val:sxTkVal(q,j)})),who:tk==='me'?'me':tk,q})});
   const people=Object.values(P);drops.sort((a,b)=>a.e.d<b.e.d?1:-1);
-  return{people,drops,group:G,next:amt=>people.reduce((b,pp)=>{const s=amt?pp.v-pp.fair:pp.n-pp.en,bs=amt?b.v-b.fair:b.n-b.en;return s<bs-1e-9?pp:b},people[0])}}
+  return{people,drops,group:[...G],next:amt=>people.reduce((b,pp)=>{const s=amt?pp.v-pp.fair:pp.n-pp.en,bs=amt?b.v-b.fair:b.n-b.en;return s<bs-1e-9?pp:b},people[0])}}
 // 쪽 나누기 (옥션처럼 « ‹ 1 2 3 › », 번호는 최대 5개 보임)
 function sxPager(total,per,pg,key){const pages=Math.ceil(total/per);if(pages<2)return '';const last=pg===pages-1,w0=Math.max(0,Math.min(pg-2,pages-5)),win=Array.from({length:Math.min(5,pages)},(_,n)=>w0+n);
   return `<div class="cm-pages sx-pages"><button type="button" data-${key}="0" ${pg===0?'disabled':''} aria-label="처음">«</button><button type="button" data-${key}="${pg-1}" ${pg===0?'disabled':''} aria-label="이전">‹</button>${win.map(n=>`<button type="button" data-${key}="${n}" class="${n===pg?'on':''}">${n+1}</button>`).join('')}<button type="button" data-${key}="${pg+1}" ${last?'disabled':''} aria-label="다음">›</button><button type="button" data-${key}="${pages-1}" ${last?'disabled':''} aria-label="마지막">»</button></div>`}
@@ -3072,16 +3211,9 @@ const sxP=v=>{const r=Math.round(v*10)/10;return (Number.isInteger(r)?r:r.toFixe
 function sxShareCtl(k,c,sl){const f=k==='l'?'lshare':'cshare',v=sl[f],p=sl.party||1,eq=v==null;
   return `<div class="sx-shc"><div class="sx-mseg">${[['eq','정분배'],['neq','차등']].map(([t,l])=>`<button type="button" class="${(eq?'eq':'neq')===t?'on':''}" data-sxsh="${k}|${c.id}|${sl._i}|${t}">${l}</button>`).join('')}</div><span class="sx-pct"><input class="inp num" type="number" min="0" max="100" step="0.1" value="${eq?Math.round(1000/p)/10:+v}" ${eq?'disabled':''} data-sxshv="${k}|${c.id}|${sl._i}" aria-label="내 몫"><span>%</span></span></div>`}
 // 3인 이상 차등일 때 파티원마다 몫 (비우면 남은 몫을 똑같이)
-function sxMemShares(k,c,sl){const d=(c.dist||{})[sl.boss]||{},arr=d[k==='l'?'lm':'cm']||[],sp=sxSplit(sl.party,sl[k==='l'?'lshare':'cshare'],arr),pt=sxPartyAt(c,sl.boss,sxNowKey(tOf(sl))),raw=pt?pt.members:(d.members||[]);
+function sxMemShares(k,c,sl){const d=(c.dist||{})[sl.boss]||{},arr=d[k==='l'?'lm':'cm']||[],sp=sxSplit(sl.party,sl[k==='l'?'lshare':'cshare'],arr),raw=matesOf(sl).map(n=>({name:n}));
   return `<div class="sx-msh">${sp.others.map((v,j)=>`<div class="frow"><span class="flbl sx-mn">${esc(((raw[j]||{}).name||'').trim()||`파티원 ${j+1}`)}</span><span class="sx-pct" style="margin-left:auto"><input class="inp num" type="number" min="0" max="100" step="0.1" value="${sp.fixed[j]?+arr[j]:''}" placeholder="${Math.round(v*10)/10}" data-sxmp="${k}|${c.id}|${sl.boss}|${j}" aria-label="파티원 ${j+1} 몫"><span>%</span></span></div>`).join('')}
     ${sp.others.some(v=>v<-0.05)?`<span class="sx-warn">적은 몫을 합치면 100%를 넘어요. 다시 맞춰 주세요.</span>`:Math.abs(sp.sum-100)>0.05?`<span class="sx-warn">합계가 ${sxP(sp.sum)}예요. 100%가 되게 맞춰 주세요.</span>`:'<span class="sx-hint">비워 둔 사람은 남은 몫을 똑같이 나눠요.</span>'}</div>`}
-// 파티 이름: 직접 적은 이름 > 적어 둔 파티원 이름으로 "철수·영희 파티" > 없으면 빈칸
-function sxPartyLabel(c,id,party){const d=(c.dist||{})[id]||{};if(d.pname&&d.pname.trim())return d.pname.trim();
-  const ns=(d.members||[]).slice(0,Math.max(0,(party||1)-1)).map(m=>((m||{}).name||'').trim()).filter(Boolean);if(!ns.length)return '';
-  const rest=(party-1)-ns.length;return `${ns.slice(0,3).join('·')}${ns.length>3?` 외 ${ns.length-3+rest}명`:rest>0?` 외 ${rest}명`:''} 파티`}
-const sxPartyTag=(c,id,party)=>{const l=sxPartyLabel(c,id,party);return l?` · <span class="sx-pn">${esc(l)}</span>`:''};
-const sxPnameRow=(c,id,party)=>{const d=(c.dist||{})[id]||{},auto=(()=>{const x={...d,pname:''};const cc={dist:{[id]:x}};return sxPartyLabel(cc,id,party)})();
-  return `<div class="frow"><span class="flbl">파티 이름</span><input class="inp sx-pname" type="text" maxlength="16" data-sxpn="${c.id}|${id}" value="${esc(d.pname||'')}" placeholder="${esc(auto||'예) 고정팟 (비워도 돼요)')}" aria-label="파티 이름"></div>`};
 let sxDD=null; // 열린 이름 고르기 목록
 // 주차: 주간 초기화(목요일) 기준으로 목요일이 속한 달의 n번째 주
 const sxWkOfMonth=w=>{const ym=sxMid(w).slice(0,7);let n=0,d=sxWeek(w);while(sxMid(d).slice(0,7)===ym){n++;d=sxAdd(d,-7)}return n};
@@ -3188,7 +3320,6 @@ const sxGW=()=>{const el=document.querySelector('#view .sx-tc'),w=el?el.clientWi
 let SX_GWT=null;addEventListener('resize',()=>{clearTimeout(SX_GWT);SX_GWT=setTimeout(()=>{if(st.tab==='stats'&&ui.sxGW&&sxGW()!==ui.sxGW)render()},150)});
 function statsView(){
   if(!st.chars.length)return `<div class="page"><section class="col-r" style="width:100%"><div class="empty" style="margin-top:12px"><b>등록된 캐릭터가 없어요</b><span>캐릭터를 추가하고 보스를 잡으면 여기에 수익이 쌓여요.</span></div></section></div>`;
-  sxMigrateParties();
   const x=sxState(),r=sxRange(x),chars=x.cid==='all'?vis():st.chars.filter(c=>c.id===x.cid);
   const all=sxCollect(chars);if(x.unit==='W')all.clears=sxSplitM(all.clears); // 주 단위: 월간 결정석은 그 달 주들에 나눠서
   all.clears.forEach(e=>{e.g=sxGroup(e.id,e.diff)});
@@ -3286,7 +3417,7 @@ function statsView(){
         // 기본 칸은 form, 상세 설정 칸은 advH, 정산 상자는 box → 순서: 기본 · [상세 설정 스위치 · 상세 칸] · 정산 상자
         let advH='',box='';const feeRow=()=>`<div class="frow"><span class="flbl">판매 수수료</span>${seg(i,'fee',k.fee,[[SX_FEE.hi,`${SX_FEE.hi}%`],[SX_FEE.lo,`${SX_FEE.lo}%`]])}</div>`;
         if(k.sold){form+=spRow();advH+=feeRow()}
-        if(k.rot){const opts=[['me','나'],...Array.from({length:k.party-1},(_,j)=>['#'+j,k.pt?sxPMem(k.pt,j).name:sxMembers(e.c,e.id,k.party)[j].name])],who=k.taker;
+        if(k.rot){const opts=[['me','나'],...Array.from({length:k.party-1},(_,j)=>[k.pt?sxTkVal(k.pt,j):'#'+j,k.pt?sxPMem(k.pt,j).name:sxMembers(e.c,e.id,k.party)[j].name])],who=k.taker==='me'?'me':k.pt?sxTkVal(k.pt,+k.taker.slice(1)):k.taker;
           form+=`<div class="frow"><span class="flbl">먹은 사람</span>${opts.length<=4?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
             :`<label class="sel sx-tsel" style="margin-left:auto"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`;
           if(who==='me'){form+=`<div class="frow"><span class="flbl">그 다음</span>${seg(i,'after',k.rotSold?'sold':'keep',[['sold','팔았음'],['keep','안 팔았음']])}</div>`;
@@ -3316,45 +3447,40 @@ function statsView(){
         if(!k.rot&&k.ms)k.ms.forEach(mb=>sum.push(`${mb.name} ${mb.fee}%${mb.xs==='mp'?'+메포':mb.xs==='tax'?'+관세':''}`));
         if(advH)form+=`<div class="sx-advw"><div class="frow sx-advr"><span class="flbl">상세 설정</span>${adv?'':`<small class="sx-advs">${esc(sum.join(' · '))}</small>`}<button type="button" class="tg-lbl" data-sxadv aria-pressed="${adv}" aria-label="상세 설정"><span class="tg${adv?' on':''}"></span></button></div>${adv?`<div class="sx-advg">${advH}</div>`:''}</div>`;
         form+=box}
-      if(k.party>1)form+=`<button type="button" class="sx-item sx-golink" data-sxgop="${k.pt?k.pt.id:'__none'}">${sxPIcon([e.id])}<span class="sx-ln"><b>${k.pt?esc(sxPLabel(k.pt)):'파티 안 정함'}</b><small>파티 관리 · 파티원 · 몫 · 순환 장부</small></span>${I.caret('currentColor')}</button>`}
+      {const ms=matesOf(e.sl||{}),pk=e.key.split('|')[1],u=pk[0]==='M'?'달':pk[0]==='D'?'날':'주';
+        if(ms.length)form+=`<div class="frow sx-lmrow"><span class="flbl">같이 간 사람</span><span class="sx-lmates">${ms.map(n=>`<span class="mchip${n?'':' anon'}">${n?esc(n):'이름 없음'}</span>`).join('')}</span><button type="button" class="linkish" data-sxlmate="${e.c.id}::${esc(e.key)}" title="그 ${u}에 같이 간 사람만 고쳐요">고치기</button></div>`}
+      if(k.party>1&&k.pt)form+=`<button type="button" class="sx-item sx-golink" data-sxgop="${esc(k.pt.id)}">${sxPIcon([e.id])}<span class="sx-ln"><b>${esc(sxPLabel(k.pt))}</b><small>파티 관리 · 파티원 · 몫 · 순환 장부</small></span>${I.caret('currentColor')}</button>`}
     sub=`<div class="fsec" style="border:0">${form}</div>`;
   }else if(x.lt==='party'){
-    // ── 파티 관리 (기간 상관없음): 오른쪽 = 파티 목록(지금 · 지난), 왼쪽 = 파티원 · 보스 · 순환 장부 ──
-    const VC=vis(),PS=st.parties.map(p=>{const sg=sxSegs(p,VC),all=sxSegs(p,st.chars);return{p,sg,on:sg.some(z=>!z.to)||(!sg.length&&all.some(z=>!z.to)),hid:all.length>sg.length,L:sxLedger(everyone,p)}});
-    // 지금 파티로 가는데(2인 이상) 파티를 안 정한 보스
-    const none=[];VC.forEach(c=>sxLiveNow(c).forEach(sl=>{if(!BY[sl.boss]||(sl.party||1)<2)return;const pt=sxPartyAt(c,sl.boss,sxNowKey(tOf(sl)));if(!pt||sxPSize(pt)!==sl.party)none.push({c,sl})}));
-    const nowP=PS.filter(o=>o.on||!o.sg.length),pastP=PS.filter(o=>!o.on&&o.sg.length),pf=x.pf==='past'?'past':'now',shown=pf==='past'?pastP:nowP;
-    if(x.psel!=='__none'&&!PS.some(o=>o.p.id===x.psel))x.psel=none.length?'__none':(nowP[0]||PS[0]||{p:{}}).p.id;
-    if(x.psel==='__none'&&!none.length)x.psel=(nowP[0]||PS[0]||{p:{}}).p.id;
-    const ids=o=>[...new Set([...o.sg.filter(z=>!z.to),...o.sg].map(z=>z.id))];
+    // ── 파티 관리: 보스 설정의 '같이 간 사람'으로 저절로 생긴 파티 (지금 · 지난) / 왼쪽 = 별명 · 사람 · 보스 · 순환 장부 ──
+    const VC=vis(),GA=sxGroups(st.chars),GV=sxGroups(VC);
+    const PS=GA.map(g=>{const v=GV.find(q=>q.p===g.p),sg=v?v.segs:[];return{p:g.p,sg,on:sg.some(sxSegOn),hid:g.segs.length>sg.length,hidN:g.segs.length-sg.length,L:sxLedger(everyone,g.p)}}).filter(o=>o.sg.length);
+    const nowP=PS.filter(o=>o.on),pastP=PS.filter(o=>!o.on),pf=x.pf==='past'?'past':'now',shown=pf==='past'?pastP:nowP;
+    if(!PS.some(o=>o.p.id===x.psel))x.psel=(shown[0]||nowP[0]||PS[0]||{p:{}}).p.id;
+    const ids=o=>[...new Set([...o.sg.filter(sxSegOn),...o.sg].map(z=>z.id))];
     const prow=o=>{const nx=o.L.drops.length?o.L.next(o.p.rot==='amount'):null,ns=o.p.members.map((_,j)=>sxPMem(o.p,j).name);
-      return `<div class="sx-brow sx-arow${x.psel===o.p.id?' picked':''}" role="button" tabindex="0" data-sxpsel="${o.p.id}">${sxPIcon(ids(o))}<span class="c-name"><b>${esc(sxPLabel(o.p))}</b><small>${sxPSize(o.p)}인 · ${esc(ns.join(', '))}${o.hid?' · 숨긴 캐릭터 포함':''}</small></span><span class="sx-tg">${nx?`<span class="sx-tag">순환 ${o.L.drops.length}개</span><span class="sx-tag acc">다음 ${nx.key==='me'?'나':esc(nx.name)}</span>`:'<span class="sx-z" style="font-size:12px">없음</span>'}</span><span class="sx-n num">${ids(o).length?ids(o).length+'곳':'—'}</span><span class="sx-pr num">${o.sg.length?sxPSpan(o.sg):'<span class="sx-z">보스 없음</span>'}</span><span class="sx-fx"></span></div>`};
-    const ntypes=['W','M',...(VC.some(c=>sxLiveNow(c).some(sl=>tOf(sl)==='D'&&(sl.party||1)>1))?['D']:[])];
-    right=bar([['now','지금 파티',nowP.length],['past','지난 파티',pastP.length]],pf,'sxpf',`<span class="sx-ddw"><button type="button" class="btn out sx-pnew" data-sxdd="pnew">+ 새 파티 ${I.caret('currentColor')}</button>${sxDD==='pnew'?`<div class="sx-dd">${ntypes.map(t=>`<button type="button" data-sxpnew="${t}"><span>${TKO[t]} 파티</span></button>`).join('')}</div>`:''}</span>`).replace(/<span>전체 캐릭터[\s\S]*?<\/span><span style="color:var\(--faint\)">\|<\/span><span class="num">[^<]*<\/span>|<span>[^<]*<\/span><span style="color:var\(--faint\)">\|<\/span><span class="num">[^<]*<\/span>/,'')+
+      return `<div class="sx-brow sx-arow${x.psel===o.p.id?' picked':''}" role="button" tabindex="0" data-sxpsel="${esc(o.p.id)}">${sxPIcon(ids(o))}<span class="c-name"><b>${esc(sxPLabel(o.p))}</b><small>${sxPSize(o.p)}인 · ${esc(ns.join(', '))}${o.hid?' · 숨긴 캐릭터 포함':''}</small></span><span class="sx-tg">${nx?`<span class="sx-tag">순환 ${o.L.drops.length}개</span><span class="sx-tag acc">다음 ${nx.key==='me'?'나':esc(nx.name)}</span>`:o.p.gk?'<span class="sx-z" style="font-size:12px">없음</span>':'<span class="sx-tag">이름 없음</span>'}</span><span class="sx-n num">${ids(o).length?ids(o).length+'곳':'—'}</span><span class="sx-pr num">${sxPSpan(o.sg)}</span><span class="sx-fx"></span></div>`};
+    right=bar([['now','지금 파티',nowP.length],['past','지난 파티',pastP.length]],pf,'sxpf','').replace(/<span>전체 캐릭터[\s\S]*?<\/span><span style="color:var\(--faint\)">\|<\/span><span class="num">[^<]*<\/span>|<span>[^<]*<\/span><span style="color:var\(--faint\)">\|<\/span><span class="num">[^<]*<\/span>/,'')+
       `<div class="stable sx-table sx-ptab">
-      <div class="sx-bbody">${pf==='now'&&none.length?`<div class="sx-brow sx-arow sx-none${x.psel==='__none'?' picked':''}" role="button" tabindex="0" data-sxpsel="__none">${sxPIcon([...new Set(none.map(o=>o.sl.boss))])}<span class="c-name"><b>파티 안 정한 보스</b><small>파티로 가는 보스 ${none.length}곳 · 눌러서 파티 정하기</small></span><span class="sx-tg"><span class="sx-tag warn">파티 정하기</span></span><span class="sx-n num">${none.length}곳</span><span class="sx-pr"></span><span class="sx-fx"></span></div>`:''}
-        ${shown.length?['D','W','M'].filter(t=>shown.some(o=>(o.p.t||'W')===t)).map(t=>`<div class="stsec fold sthd${isFold('p'+t)?' folded':''}"${foldA('p'+t)}><span class="st-t">${mini(t)}${TKO[t]} 파티 <span class="sx-z num" style="font-weight:500">${shown.filter(o=>(o.p.t||'W')===t).length}</span></span><span class="sx-tg">순환 장부</span><span class="sx-n">보스</span><span class="sx-pr">기간</span><span class="sx-fx">${foldI('p'+t)}</span></div>${isFold('p'+t)?'':shown.filter(o=>(o.p.t||'W')===t).map(prow).join('')}`).join(''):`<div class="sx-empty">${pf==='past'?'끝난 파티가 없어요.<br><small>파티원이나 인원이 바뀌어 새 파티로 옮기면 예전 파티가 여기 남아요.</small>':'만든 파티가 없어요.<br><small>+ 새 파티로 만들고 보스를 넣어 주세요.</small>'}</div>`}</div></div>`;
-    let form='';
-    if(x.psel==='__none'){
-      // 파티 안 정한 보스: 보스마다 같은 인원 파티 중에서 고르거나 새로 만들기
-      form=`<div class="sx-sel">${sxPIcon([...new Set(none.map(o=>o.sl.boss))])}<span class="sx-ln"><b>파티 안 정한 보스</b><small>${none.length}곳 · 종류(주간·월간)와 인원이 같은 파티만 고를 수 있어요</small></span></div>
-        <div class="sx-pbl">${none.map(o=>{const opts=st.parties.filter(p=>sxPSize(p)===o.sl.party&&(p.t||'W')===tOf(o.sl)),old=sxPartyAt(o.c,o.sl.boss,sxNowKey(tOf(o.sl)));
-          return `<div class="sx-pbw"><div class="sx-pbr">${frame(o.sl,'s32')}<span class="sx-ln"><b>${esc(BY[o.sl.boss].name)} ${dk(o.sl.diff)}</b><small>${esc(nm(o.c))} · ${o.sl.party}인${old?` · 전 파티 ${esc(sxPLabel(old))}(${sxPSize(old)}인)`:''}</small></span>
-            <label class="sel sx-psel"><span class="t">파티 고르기</span>${I.caret()}<select data-sxpasg="${o.c.id}|${o.sl.boss}" aria-label="${esc(BY[o.sl.boss].name)} 파티 고르기"><option value="" selected disabled>파티 고르기</option>${opts.map(p=>`<option value="${p.id}">${esc(sxPLabel(p))}</option>`).join('')}<option value="__new">+ 새 ${TKO[tOf(o.sl)]} ${o.sl.party}인 파티 만들기</option></select></label></div></div>`}).join('')}</div>
-        <span class="sx-hint">처음 넣는 보스는 지난 기록부터 그 파티로 쳐요. 인원을 바꾼 보스는 이번 주부터 새 파티예요.</span>`}
-    else{const o=PS.find(q=>q.p.id===x.psel);
-      if(!o)form='<div class="sx-empty">만든 파티가 없어요.<br><small>오른쪽 위 + 새 파티로 만들어 주세요.</small></div>';
-      else{const p=o.p,hidN=sxSegs(p,st.chars).length-o.sg.length,locked=o.sg.length>0||hidN>0; // 숨긴 캐릭터 보스도 들어 있으면 잠금 (X12)
-        form=`<div class="sx-sel">${sxPIcon(ids(o))}<span class="sx-ln"><b>${esc(sxPLabel(p))}${o.on?'':o.sg.length?'<span class="sx-tag">지난 파티</span>':''}</b><small>${TKO[p.t||'W']} · ${sxPSize(p)}인${o.sg.length?` · ${sxPSpan(o.sg)}`:''}</small></span></div>
-          <div class="frow"><span class="flbl">파티 이름</span><input class="inp sx-pname" type="text" maxlength="16" data-sxpnm="${p.id}" value="${esc(p.name||'')}" placeholder="${esc(sxPName({...p,name:''})||'예) 고정팟 (비워도 돼요)')}" aria-label="파티 이름"></div>
-<!--sec--><div class="fhead"><b style="color:var(--text2)">파티원</b>${locked?`<span style="font-size:12px;color:var(--muted)">${sxPSize(p)}인</span>`:`<div class="cp-step sx-psz"><button type="button" data-sxpsz="${p.id}|-1" aria-label="파티원 줄이기" ${p.members.length<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${sxPSize(p)}</b>인</span><button type="button" data-sxpsz="${p.id}|1" aria-label="파티원 늘리기" ${p.members.length>=5?'disabled':''}>${I.plus()}</button></div>`}</div>
-          <div class="sx-mem">${p.members.map((_,j)=>{const mb=sxPMem(p,j);
-            return `<div class="sx-mrow"><input class="inp sx-mname" type="text" data-sxpmn="${p.id}|${j}" value="${esc((p.members[j].name||'').trim())}" placeholder="${esc(`파티원 ${j+1}`)}" aria-label="파티원 ${j+1} 이름"></div>`}).join('')}</div>
-          <span class="sx-hint">${locked?'이름을 고치면 이 파티의 지난 기록에도 그대로 적용돼요. 사람이나 인원이 바뀌었으면 새 파티를 만들어 보스를 옮겨 주세요.':'보스를 넣기 전까지만 인원을 바꿀 수 있어요.'}</span>`;
-        // 보스: 들어 있던 기간 · 몫 (누르면 펼침)
-        const cand=[];VC.forEach(c=>sxLiveNow(c).forEach(sl=>{if(!BY[sl.boss]||(sl.party||1)!==sxPSize(p)||tOf(sl)!==(p.t||'W'))return;const cp=sxPartyAt(c,sl.boss,sxNowKey(tOf(sl)));if(cp!==p)cand.push({c,sl,cp})}));
-        const byB={};o.sg.forEach(z=>{const k=z.c.id+'|'+z.id;(byB[k]=byB[k]||{c:z.c,id:z.id,sg:[]}).sg.push(z)});const rows=Object.values(byB).sort((a,b)=>(!a.sg.some(z=>!z.to))-(!b.sg.some(z=>!z.to)));
-        const det=bo=>{const c=bo.c,sl0=sxLiveNow(c).find(q=>q.boss===bo.id),on=bo.sg.some(z=>!z.to);if(!sl0||!on)return `<div class="sx-pbd"><span class="sx-hint">지금은 이 파티로 안 가요. 몫은 지금 가는 보스에서만 바꿀 수 있어요.</span></div>`;
+      <div class="sx-bbody">${shown.length?['D','W','M'].filter(t=>shown.some(o=>(o.p.t||'W')===t)).map(t=>`<div class="stsec fold sthd${isFold('p'+t)?' folded':''}"${foldA('p'+t)}><span class="st-t">${mini(t)}${TKO[t]} 파티 <span class="sx-z num" style="font-weight:500">${shown.filter(o=>(o.p.t||'W')===t).length}</span></span><span class="sx-tg">순환 장부</span><span class="sx-n">보스</span><span class="sx-pr">기간</span><span class="sx-fx">${foldI('p'+t)}</span></div>${isFold('p'+t)?'':shown.filter(o=>(o.p.t||'W')===t).map(prow).join('')}`).join(''):`<div class="sx-empty">${pf==='past'?'끝난 파티가 없어요.<br><small>같이 가는 사람이 바뀌면 예전 파티가 장부와 함께 여기 남아요.</small>':'파티로 가는 보스가 없어요.<br><small>보스 설정에서 같이 간 사람을 적으면 여기 저절로 생겨요.</small>'}</div>`}</div></div>`;
+    let form='';const o=PS.find(q=>q.p.id===x.psel);
+    if(!o)form='<div class="sx-empty">파티가 없어요.<br><small>보스 설정에서 같이 간 사람을 적으면 저절로 생겨요.</small></div>';
+    else{const p=o.p,hidN=o.hidN;
+      form=`<div class="sx-sel">${sxPIcon(ids(o))}<span class="sx-ln"><b>${esc(sxPLabel(p))}${o.on?'':'<span class="sx-tag">지난 파티</span>'}</b><small>${TKO[p.t||'W']} · ${sxPSize(p)}인 · ${sxPSpan(o.sg)}</small></span></div>
+        <div class="frow"><span class="flbl">파티 이름</span><input class="inp sx-pname" type="text" maxlength="16" data-sxpnm="${esc(sxGK(p))}" value="${esc(p.name||'')}" placeholder="${esc(sxPName({...p,name:''})||'예) 고정팟 (비워도 돼요)')}" aria-label="파티 이름"></div>`;
+      // 사람: 보내는 방법은 사람마다 저장 (이 사람이 낀 다른 파티에도 같이 적용)
+      form+=`<!--sec--><div class="fhead"><b style="color:var(--text2)">파티원</b><span style="font-size:12px;color:var(--muted)">${sxPSize(p)}인</span></div>
+        <div class="sx-mem">${p.members.map((_,j)=>{const mb=sxPMem(p,j),nm0=(p.members[j].name||'').trim();
+          if(!nm0)return `<div class="sx-mrow sx-pp"><span class="sx-ppn anon">이름 없음</span><span class="sx-hint" style="margin:0">보스 설정에서 이름을 적으면 장부가 생겨요</span></div>`;
+          const ren=ui.sxRen===nm0;
+          return `<div class="sx-mrow sx-pp">${ren?`<input class="inp sx-mname" type="text" maxlength="16" id="sxren" value="${esc(nm0)}" aria-label="새 이름"><button type="button" class="btn dark sx-renb" data-sxrenok="${esc(nm0)}">바꾸기</button><button type="button" class="btn out sx-renb" data-sxrenx>취소</button>`
+              :`<span class="sx-ppn">${esc(nm0)}</span><button type="button" class="linkish" data-sxren="${esc(nm0)}">이름 바꾸기</button>`}</div>
+            <div class="frow sx-xsub"><span class="flbl">교환 수수료</span><div class="sx-mseg">${[SX_FEE.hi,SX_FEE.lo].map(f=>`<button type="button" class="${mb.fee===f?'on':''}" data-sxpfee="${esc(nm0)}|${f}">${f}%</button>`).join('')}</div></div>
+            <div class="frow sx-xsub"><span class="flbl">타섭</span><div class="sx-mseg">${SX_XS.map(([v,l])=>`<button type="button" class="${(mb.xs||'')===v?'on':''}" data-sxpxs="${esc(nm0)}|${v}">${l}</button>`).join('')}</div></div>`}).join('')}</div>
+        <span class="sx-hint">이름을 바꾸면 지난 기록에도 모두 바뀌어요. 수수료·타섭은 사람마다 저장돼서 이 사람이 낀 다른 파티에도 같이 적용돼요.</span>`;
+      // 보스: 이 파티로 간 기간 · 몫 (누르면 펼침)
+      const byB={};o.sg.forEach(z=>{const k=z.c.id+'|'+z.id;(byB[k]=byB[k]||{c:z.c,id:z.id,sg:[]}).sg.push(z)});const rows=Object.values(byB).sort((a,b)=>(!a.sg.some(sxSegOn))-(!b.sg.some(sxSegOn)));
+        const det=bo=>{const c=bo.c,sl0=sxLiveNow(c).find(q=>q.boss===bo.id),on=bo.sg.some(sxSegOn);if(!sl0||!on)return `<div class="sx-pbd"><span class="sx-hint">지금은 이 파티로 안 가요. 몫은 지금 가는 보스에서만 바꿀 수 있어요.</span></div>`;
           const sl=sl0,d=(c.dist||{})[sl.boss]||{},full=priceAt(sl.boss,sl.diff),gsp=sxSplit(sl.party,sl.cshare,d.cm),eq=sl.cshare==null,arr=d.cm||[],amt=v=>full!=null?Mr(full*v/100):'<span class="sx-z">—</span>';
           const pin=(attr,val,ph)=>`<span class="sx-pct"><input class="inp num" type="number" min="0" max="100" step="0.1" ${attr} value="${val}" placeholder="${ph}" ${eq?'disabled':''} aria-label="몫"><span>%</span></span>`;
           return `<div class="sx-pbd">
@@ -3366,29 +3492,27 @@ function statsView(){
               ${eq?'':gsp.others.some(v=>v<-0.05)?'<span class="sx-warn">적은 몫을 합치면 100%를 넘어요. 다시 맞춰 주세요.</span>':Math.abs(gsp.sum-100)>0.05?`<span class="sx-warn">합계가 ${sxP(gsp.sum)}예요. 100%가 되게 맞춰 주세요.</span>`:sl.party>2?'<span class="sx-hint">파티원 몫을 비워 두면 남은 몫을 똑같이 나눠요.</span>':''}</div>
             <div class="frow"><span class="flbl">물욕 몫</span>${sxShareCtl('l',c,sl)}</div>
             ${sl.lshare!=null&&sl.party>=3?sxMemShares('l',c,sl):''}
-            <button type="button" class="linkish sx-pout" data-sxpout="${c.id}|${sl.boss}">이번 ${tOf(sl)==='M'?'달':'주'}부터 이 파티에서 빼기</button>
+            <span class="sx-hint">같이 간 사람이 바뀌었으면 보스 설정에서 고쳐 주세요. 그 기간부터 다른 파티로 나뉘어요.</span>
           </div>`};
-        form+=`<!--sec--><div class="fhead"><b style="color:var(--text2)">보스</b><span class="sx-ddw"><button type="button" class="linkish sx-ddb" data-sxdd="padd|${p.id}" ${cand.length?'':'disabled'}>+ 보스 넣기 ${I.caret('currentColor')}</button>
-            ${sxDD===`padd|${p.id}`?`<div class="sx-dd">${cand.map(q=>`<button type="button" data-sxpadd="${p.id}|${q.c.id}|${q.sl.boss}"><span>${esc(BY[q.sl.boss].name)} · ${esc(nm(q.c))}</span><small>${q.cp?esc(sxPLabel(q.cp))+'에서 옮김':'새로'}</small></button>`).join('')}</div>`:''}</span></div>
-          ${rows.length?`<div class="sx-pbl">${rows.map(bo=>{const k=bo.c.id+'|'+bo.id,open=x.pb===k,sl=sxLiveNow(bo.c).find(q=>q.boss===bo.id)||bo.c.slots.find(q=>q.boss===bo.id)||{boss:bo.id,diff:Object.keys(BY[bo.id].diffs)[0]},on=bo.sg.some(z=>!z.to);
+        form+=`<!--sec--><div class="fhead"><b style="color:var(--text2)">보스</b><span style="font-size:12px;color:var(--muted)">같이 간 사람은 보스 설정에서</span></div>
+          ${rows.length?`<div class="sx-pbl">${rows.map(bo=>{const k=bo.c.id+'|'+bo.id,open=x.pb===k,sl=sxLiveNow(bo.c).find(q=>q.boss===bo.id)||bo.c.slots.find(q=>q.boss===bo.id)||{boss:bo.id,diff:Object.keys(BY[bo.id].diffs)[0]},on=bo.sg.some(sxSegOn);
             return `<div class="sx-pbw${open?' on':''}${on?'':' off'}"><button type="button" class="sx-pbr" data-sxpb="${esc(k)}" aria-expanded="${open}">${frame(sl,'s32')}<span class="sx-ln"><b>${esc(BY[bo.id].name)} ${sl.diff?dk(sl.diff):''}</b><small>${esc(nm(bo.c))} · ${bo.sg.map(z=>sxRangeTxt(z.from,z.to)).join(', ')}</small></span>${on?`<span class="sx-pbv"><span>결정 <b class="num">${sxP(sl.cshare!=null?+sl.cshare:100/sl.party)}</b></span><span>물욕 <b class="num">${sxP(sl.lshare!=null?+sl.lshare:100/sl.party)}</b></span></span>`:'<span class="sx-tag">끝남</span>'}${I.caret('currentColor')}</button>${open?det(bo):''}</div>`}).join('')}</div>`
-            :`<span class="sx-hint">아직 넣은 보스가 없어요. ${cand.length?'+ 보스 넣기로 넣어 주세요.':`${sxPSize(p)}인으로 가는 보스가 없어요. 보스 설정에서 인원을 맞춰 주세요.`}</span>`}`;
+            :''}`;
         // 순환 장부 (처음부터 지금까지)
         const L2=o.L,amt=p.rot==='amount';
-        form+=`<!--sec--><div class="fhead"><b style="color:var(--text2)">순환 장부 <small class="sx-z" style="font-weight:400">전체 기간${L2.group.length>1?` · ${[...new Set(L2.group.map(q=>TKO[q.t||'W']))].join('·')} 합침`:''}</small></b><div class="sx-mseg" style="margin-left:0">${[['turn','순번'],['amount','금액']].map(([v,l])=>`<button type="button" class="${(p.rot||'turn')===v?'on':''}" data-sxprot="${p.id}|${v}">${l}</button>`).join('')}</div></div>`;
+        form+=`<!--sec--><div class="fhead"><b style="color:var(--text2)">순환 장부 <small class="sx-z" style="font-weight:400">전체 기간${L2.group.length>1?` · ${[...new Set(L2.group.map(q=>TKO[q.t||'W']))].join('·')} 합침`:''}</small></b><div class="sx-mseg" style="margin-left:0">${[['turn','순번'],['amount','금액']].map(([v,l])=>`<button type="button" class="${(p.rot||'turn')===v?'on':''}" data-sxprot="${esc(sxGK(p))}|${v}">${l}</button>`).join('')}</div></div>`;
         if(L2.drops.length){const nxt=L2.next(amt);
           form+=`<div class="sx-ledger2"><div class="sx-lr sx-lh"><span>이름</span><span>먹은 템</span><span>${amt?'몫 대비':'몫 기준'}</span></div>
             ${L2.people.map(pp=>`<div class="sx-lr${pp.key==='me'?' me':''}${pp.key===nxt.key?' next':''}"><span>${esc(pp.name)}${pp.key===nxt.key?'<i>다음</i>':''}</span><span class="num">${pp.n}개 · ${S(pp.v)}</span><span class="num ${amt?(pp.v-pp.fair<0?'minus':'plus'):''}">${amt?`${pp.v-pp.fair<0?'−':'+'}${meso(Math.round(Math.abs(pp.v-pp.fair)/1e4)*1e4)||0}`:`${Math.round(pp.en*10)/10}개`}</span></div>`).join('')}
             <p>다음 드랍은 <b>${nxt.key==='me'?'내':esc(nxt.name)}</b> 차례 (${amt?'몫보다 덜 먹은 금액':'몫보다 덜 먹은 횟수'} 기준)</p></div>
             ${(()=>{const PER=5,pages=Math.ceil(L2.drops.length/PER),pg=Math.min(Math.max(0,x.dpg||0),pages-1);
               // 드랍 기록: 옥션처럼 쪽 나누기 (한 쪽 5개, 최신부터)
-              return `<div class="fhead sx-dh"><span>드랍 기록</span><span class="num">${L2.drops.length}개</span></div><div class="sx-drops">${L2.drops.slice(pg*PER,pg*PER+PER).map(({e,persons,who})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n,opts=[['me','나'],...persons.map(pp=>[pp.key,pp.name])];
-              return `<div class="sx-drop">${ifr(itn,e)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${e.k.sp!=null?`판매 ${S(e.k.sp)}`:S(e.price)} · ${esc(BY[e.id].name)}${L2.group.length>1?` · ${TKO[e.k.pt.t||'W']}`:''}</small></span>${opts.length<=3?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
-                :`<label class="sel sx-tsel"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`}).join('')}</div>
+              return `<div class="fhead sx-dh"><span>드랍 기록</span><span class="num">${L2.drops.length}개</span></div><div class="sx-drops">${L2.drops.slice(pg*PER,pg*PER+PER).map(({e,persons,who})=>{const itn=e.res&&e.res!=='꽝'?e.res:e.n,opts=[['me','나'],...persons.map(pp=>[pp.val,pp.name])],who2=who==='me'?'me':((persons.find(pp=>pp.key===who)||{}).val||who);
+              return `<div class="sx-drop">${ifr(itn,e)}<span class="sx-ln"><b>${esc(itn)}</b><small>${md(e.dd||e.d)} · ${e.k.sp!=null?`판매 ${S(e.k.sp)}`:S(e.price)} · ${esc(BY[e.id].name)}${L2.group.length>1?` · ${TKO[e.k.pt.t||'W']}`:''}</small></span>${opts.length<=3?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who2===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
+                :`<label class="sel sx-tsel"><span class="t">${esc((opts.find(q=>q[0]===who2)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who2===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`}).join('')}</div>
               ${sxPager(L2.drops.length,PER,pg,'sxdpg')}`})()}`}
         else form+='<span class="sx-hint">순환 획득한 템이 아직 없어요. 물욕 관리에서 "순환 획득"으로 두면 여기 쌓여요.</span>';
-        if(hidN>0)form+=`<span class="sx-hint">숨긴 캐릭터의 보스 ${hidN}개도 이 파티에 들어 있어요. 캐릭터 숨김을 풀면 보여요.</span>`;
-        else if(!o.sg.length)form+=`<button type="button" class="linkish sx-pdel" data-sxpdel="${p.id}">이 파티 지우기</button>`}}
+      if(hidN>0)form+=`<span class="sx-hint">숨긴 캐릭터의 보스 ${hidN}개도 이 파티로 갔어요. 캐릭터 숨김을 풀면 보여요.</span>`}
     // 구역마다 점선으로 나눔 (보스 설정 폼처럼)
     sub=form.split('<!--sec-->').map((h,n,a)=>`<div class="fsec"${n===a.length-1?' style="border:0"':''}>${h}</div>`).join('');
   }else{
@@ -3449,20 +3573,20 @@ function statsView(){
 // 물욕템 줄 펼치기 (열린 줄은 하나만)
 let sxOpen=null,sxRows=[];const sxRowKey=e=>e.c.id+'|'+e.key+'|'+e.n;
 const sxMeta=e=>{const c=e.c;c.lootMeta=c.lootMeta||{};const k=c.lootMeta[e.key]=c.lootMeta[e.key]||{};return k[e.n]=k[e.n]||{}};
-function bindStats(){const v=document.getElementById('view'),x=sxState();setTimeout(sxAskConf,0);if(x.lt==='sum'&&ui.sxGW&&sxGW()!==ui.sxGW&&!ui.sxGWfix){ui.sxGWfix=1;setTimeout(()=>{render();ui.sxGWfix=0},0)} // 처음 그릴 땐 폭을 어림해서 → 실제 폭으로 한 번 더
+function bindStats(){const v=document.getElementById('view'),x=sxState();if(x.lt==='sum'&&ui.sxGW&&sxGW()!==ui.sxGW&&!ui.sxGWfix){ui.sxGWfix=1;setTimeout(()=>{render();ui.sxGWfix=0},0)} // 처음 그릴 땐 폭을 어림해서 → 실제 폭으로 한 번 더
   v.querySelectorAll('[data-sxsub]').forEach(b=>b.onclick=()=>{const[i,full]=b.dataset.sxsub.split('|'),e=sxRows[+i];if(!e)return;
     set(()=>{const c=e.c;sxUnsnap(e);c.lootSub=c.lootSub||{};const m=c.lootSub[e.key]=c.lootSub[e.key]||{};if(m[e.n]===full)delete m[e.n];else m[e.n]=full})});
   v.querySelectorAll('[data-sxm]').forEach(b=>b.onclick=()=>{const[i,f,val]=b.dataset.sxm.split('|'),e=sxRows[+i];if(!e)return;
     set(()=>{const m=sxMeta(e);if(f!=='settled')delete m.snap;if(f==='fee')m.fee=+val;else m[f]=val})});
   v.querySelectorAll('[data-sxq]').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.sxq;sxHelpOpen=sxHelpOpen===k?null:k;render()});
   v.querySelectorAll('[data-sxadv]').forEach(b=>b.onclick=()=>set(()=>{x.adv=!x.adv}));
-  const xfSet=(i,j,fn)=>{const e=sxRows[+i];if(!e)return;const mb0=(e.k.ms||[])[+j]||{},pm0=e.k.pt?e.k.pt.members[+j]:(((e.c.dist||{})[e.id]||{}).members||[])[+j];
+  const xfSet=(i,j,fn)=>{const e=sxRows[+i];if(!e)return;const mb0=(e.k.ms||[])[+j]||{},who=e.k.pt?((e.k.pt.members[+j]||{}).name||'').trim():'',pm0=who||null;
     const run=mode=>set(()=>{const m=sxMeta(e),mb=(e.k.ms||[])[+j]||{};delete m.snap;m.xf=m.xf||{};const o=m.xf[j]={fee:mb.fee,xs:mb.xs||''};fn(o);
-    if(mode==='one')return; // 이 템만
-    const pm=e.k.pt?e.k.pt.members[+j]:(((e.c.dist||{})[e.id]||{}).members||[])[+j];if(!pm)return;
-    // 이 템보다 앞선 같은 파티 템은 지금까지 값으로 고정 (기본값이 바뀌어도 지난 정산은 그대로)
-    if(e.k.pt){const old={fee:pm.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,xs:sxXs(pm)};sxCollect(st.chars).loots.forEach(q=>{if(q.k.pt!==e.k.pt||q.d>=e.d||!q.k.ms)return;const m2=sxMeta(q);m2.xf=m2.xf||{};if(!m2.xf[j])m2.xf[j]={...old}})}
-    pm.fee=o.fee;pm.xs=o.xs;delete pm.tax});
+    if(mode==='one'||!who)return; // 이 템만 (이름 없는 파티원은 이 템만)
+    st.people=st.people||{};const pm=st.people[who]=st.people[who]||{};
+    // 이 템보다 앞선, 이 사람이 낀 템은 지금까지 값으로 고정 (기본값이 바뀌어도 지난 정산은 그대로)
+    const old={fee:pm.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,xs:sxXs(pm)};sxCollect(st.chars).loots.forEach(q=>{if(!q.k.pt||q.d>=e.d||!q.k.ms)return;const j2=q.k.pt.members.findIndex(x=>(x.name||'').trim()===who);if(j2<0)return;const m2=sxMeta(q);m2.xf=m2.xf||{};if(!m2.xf[j2])m2.xf[j2]={...old}});
+    if(o.fee===SX_FEE.lo)pm.fee=SX_FEE.lo;else delete pm.fee;if(o.xs)pm.xs=o.xs;else delete pm.xs;delete m.xf[j];if(!Object.keys(m.xf).length)delete m.xf});
     if(!pm0){run('one');return}
     askModal({title:`${mb0.name||'파티원'} 수수료·관세를 바꿀까요?`,lead:'이 템만 고칠지, 이 템부터 앞으로 다 바꿀지 골라 주세요. 정산 완료한 템은 어느 쪽이든 그대로예요.',
       opts:[['one','이 템만 (잘못 입력)','다른 템은 그대로예요.'],['on','이 템부터 앞으로','이 템과 그 뒤 템, 앞으로 먹는 템에 적용해요. 앞선 템은 그대로예요.']]},run)};
@@ -3490,23 +3614,23 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();setTime
   pick('[data-sxpsel]',r=>{if(x.psel!==r.dataset.sxpsel){x.pb=null;x.dpg=0}x.psel=r.dataset.sxpsel});
   v.querySelectorAll('[data-sxdpg]').forEach(b=>b.onclick=()=>set(()=>{x.dpg=+b.dataset.sxdpg}));
   v.querySelectorAll('[data-sxgo]').forEach(b=>b.onclick=()=>set(()=>{x.lt='loot';x.lv='items';x.lf='all';x.lsel=b.dataset.sxgo}));
-  v.querySelectorAll('[data-sxgop]').forEach(b=>b.onclick=()=>set(()=>{x.lt='party';x.psel=b.dataset.sxgop;x.pf='now';const p=sxPById(x.psel);if(p&&!sxSegs(p,vis()).some(z=>!z.to))x.pf='past';x.pb=null}));
-  // 파티 관리
-  const P_=id=>sxPById(id),pm=(id,j)=>{const p=P_(id);if(!p)return {};return p.members[+j]=p.members[+j]||{name:''}};
-  const newParty=(size,t)=>{st.parties=st.parties||[];const p={id:'p'+Math.random().toString(36).slice(2,9),t:t||'W',manual:1,name:'',members:Array.from({length:Math.max(1,size-1)},()=>({name:'',fee:SX_FEE.hi,tax:false})),rot:'turn'};st.parties.push(p);return p};
-  v.querySelectorAll('[data-sxpnew]').forEach(b=>b.onclick=()=>{sxDD=null;set(()=>{const p=newParty(2,b.dataset.sxpnew);x.psel=p.id;x.pf='now';x.pb=null})});
-  v.querySelectorAll('[data-sxpnm]').forEach(inp=>inp.onchange=()=>{const p=P_(inp.dataset.sxpnm);if(p)set(()=>{p.name=inp.value.trim().slice(0,16)})});
-  v.querySelectorAll('[data-sxpmn]').forEach(inp=>inp.onchange=()=>{const[id,j]=inp.dataset.sxpmn.split('|');set(()=>{pm(id,j).name=inp.value.trim().slice(0,12)})});
-  v.querySelectorAll('[data-sxpmf]').forEach(b=>b.onclick=()=>{const[id,j,f]=b.dataset.sxpmf.split('|');set(()=>{pm(id,j).fee=+f})});
-  v.querySelectorAll('[data-sxpmx]').forEach(sel=>sel.onchange=()=>{const[id,j]=sel.dataset.sxpmx.split('|');set(()=>{const m=pm(id,j);m.xs=sel.value;delete m.tax})});
-  v.querySelectorAll('[data-sxpsz]').forEach(b=>b.onclick=()=>{const[id,dl]=b.dataset.sxpsz.split('|'),p=P_(id);if(!p||sxSegs(p,st.chars).length)return;
-    set(()=>{if(+dl>0&&p.members.length<5)p.members.push({name:'',fee:SX_FEE.hi,tax:false});else if(+dl<0&&p.members.length>1)p.members.pop()})});
-  v.querySelectorAll('[data-sxprot]').forEach(b=>b.onclick=()=>{const[id,val]=b.dataset.sxprot.split('|'),p=P_(id);if(p)set(()=>{sxLGroup(p).forEach(q=>{q.rot=val})})});
-  v.querySelectorAll('[data-sxpadd]').forEach(b=>b.onclick=()=>{const[id,cid,boss]=b.dataset.sxpadd.split('|'),c=st.chars.find(c=>c.id===cid);sxDD=null;if(c)set(()=>{sxAssign(c,boss,id);x.pb=cid+'|'+boss})});
-  v.querySelectorAll('[data-sxpout]').forEach(b=>b.onclick=()=>{const[cid,boss]=b.dataset.sxpout.split('|'),c=st.chars.find(c=>c.id===cid);if(c)set(()=>{sxAssign(c,boss,null);x.pb=null})});
-  v.querySelectorAll('[data-sxpasg]').forEach(sel=>sel.onchange=()=>{const[cid,boss]=sel.dataset.sxpasg.split('|'),c=st.chars.find(c=>c.id===cid);if(!c)return;
-    set(()=>{let pid=sel.value;if(pid==='__new'){const sl=sxLiveNow(c).find(q=>q.boss===boss);const p=newParty(sl?sl.party:2,sl?tOf(sl):'W');pid=p.id;x.psel=p.id;x.pb=cid+'|'+boss}sxAssign(c,boss,pid)})});
-  v.querySelectorAll('[data-sxpdel]').forEach(b=>b.onclick=()=>{const p=P_(b.dataset.sxpdel);if(!p||sxSegs(p,st.chars).length)return;set(()=>{st.parties=st.parties.filter(q=>q!==p);x.psel=null})});
+  v.querySelectorAll('[data-sxlmate]').forEach(b=>b.onclick=()=>{const[cid,key]=b.dataset.sxlmate.split('::'),c=st.chars.find(q=>q.id===cid);if(!c)return;const[id,pk]=key.split('|'),sl=sxSlotAt(c,id,sxKD(pk));
+    ui.modal={kind:'mates',cid,boss:id,pk,party:(sl&&sl.party)||1,mates:matesOf(sl||{})};renderLayer()});
+  v.querySelectorAll('[data-sxgop]').forEach(b=>b.onclick=()=>set(()=>{x.lt='party';x.psel=b.dataset.sxgop;const g=sxGroups(vis()).find(q=>q.p.id===x.psel);x.pf=g&&!g.segs.some(sxSegOn)?'past':'now';x.pb=null}));
+  // 파티 관리: 별명 · 순환 방식(묶음마다) · 사람 설정 · 이름 바꾸기
+  const grp=k=>{st.pgrp=st.pgrp||{};return st.pgrp[k]=st.pgrp[k]||{}},gclean=k=>{if(st.pgrp[k]&&!Object.keys(st.pgrp[k]).length)delete st.pgrp[k]};
+  v.querySelectorAll('[data-sxpnm]').forEach(inp=>inp.onchange=()=>{const k=inp.dataset.sxpnm,n=inp.value.trim().slice(0,16);set(()=>{const g=grp(k);if(n)g.name=n;else delete g.name;gclean(k)})});
+  v.querySelectorAll('[data-sxprot]').forEach(b=>b.onclick=()=>{const i=b.dataset.sxprot.lastIndexOf('|'),k=b.dataset.sxprot.slice(0,i),val=b.dataset.sxprot.slice(i+1);set(()=>{const g=grp(k);if(val==='amount')g.rot='amount';else delete g.rot;gclean(k)})});
+  const per=n=>{st.people=st.people||{};return st.people[n]=st.people[n]||{}};
+  v.querySelectorAll('[data-sxpfee]').forEach(b=>b.onclick=()=>{const i=b.dataset.sxpfee.lastIndexOf('|'),n=b.dataset.sxpfee.slice(0,i),f=+b.dataset.sxpfee.slice(i+1);set(()=>{const o=per(n);if(f===SX_FEE.lo)o.fee=f;else delete o.fee})});
+  v.querySelectorAll('[data-sxpxs]').forEach(b=>b.onclick=()=>{const i=b.dataset.sxpxs.lastIndexOf('|'),n=b.dataset.sxpxs.slice(0,i),xs=b.dataset.sxpxs.slice(i+1);set(()=>{const o=per(n);if(xs)o.xs=xs;else delete o.xs;delete o.tax})});
+  v.querySelectorAll('[data-sxren]').forEach(b=>b.onclick=()=>{ui.sxRen=b.dataset.sxren;render();const i=document.getElementById('sxren');if(i){i.focus();i.select()}});
+  v.querySelectorAll('[data-sxrenx]').forEach(b=>b.onclick=()=>{ui.sxRen=null;render()});
+  const renOk=old=>{const i=document.getElementById('sxren'),neu=i?i.value.trim().slice(0,16):'';if(!neu){toast('이름을 적어 주세요');return}if(neu===old){ui.sxRen=null;render();return}
+    const go=()=>{ui.sxRen=null;set(()=>{sxRename(old,neu);x.psel=null});toast(`${old} → ${neu} 이름을 바꿨어요`)};
+    if(knownMates().includes(neu))askModal({title:`${neu} 님은 이미 있어요`,lead:`${old} 님 기록을 ${neu} 님과 합칠까요? 같은 사람이면 합치면 돼요.`,opts:[['ok','합치기',`${old} → ${neu}, 장부도 같이 합쳐져요`]]},go);else go()};
+  v.querySelectorAll('[data-sxrenok]').forEach(b=>b.onclick=()=>renOk(b.dataset.sxrenok));
+  {const i=document.getElementById('sxren');if(i)i.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();renOk(ui.sxRen)}else if(e.key==='Escape'){ui.sxRen=null;render()}}}
   v.querySelectorAll('[data-sxpf]').forEach(b=>b.onclick=()=>set(()=>{x.pf=b.dataset.sxpf;x.psel=null;x.pb=null}));
   v.querySelectorAll('[data-sxpb]').forEach(b=>b.onclick=()=>set(()=>{x.pb=x.pb===b.dataset.sxpb?null:b.dataset.sxpb}));
   const slotOf=(cid,i)=>{const c=st.chars.find(c=>c.id===cid);return c&&c.slots[+i]};
@@ -3516,7 +3640,9 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();setTime
       opts:[['fix','잘못 입력했어요',`지난 기록까지 모두 이 값으로 고쳐요. 정산 완료한 템은 그대로예요.`],['now',`이번 ${u}부터`,`지난 ${u} 템은 예전 값 그대로예요.`],['next',`다음 ${u}부터`,`이번 ${u}까지는 예전 값이에요.`]]},
       mode=>set(()=>mutate(mode,mode==='next'?nextK:nowK)))};
   // 슬롯 몫(lshare·cshare) 바꾸기
-  const setShareF=(c,sl,f,n,mode,key)=>{if(mode==='fix'){sl[f]=n;(sl.prev||[]).forEach(p=>{p[f]=n});(sl.tmps?Object.values(sl.tmps):[]).forEach(tp=>{if(f in tp)tp[f]=n})}else applyFrom(sl,{[f]:n},key);
+  // 이번·다음 주부터: 보스 설정의 몫만 바꾸고, 그 주부터 '그 주만' 바꿔 둔 값(다른 파티원 등)은 지우지 않고 몫만 같이 고침
+  const setShareF=(c,sl,f,n,mode,key)=>{if(mode==='fix'){sl[f]=n;(sl.prev||[]).forEach(p=>{p[f]=n});(sl.tmps?Object.values(sl.tmps):[]).forEach(tp=>{if(f in tp)tp[f]=n})}
+    else{const kt=Object.entries(sl.tmps||{}).filter(([k])=>k[0]===key[0]&&sxKD(k)>=sxKD(key));applyFrom(sl,{[f]:n},key);if(kt.length){sl.tmps=sl.tmps||{};kt.forEach(([k,tp])=>{sl.tmps[k]={...tp,[f]:n}})}}
     if(f==='cshare'){const id=sl.boss;if(mode==='fix')(c.clears[id]||[]).forEach((e,i,a)=>{if(typeof e!=='object'||!e.diff)return;const s0=atDay(e.d,()=>live(c).find(x=>x.boss===id))||sl;a[i]={...e,v:(priceAt(id,e.diff,e.d)??0)*share({...s0,diff:e.diff})}});else if(mode==='now')fixClear(c,id)}};
   // 파티원 몫 배열(dist.lm·cm) 바꾸기: 이번·다음부터면 예전 값을 hist에 남김
   const setDistA=(c,id,ks,fnA,mode,key)=>{const d=((c.dist=c.dist||{})[id]=c.dist[id]||{});
@@ -3524,7 +3650,7 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();setTime
     ks.forEach(k=>{d[k]=d[k]||[];fnA(d[k])});if(mode==='fix')(d.hist||[]).forEach(h=>ks.forEach(k=>{h[k]=h[k]||[];fnA(h[k])}))};
   v.querySelectorAll('[data-sxsh]').forEach(b=>b.onclick=()=>{const[k,cid,i,t]=b.dataset.sxsh.split('|'),sl=slotOf(cid,i);if(!sl)return;const f=k==='l'?'lshare':'cshare',c=st.chars.find(c=>c.id===cid),nm0=k==='l'?'물욕 몫':'결정석 몫';
     if(t==='eq'){if(sl[f]==null)return;askShare(c,sl,`${nm0}을 정분배로`,(mode,key)=>{setShareF(c,sl,f,null,mode,key);setDistA(c,sl.boss,[k==='l'?'lm':'cm'],a=>{a.length=0},mode,key)})}
-    else if(sl[f]==null)set(()=>{sl[f]=Math.round(1000/(sl.party||1))/10})});  // 차등으로 켜기만 하면 값은 정분배와 같아서 금액 변화 없음
+    else if(sl[f]==null)set(()=>{const v=Math.round(1000/(sl.party||1))/10,nk=sxNowKey(tOf(sl));sl[f]=v;Object.entries(sl.tmps||{}).forEach(([kk,tp])=>{if(kk[0]===nk[0]&&sxKD(kk)>=sxKD(nk)&&tp[f]==null)tp[f]=Math.round(1000/(tp.party||sl.party||1))/10})})});  // 차등으로 켜기만 하면 값은 정분배와 같아서 금액 변화 없음 (이번 주만 바꾼 값에도 같이)
   v.querySelectorAll('[data-sxshv]').forEach(inp=>inp.onchange=()=>{const[k,cid,i]=inp.dataset.sxshv.split('|'),sl=slotOf(cid,i);if(!sl)return;const n=Math.max(0,Math.min(100,Math.round((+inp.value||0)*10)/10)),f=k==='l'?'lshare':'cshare',c=st.chars.find(c=>c.id===cid);
     if(n===sl[f])return;askShare(c,sl,`${k==='l'?'물욕 몫':'결정석 몫'}을 ${n}%로`,(mode,key)=>setShareF(c,sl,f,n,mode,key))});
   v.querySelectorAll('[data-sxmp]').forEach(inp=>inp.onchange=()=>{const[k,cid,id,j]=inp.dataset.sxmp.split('|'),c=st.chars.find(c=>c.id===cid);if(!c)return;const raw=inp.value.trim(),val=raw===''?null:Math.max(0,Math.min(100,Math.round(+raw*10)/10));
@@ -3746,7 +3872,7 @@ const VIEWF=['theme','tab','sel','filter','stab','q','psel','sfilter','ptab','fo
 const hashS=str=>{let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)};
 const stateHash=o=>{if(o&&o._fmt!==undefined){o={...o};delete o._fmt}return hashS(JSON.stringify(o))};
 // 기록 모양 버전: 모양이 바뀌는 업데이트마다 +1. 계정 기록이 이 숫자보다 크면(새 버전 탭이 저장) 옛 탭은 덮어쓰지 않고 새로고침 안내 (V12)
-const DATA_FMT=2,isNewer=d=>!!d&&(+d._fmt||0)>DATA_FMT;
+const DATA_FMT=3,isNewer=d=>!!d&&(+d._fmt||0)>DATA_FMT;
 function cloudOld(){cloud.state='old';cloudSaveMeta();paintAcct();if(!ui.oldShown){ui.oldShown=true;askModal({title:'새 버전 메푸리가 나왔어요',lead:'다른 기기나 탭에서 새 버전으로 저장한 기록이 있어요. 이 탭은 옛 버전이라, 기록이 망가지지 않게 계정 저장을 멈췄어요.',opts:[['reload','새로고침','새 버전으로 열기 (이 기기 기록도 그대로 있어요)']]},k=>{if(k==='reload')location.reload()})}}
 function packState(){const o=JSON.parse(JSON.stringify(st));o._fmt=DATA_FMT;VIEWF.forEach(k=>delete o[k]);(o.chars||[]).forEach(c=>{if(c.lookUrl){delete c.img;delete c.frames;c.lookV=0}});return o}
 function unpackState(d){const view={};VIEWF.forEach(k=>{if(st[k]!==undefined)view[k]=st[k]});const old={};(st.chars||[]).forEach(c=>{old[c.ocid||c.id]=c});st=sanitize(JSON.parse(JSON.stringify(d)));delete st._fmt;VIEWF.forEach(k=>{if(view[k]!==undefined)st[k]=view[k]});if(!st.form)st.form=sample().form;
@@ -3939,6 +4065,11 @@ function renderLayer(){
       <div class="note" style="padding:10px 12px"><div class="lchips">${lt.map(n=>`<span><i class="gem">${lootIcon(n)}</i>${esc(n)}</span>`).join('')}</div></div>
       <div class="m-btns"><button class="btn out" type="button" id="m-cancel">그대로 두기</button><button class="btn danger" type="button" id="u-ok">클리어 취소</button></div></div></div></div>`;
   }
+  if(m&&m.kind==='mates'){const c=st.chars.find(q=>q.id===m.cid),u=m.pk[0]==='M'?'달':m.pk[0]==='D'?'날':'주',when=m.pk[0]==='M'?`${+m.pk.slice(6,8)}월`:md(m.pk.slice(1))+(m.pk[0]==='W'?' 주':'');
+    h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt-title"><div class="m-head"><span id="mt-title">${esc(BY[m.boss].name)} · ${esc(when)} 같이 간 사람</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
+      <div class="m-body"><p style="margin:0 0 10px;font-size:13px;line-height:20px;color:var(--sub)">그 ${u}만 고쳐요. 다른 ${u}와 보스 설정은 그대로예요.</p><div class="frow"><span class="flbl">파티 인원</span><div class="cp-step fstep"><button type="button" data-mtp="-1" aria-label="파티 인원 줄이기" ${m.party<=1?'disabled':''}>${I.minus}</button><span class="num"><b>${m.party}</b>${m.party>1?'인 파티':' 솔로'}</span><button type="button" data-mtp="1" aria-label="파티 인원 늘리기" ${m.party>=6?'disabled':''}>${I.plus()}</button></div></div>${mateRows('m',m.party,m.mates)}
+      <div class="m-btns"><button class="btn out" type="button" id="m-cancel">취소</button><button class="btn dark" type="button" id="mt-ok">그 ${u}만 바꾸기</button></div></div></div></div>`;
+  }
   if(m&&m.kind==='ask'){
     h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="a-title"><div class="m-head"><span id="a-title">${esc(m.title)}</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
       <div class="m-body">${m.lead?`<p style="margin:0;font-size:13px;line-height:20px;color:var(--sub)">${esc(m.lead)}</p>`:''}
@@ -4083,6 +4214,12 @@ function renderLayer(){
     set(()=>{st.chars=st.chars.filter(x=>x.id!==id);if(st.sel===id)st.sel=st.chars[0]?st.chars[0].id:null;st.form.targets=st.form.targets.filter(x=>x!==id);if(!st.form.targets.length&&st.sel)st.form.targets=[st.sel]});
     ui.modal=back||null;renderLayer();toast(`${c?jo(c.name,'을'):'캐릭터를'} 삭제했어요`)};
   L.querySelectorAll('[data-fcand]').forEach(b=>b.onclick=()=>{const m=ui.modal,c=st.chars.find(x=>x.id===m.cid)||cur();m.p=fillPlan(c,m.p.t,+b.dataset.fcand);renderLayer()});
+  if(ui.modal&&ui.modal.kind==='mates'){const m=ui.modal;L.querySelectorAll('[data-mtp]').forEach(b=>b.onclick=()=>{m.party=Math.max(1,Math.min(6,m.party+ +b.dataset.mtp));m.mates=mateDraft(m.party,m.mates);renderLayer()});
+    bindMateRows(L,'m',()=>mateDraft(m.party,m.mates),a=>{m.mates=a});
+    const ok=document.getElementById('mt-ok');if(ok)ok.onclick=()=>{const c=st.chars.find(q=>q.id===m.cid);ui.modal=null;renderLayer();if(!c)return;let done=false;
+      set(()=>atDay(sxKD(m.pk),()=>{const t=m.pk[0],e=live(c).find(x=>x.boss===m.boss);if(!e)return;const n=m.party;
+        putSlot(c,m.boss,{diff:e.diff,party:n,mates:matesOf({party:n,mates:m.mates}),cshare:n===e.party?e.cshare:null,lmode:e.lmode,lshare:n===e.party?e.lshare:null},true,pkey(t),t,true);done=true}));
+      toast(done?'같이 간 사람을 고쳤어요':'그 기간엔 이 보스가 목록에 없어요')}}
   L.querySelectorAll('[data-ask]').forEach(b=>b.onclick=()=>{const m=ui.modal,k=b.dataset.ask;ui.modal=null;renderLayer();if(m&&m.cb)m.cb(k)});
   L.querySelectorAll('[data-mvq]').forEach(b=>b.onclick=()=>{const mode=b.dataset.mvq;ui.modal=null;renderLayer();if(ui.formApply)ui.formApply(mode)});
   L.querySelectorAll('[data-pcpick]').forEach(b=>b.onclick=()=>{const [i,v]=b.dataset.pcpick.split(':');ui.modal.rows[+i].keep=v==='keep';renderLayer()});
@@ -4154,6 +4291,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',paintThemeB
 // 가격표 적용 날짜가 종류별로 바뀌어서, 이미 저장된 클리어 금액을 한 번 다시 계산
 if(!st.pfix){st.chars.forEach(c=>Object.keys(c.clears||{}).forEach(id=>{if(!BY[id])return;const sl=c.slots.find(x=>x.boss===id)||{party:1};
   c.clears[id]=c.clears[id].map(e=>typeof e==='object'&&e.diff?{...e,v:(priceAt(id,e.diff,e.d)??0)*share({...sl,diff:e.diff})}:e)}));st.pfix=1;save()}
+window.SX_READY=true;try{if(sxMigrateMates(st))save(true)}catch(e){console.error(e)}
 render();paintTimers();
 // 30초마다 남은 시간 갱신, 날짜가 바뀌면(0시 초기화) 화면 다시 그림
 // 지난 날짜를 보는 중에 자정이 지나도 보던 날이 그대로 있게 (X6): 날짜가 바뀌면 보던 날(절대 날짜)로 다시 맞춤
