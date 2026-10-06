@@ -95,12 +95,25 @@ export default {
     // 외형 이미지는 키가 필요 없음. 넥슨 외형 이미지 주소만 받아서 그대로 전달
     if (url.pathname === '/api/look') {
       // 주소를 정리(../ 풀기)한 뒤 넥슨 외형 이미지 경로인지 확인하고, 이미지 응답만 통과 (V2)
+      const okLook = (u, any) => u.protocol === 'https:' && u.host === 'open.api.nexon.com' && !u.username && !u.password
+        && u.pathname.startsWith(any ? '/static/maplestory/' : '/static/maplestory/character/look/');
       let lu; try { lu = new URL(url.searchParams.get('u') || ''); } catch { return fail(400, 'BAD_URL', '외형 이미지 주소가 아니에요', cors); }
-      if (lu.protocol !== 'https:' || lu.host !== 'open.api.nexon.com' || !lu.pathname.startsWith('/static/maplestory/character/look/') || lu.username || lu.password)
-        return fail(400, 'BAD_URL', '외형 이미지 주소가 아니에요', cors);
-      let r; try { r = await fetch(lu.toString(), { redirect: 'error' }); } catch { return fail(502, 'LOOK', '외형 이미지를 불러오지 못했어요', cors); }
+      if (!okLook(lu)) return fail(400, 'BAD_URL', '외형 이미지 주소가 아니에요', cors);
+      // 브라우저가 아닌 요청이라 넥슨이 거절하거나 주소를 옮겨 줄(리다이렉트) 때가 있어서:
+      // 누가 보내는지 밝히는 머리글을 붙이고, 넥슨 이미지 주소 안에서만 3번까지 따라감 (V12)
+      let r, cur = lu;
+      const sig = AbortSignal.timeout(8000); // 그림은 8초 안에 못 받으면 포기 (사이트는 원본 그림으로 먼저 보여 줌)
+      try {
+        for (let i = 0; ; i++) {
+          r = await fetch(cur.toString(), { redirect: 'manual', signal: sig, headers: { 'user-agent': 'Mozilla/5.0 (compatible; MEPURI/1.0; +https://github.com/snrnsrk5/MEPURI)', accept: 'image/avif,image/webp,image/png,image/*;q=0.8,*/*;q=0.5' } });
+          if (r.status < 300 || r.status >= 400 || i >= 3) break;
+          let nx; try { nx = new URL(r.headers.get('location') || '', cur); } catch { break; }
+          if (!okLook(nx, true)) break;
+          cur = nx;
+        }
+      } catch (e) { return e && e.name === 'TimeoutError' ? fail(504, 'LOOK', '외형 이미지를 불러오지 못했어요 (넥슨 응답 늦음)', cors) : fail(502, 'LOOK', '외형 이미지를 불러오지 못했어요 (넥슨 연결 실패)', cors); }
       const ct = r.headers.get('content-type') || '';
-      if (!r.ok || !/^image\//.test(ct)) return fail(r.ok ? 502 : r.status, 'LOOK', '외형 이미지를 불러오지 못했어요', cors);
+      if (!r.ok || !/^image\//.test(ct)) return fail(r.status >= 400 ? r.status : 502, 'LOOK', `외형 이미지를 불러오지 못했어요 (넥슨 ${r.status})`, cors);
       return new Response(r.body, {
         status: 200,
         headers: { ...cors, 'content-type': ct, 'cache-control': 'public, max-age=86400', 'x-content-type-options': 'nosniff' },
@@ -160,7 +173,13 @@ async function nexon(env, ctx, path, params, ttl) {
   const hit = await cache.match(cacheKey);
   if (hit) return hit.json();
 
-  const res = await fetch(u, { headers: { 'x-nxopen-api-key': env.NEXON_API_KEY } });
+  // 넥슨이 오래 답이 없으면 15초에 끊고 알려 줌 (조회 창이 끝없이 도는 걸 막음, V12)
+  let res;
+  try { res = await fetch(u, { headers: { 'x-nxopen-api-key': env.NEXON_API_KEY }, signal: AbortSignal.timeout(15000) }); }
+  catch (e) {
+    if (e && e.name === 'TimeoutError') throw new NexonError(504, 'NEXON_SLOW', '넥슨 응답이 늦어요. 잠시 후 다시 시도해 주세요');
+    throw new NexonError(502, 'NEXON_NET', '넥슨에 연결하지 못했어요. 잠시 후 다시 시도해 주세요');
+  }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = body.error || {};
