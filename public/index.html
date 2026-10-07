@@ -663,6 +663,12 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 /* 넥슨 원본 그림(.look): 지금은 300×300 안에 캐릭터 발끝이 (150, 200). 그 둘레만 보이게 (예전 96×96 원본도 그대로 맞음)
    목록 동그라미는 92×92 범위(세로 112~204)를 34px로 줄여서 (zoom) — 칩처럼 더 작은 곳은 --z로 */
 .ava.look{width:92px!important;height:92px!important;object-fit:none;object-position:50% 53.8%;zoom:var(--z,.37)}
+/* 고정 배율로 자른 그림(.fx): 넥슨 원본에서 발끝 기준으로 늘 같은 범위(가로 60~240, 세로 70~210 → 180×140, 발끝 (90,131))
+   → 모든 캐릭터가 같은 배율로 보임. 칸마다 배율만 다름: 보스현황 0.85배, 헤더·캐릭터 선택 1배, 동그라미 0.4배(몸 전체 85×85 → 34px, 더 작은 곳은 --zf) */
+.b-ava img.fx{left:0;bottom:0;width:129.4px;height:94.1px;zoom:.85;object-fit:none;object-position:-31.2px -38px}
+.found .pic img.fx{width:84px;height:92px;object-fit:none;object-position:-48px -43px}
+.cm-pic img.fx{width:120px;height:112px;max-width:none;max-height:none;object-fit:none;object-position:-30px -23px}
+.ava.fx{width:85px!important;height:85px!important;object-fit:none;object-position:-47.5px -49px;zoom:var(--zf,.4)}
 .keybox{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:8px;border:1px dashed var(--border2);background:var(--card)}
 .keyrow{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:500;color:var(--sub)}
 .keyrow small,.khint{font-size:11px;font-weight:400;color:var(--muted)}
@@ -792,7 +798,7 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
   .nav-link .tx{display:none}
   .cm-head{flex-wrap:wrap;padding:12px}.cm-pill{min-width:0;flex:1}
   .cm-body{padding:14px}.cm-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}.cm-card{min-height:0}
-  .cm-pic{height:84px}.cm-pic img{max-height:84px;max-width:90px}.cm-pic img.jill{height:84px;width:90px}.cm-add{min-height:170px}
+  .cm-pic{height:84px}.cm-pic img{max-height:84px;max-width:90px}.cm-pic img.jill{height:84px;width:90px}.cm-pic img.fx{zoom:.75;max-height:none;max-width:none}.cm-add{min-height:170px}
 }
 /* 보스 목록 표가 좁아지면(창 크기와 상관없이 표 자체 폭 기준) 이름이 두 줄로 꺾이기 전에 2줄 카드형으로 바꿈 */
 @container slots (max-width:539px){
@@ -941,7 +947,7 @@ html.theme-fade,html.theme-fade *{transition:background-color .32s ease,color .3
 .sx-hint{font-size:11px;line-height:1.5;color:var(--faint)}
 .sx-hint.sx-sph{margin:-2px 0 6px;text-align:right}
 .sx-mvp{display:flex;flex-direction:column}
-.sx-mv{width:100%;min-height:40px;border-bottom:1px solid var(--border)}.sx-mv:last-child{border-bottom:0}.sx-mv .ava{width:26px;height:26px}
+.sx-mv{width:100%;min-height:40px;border-bottom:1px solid var(--border)}.sx-mv:last-child{border-bottom:0}.sx-mv .ava{width:26px;height:26px;--z:.283;--zf:.306}
 .sx-mv span:not(.tg){flex:1;text-align:left;font-size:13px;font-weight:600;color:var(--text2)}.sx-mv small{font-size:12px;color:var(--muted)}
 /* 분배 */
 .sx-dist{display:flex;flex-direction:column}
@@ -1800,6 +1806,8 @@ function HID(c){return (c&&c.hide)||{}}
 function vis(){return st.chars.filter(c=>!HID(c).all)} // 통째로 숨긴 캐릭터는 목록·합계에서 빠짐
 function nm(c){if(!c)return '';if(!HID(c).name)return c.name;const i=vis().indexOf(c);return `캐릭터 ${(i>=0?i:st.chars.indexOf(c))+1}`}
 function cimg(c){return HID(c).look?null:c.img}
+// 그림 종류 → class: 넥슨 원본(look) / 고정 배율로 자름(fx) / 예전 방식(그림 있는 부분만 자름)
+const lkc=o=>o.look?'look':o.fx?'fx':'';
 // 코디 숨기기 → 직업 일러스트 (JOB_IMG, jobill.js). 직업 이름은 띄어쓰기 빼고 맞춤, API 표기가 다른 건 별칭
 const JOB_ALIAS={'듀얼블레이더':'듀얼블레이드','캐논마스터':'캐논슈터','캐논블래스터':'캐논슈터'};
 function jill(c){if(!HID(c).look||!c.job||typeof JOB_IMG==='undefined')return null;const k=String(c.job).replace(/\s/g,'');return JOB_IMG[k]||JOB_IMG[JOB_ALIAS[k]]||null}
@@ -1831,7 +1839,7 @@ function share(s){ // my crystal share (0..1)
 function myPrice(s,date){const p=priceAt(s.boss,s.diff,date);if(p==null)return null;return p*share(s)}
 function sil(size){return `<svg width="${size*.64}" height="${size*.78}" viewBox="0 0 70 100" aria-hidden="true"><circle cx="35" cy="30" r="20" fill="var(--faint)"/><path d="M12 100c0-24 8-44 23-44s23 20 23 44z" fill="var(--faint)"/></svg>`}
 const idl=c=>c.frames?` data-idle="${c.id}"`:'';
-function ava(c,cls){return cimg(c)?`<img class="${cls||'ava'}${c.look?' look':''}" src="${esc(c.img)}" alt="" loading="lazy"${idl(c)}>`:jillImg(c,'ava',`<span class="sil-ava">${sil(34)}</span>`)}
+function ava(c,cls){return cimg(c)?`<img class="${cls||'ava'}${lkc(c)?' '+lkc(c):''}" src="${esc(c.img)}" alt="" loading="lazy"${idl(c)}>`:jillImg(c,'ava',`<span class="sil-ava">${sil(34)}</span>`)}
 const I={
   gear:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
   corner:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4v9a3 3 0 0 0 3 3h11M16 12l4 4-4 4"/></svg>',
@@ -2101,7 +2109,7 @@ function renderBanner(){
   const k=charStats(c);
   document.getElementById('banner').innerHTML=BN_GLOW+`<div class="wrap">
     <div class="b-left">
-      <div class="b-ava">${CH_GLOW}${cimg(c)?`<img src="${esc(c.img)}" alt="${esc(nm(c))}"${c.look?' class="look"':''}${idl(c)}>`:jillImg(c,'',`<span class="sil">${sil(60)}</span>`)}</div>
+      <div class="b-ava">${CH_GLOW}${cimg(c)?`<img src="${esc(c.img)}" alt="${esc(nm(c))}"${lkc(c)?` class="${lkc(c)}"`:''}${idl(c)}>`:jillImg(c,'',`<span class="sil">${sil(60)}</span>`)}</div>
       <div class="b-info" style="position:relative">
         <button class="name-btn" id="name-btn" type="button" aria-haspopup="menu" aria-expanded="${ui.menu}"><span class="b-name">${c.world?wicon(c.world):''}${esc(nm(c))}</span>${I.caret('#fff',9)}</button>
         <div class="b-meta">${cinfo(c)?`<span>Lv.${esc(lvS(c))}</span><i></i><span>${esc(c.job||'직업 미확인')}</span><i class="m2"></i>`:''}<span class="m3">남은 주간 보스 ${k.W.all-k.W.done} · 예상 ${meso(k.left)||'0'}</span></div>
@@ -3825,33 +3833,36 @@ async function buildLook(src){
     for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>8){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
     cvs.push(cv)}
   if(x1<0)return null;
-  const cw=x1-x0+3,ch=y1-y0+3;
-  const frames=cvs.map(cv=>{const o=document.createElement('canvas');o.width=cw;o.height=ch;o.getContext('2d').drawImage(cv,x0-1,y0-1,cw,ch,0,0,cw,ch);return o.toDataURL('image/png')});
-  return {img:frames[0],frames:frames.length>1?frames:null};
+  // 넥슨 300×300(발끝 150·200)이면 발끝 기준 고정 범위로 → 캐릭터마다 배율이 같음. 다른 크기면 예전처럼 그림 있는 부분만
+  const fx=w===300&&h===300,cx=fx?60:x0-1,cy=fx?70:y0-1,cw=fx?180:x1-x0+3,ch=fx?140:y1-y0+3;
+  const frames=cvs.map(cv=>{const o=document.createElement('canvas');o.width=cw;o.height=ch;o.getContext('2d').drawImage(cv,cx,cy,cw,ch,0,0,cw,ch);return o.toDataURL('image/png')});
+  return {img:frames[0],frames:frames.length>1?frames:null,fx};
 }
 // 그림을 못 잘랐을 때: 넥슨 원본(300×300, 캐릭터 발끝이 가로 150·세로 200)을 그대로 쓰고 대기 모션 3장도 원본 주소로
 // → 화면에선 CSS(.look)로 캐릭터 부분만 보여 주고 움직임도 그대로. lookV는 2가 아니라서 나중에 다시 잘라 봄
-function rawLook(src){let fr=null;try{fr=[0,1,2].map(n=>lookFrame(src,n))}catch(e){}return {img:src||null,frames:src?fr:null,look:!!src}}
+function rawLook(src){let fr=null;try{fr=[0,1,2].map(n=>lookFrame(src,n))}catch(e){}return {img:src||null,frames:src?fr:null,look:!!src,fx:false}}
+// 그림 버전: 3 = 발끝 기준 고정 범위 (2 = 예전 '그림 있는 부분만' → 다시 잘라 둠)
+const LOOK_V=3;
 // 캐릭터 조회는 그림을 4.5초까지만 기다림 → 늦으면 원본으로 먼저 보여 주고, 잘라 오기는 뒤에서 다시 (fixLooks)
 const LOOK_FIRST_MS=4500;
 async function fromSrv(b){
   const lk=await Promise.race([buildLook(b.image).catch(()=>null),new Promise(r=>setTimeout(()=>r(null),LOOK_FIRST_MS))]),rw=lk?null:rawLook(b.image);
-  return {ocid:b.ocid,name:b.name,world:b.world,lv:b.level,job:b.job,img:lk?lk.img:rw.img,frames:lk?lk.frames:rw.frames,look:!lk&&!!b.image,lookUrl:b.image||null,lookV:lk?2:0,at:new Date().toISOString().slice(0,10)};
+  return {ocid:b.ocid,name:b.name,world:b.world,lv:b.level,job:b.job,img:lk?lk.img:rw.img,frames:lk?lk.frames:rw.frames,look:!lk&&!!b.image,fx:!!(lk&&lk.fx),lookUrl:b.image||null,lookV:lk?LOOK_V:0,at:new Date().toISOString().slice(0,10)};
 }
 // 새로 받은 기본 정보 넣기: 그림을 새로 못 만들었는데 코디(주소)가 그대로면 예전에 잘라 둔 그림을 유지 (움직이던 캐릭터가 원본으로 바뀌지 않게)
 function applyBasic(c,b){const keep=b.look&&!c.look&&!!c.img&&!!c.lookUrl&&c.lookUrl===b.lookUrl;
-  Object.assign(c,{name:b.name,world:b.world,lv:b.lv,job:b.job,at:b.at},keep?{}:{img:b.img,frames:b.frames,look:b.look,lookUrl:b.lookUrl,lookV:b.lookV});
-  if(c.lookV!==2&&c.lookUrl)setTimeout(fixLooks,3000)}
+  Object.assign(c,{name:b.name,world:b.world,lv:b.lv,job:b.job,at:b.at},keep?{}:{img:b.img,frames:b.frames,look:b.look,fx:b.fx,lookUrl:b.lookUrl,lookV:b.lookV});
+  if(c.lookV!==LOOK_V&&c.lookUrl)setTimeout(fixLooks,3000)}
 // 예전 방식(원본 이미지·정지 이미지)으로 저장된 캐릭터도 다시 만들어 저장
 // 캐릭터 그림 다시 만들기: 한 명씩 천천히(0.3초 간격) — 실패한 캐릭터도 다음에 다시 시도 (X18)
 // 원본 그대로인 캐릭터(look)도 다시 잘라 봄. 못 자르는 동안엔 넥슨 원본으로 보이고 움직이게 해 두고, 1분 → 5분 → 15분 뒤 다시
 let LOOK_BUSY=false,LOOK_AGAIN=false,LOOK_TRY=0;const LOOK_WAIT=[65000,300000,900000];
 async function fixLooks(){if(LOOK_BUSY){LOOK_AGAIN=true;return}LOOK_BUSY=true;LOOK_AGAIN=false;let n=0,fail=false;
-  try{for(const c of st.chars){const src=c.lookUrl||(c.look?c.img:null);if(!src||(c.lookV===2&&!c.look))continue;
+  try{for(const c of st.chars){const src=c.lookUrl||(c.look?c.img:null);if(!src||(c.lookV===LOOK_V&&!c.look))continue;
     if(!c.img||(c.look&&!c.frames)){Object.assign(c,rawLook(src));n++}
     if(fail||!apiBase())continue;
     const lk=await buildLook(src).catch(()=>null);if(!lk){fail=true;continue}
-    c.lookV=2;c.lookUrl=src;c.img=lk.img;c.frames=lk.frames;c.look=false;n++;if(n%4===0){save(true);render()}
+    c.lookV=LOOK_V;c.lookUrl=src;c.img=lk.img;c.frames=lk.frames;c.look=false;c.fx=!!lk.fx;n++;if(n%4===0){save(true);render()}
     await new Promise(r=>setTimeout(r,300))}}
   finally{LOOK_BUSY=false}
   if(n){save(true);render()}
@@ -3949,9 +3960,9 @@ const stateHash=o=>{if(o&&o._fmt!==undefined){o={...o};delete o._fmt}return hash
 // 기록 모양 버전: 모양이 바뀌는 업데이트마다 +1. 계정 기록이 이 숫자보다 크면(새 버전 탭이 저장) 옛 탭은 덮어쓰지 않고 새로고침 안내 (V12)
 const DATA_FMT=3,isNewer=d=>!!d&&(+d._fmt||0)>DATA_FMT;
 function cloudOld(){cloud.state='old';cloudSaveMeta();paintAcct();if(!ui.oldShown){ui.oldShown=true;askModal({title:'새 버전 메푸리가 나왔어요',lead:'다른 기기나 탭에서 새 버전으로 저장한 기록이 있어요. 이 탭은 옛 버전이라, 기록이 망가지지 않게 계정 저장을 멈췄어요.',opts:[['reload','새로고침','새 버전으로 열기 (이 기기 기록도 그대로 있어요)']]},k=>{if(k==='reload')location.reload()})}}
-function packState(){const o=JSON.parse(JSON.stringify(st));o._fmt=DATA_FMT;VIEWF.forEach(k=>delete o[k]);(o.chars||[]).forEach(c=>{if(c.lookUrl){delete c.img;delete c.frames;c.lookV=0}});return o}
+function packState(){const o=JSON.parse(JSON.stringify(st));o._fmt=DATA_FMT;VIEWF.forEach(k=>delete o[k]);(o.chars||[]).forEach(c=>{if(c.lookUrl){delete c.img;delete c.frames;delete c.fx;c.lookV=0}});return o}
 function unpackState(d){const view={};VIEWF.forEach(k=>{if(st[k]!==undefined)view[k]=st[k]});const old={};(st.chars||[]).forEach(c=>{old[c.ocid||c.id]=c});st=sanitize(JSON.parse(JSON.stringify(d)));delete st._fmt;VIEWF.forEach(k=>{if(view[k]!==undefined)st[k]=view[k]});if(!st.form)st.form=sample().form;
-  let keep=0;(st.chars||[]).forEach(c=>{const k=old[c.ocid||c.id];if(!c.img&&k&&k.img&&k.lookUrl===c.lookUrl){c.img=k.img;c.frames=k.frames;c.lookV=k.lookV;c.look=!!k.look}
+  let keep=0;(st.chars||[]).forEach(c=>{const k=old[c.ocid||c.id];if(!c.img&&k&&k.img&&k.lookUrl===c.lookUrl){c.img=k.img;c.frames=k.frames;c.lookV=k.lookV;c.look=!!k.look;c.fx=!!k.fx}
     if(c.chal===undefined&&k&&k.chal!==undefined&&k.ocid===c.ocid){c.chal=k.chal;keep++}}); // 이 기기에서 확인한 챌린저스 결과는 이어 붙임
   if(!st.chars.find(c=>c.id===st.sel))st.sel=st.chars[0]?st.chars[0].id:null;
   ui.pop=null;ui.cfg=null;save(!keep);applyTheme();render();fixLooks();setTimeout(chalScan,800)}
@@ -4062,12 +4073,12 @@ function renderLayer(){
         <div class="info">${I.info}캐릭터 이름만 입력하면 돼요. 넥슨 계정 연결은 필요 없어요.</div>
         <div class="m-search"><label class="search">${I.search}<input id="m-q" type="text" placeholder="캐릭터 이름" value="${esc(m.q)}" autocomplete="off"></label><button class="btn dark" type="submit" ${m.loading?'disabled':''}>${m.loading?'조회 중':'조회'}</button></div>
         ${m.err?`<div class="m-err">${I.info}<span>${esc(m.err)}</span></div>`:''}
-        ${fo?`<div class="found"><div class="pic">${fo.img?`<img src="${esc(fo.img)}" alt=""${fo.look?' class="look"':''}${fo.frames?' data-idle="found"':''}>`:`<span style="padding-bottom:6px">${sil(64)}</span>`}</div>
+        ${fo?`<div class="found"><div class="pic">${fo.img?`<img src="${esc(fo.img)}" alt=""${lkc(fo)?` class="${lkc(fo)}"`:''}${fo.frames?' data-idle="found"':''}>`:`<span style="padding-bottom:6px">${sil(64)}</span>`}</div>
           <div style="display:flex;flex-direction:column;gap:5px;min-width:0"><div style="display:flex;align-items:center;gap:6px">${fo.world?wicon(fo.world):''}<span class="world" style="background:var(--soft);color:var(--sub)">${esc(fo.world||'—')}</span><b style="font-size:16px">${esc(fo.name)}</b></div>
           <span style="font-size:13px;color:var(--sub)">Lv.${esc(fo.lv||'?')} <span style="color:var(--faint)">|</span> ${esc(fo.job||'직업 미확인')}</span>
           ${fo.dup?`<span class="ok" style="color:var(--accent)">${I.info}이미 등록된 캐릭터예요</span>`:fo.fake?`<span class="ok" style="color:var(--muted)">${I.info}테스트 조회라 정보가 비어 있어요</span>`:`<span class="ok">${I.check(12,'currentColor')}캐릭터를 찾았어요 · ${fo.ocid?'넥슨 Open API':'예시 데이터'}</span>`}</div></div>`:''}
         <div class="note"><h3 style="color:var(--text);font-weight:500">등록된 캐릭터 <span style="padding:0 8px;border-radius:999px;background:var(--card);font-size:12px;line-height:20px;color:var(--sub)"><b style="color:var(--text)">${st.chars.length}</b>명</span></h3>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">${st.chars.map(c=>`<span style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 3px;border-radius:14px;background:var(--card);font-size:12px;font-weight:500">${c.img&&!HID(c).look?`<img class="ava${c.look?' look':''}" style="width:22px;height:22px;--z:.239" src="${esc(c.img)}" alt="">`:`<span class="sil-ava" style="width:22px;height:22px">${sil(22)}</span>`}${esc(nm(c))}</span>`).join('')}</div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${st.chars.map(c=>`<span style="display:flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 3px;border-radius:14px;background:var(--card);font-size:12px;font-weight:500">${c.img&&!HID(c).look?`<img class="ava${lkc(c)?' '+lkc(c):''}" style="width:22px;height:22px;--z:.239;--zf:.259" src="${esc(c.img)}" alt="">`:`<span class="sil-ava" style="width:22px;height:22px">${sil(22)}</span>`}${esc(nm(c))}</span>`).join('')}</div></div>
         <div class="m-btns"><button class="btn out" type="button" id="m-cancel">취소</button><button class="btn pri" type="button" id="m-save" ${fo&&!fo.dup?'':'disabled'}>이 캐릭터 저장하기</button></div>
       </form></div></div>`;
   }
@@ -4106,7 +4117,7 @@ function renderLayer(){
         <div class="cm-grid">
           ${cards.map(c=>`<div class="cm-card${c.id===cur().id?' on':''}${m.edit?' edit':''}${HID(c).all?' hid':''}">
             <button type="button" class="cm-pick" data-cpick="${c.id}" aria-label="${esc(nm(c))} 선택"${m.edit?' tabindex="-1"':''}>
-              <span class="cm-pic">${cimg(c)?`<img src="${esc(c.img)}" alt=""${c.look?' class="look"':''}${idl(c)}>`:jillImg(c,'',`<span class="cm-sil">${sil(72)}</span>`)}</span>
+              <span class="cm-pic">${cimg(c)?`<img src="${esc(c.img)}" alt=""${lkc(c)?` class="${lkc(c)}"`:''}${idl(c)}>`:jillImg(c,'',`<span class="cm-sil">${sil(72)}</span>`)}</span>
               <b>${esc(nm(c))}</b>${cinfo(c)?`<small>Lv.${esc(lvS(c))} | ${esc(c.job||'직업 미확인')}</small>`:'<small>&nbsp;</small>'}</button>
             ${m.edit?`<div class="cm-hides" role="group" aria-label="${esc(c.name)} 숨기기">${[['all','숨김','목록·합계에서 통째로 빼요'],['name','이름','이름을 캐릭터 1, 2…로'],['info','레벨','레벨을 5단위로 가려요 (예: Lv.295+)'],['look','코디','캐릭터 그림을 가려요']].map(([k,l,tt])=>`<button type="button" class="${HID(c)[k]?'on':''}" data-chide="${c.id}:${k}" aria-pressed="${!!HID(c)[k]}" title="${tt}">${l}</button>`).join('')}</div>
             <button type="button" class="cm-del" data-cdel="${c.id}" aria-label="${esc(c.name)} 삭제">${I.x(12)}</button>`:''}
@@ -4290,7 +4301,7 @@ function renderLayer(){
   const ks=document.getElementById('k-save');if(ks)ks.onclick=()=>{const v=document.getElementById('k-in').value.trim();if(!v){toast('API 키를 입력해 주세요');return}nxSetKey(v);renderLayer();toast('API 키를 저장했어요')};
   const ki=document.getElementById('k-in');if(ki)ki.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();ks.click()}};
   const ms=document.getElementById('m-save');if(ms)ms.onclick=()=>{const fo=ui.modal.found;const id='c'+Date.now();ui.modal=null;
-    set(()=>{st.chars.push({id,name:fo.name,lv:fo.lv,job:fo.job,world:fo.world,img:fo.img||null,frames:fo.frames||null,look:!!fo.look,lookUrl:fo.lookUrl||null,lookV:fo.lookV||null,ocid:fo.ocid||null,at:fo.at||null,slots:[],clears:{},loot:{}});st.sel=id;st.form.targets=[id]});renderLayer();toast(`${fo.name} 저장했어요`);if(fo.ocid)setTimeout(chalScan,300);if(fo.lookUrl&&fo.lookV!==2)setTimeout(fixLooks,3000)};
+    set(()=>{st.chars.push({id,name:fo.name,lv:fo.lv,job:fo.job,world:fo.world,img:fo.img||null,frames:fo.frames||null,look:!!fo.look,fx:!!fo.fx,lookUrl:fo.lookUrl||null,lookV:fo.lookV||null,ocid:fo.ocid||null,at:fo.at||null,slots:[],clears:{},loot:{}});st.sel=id;st.form.targets=[id]});renderLayer();toast(`${fo.name} 저장했어요`);if(fo.ocid)setTimeout(chalScan,300);if(fo.lookUrl&&fo.lookV!==2)setTimeout(fixLooks,3000)};
   // 캐릭터 창
   const wb=document.getElementById('cm-wbtn');if(wb)wb.onclick=e=>{e.stopPropagation();ui.modal.wdd=!ui.modal.wdd;renderLayer()};
   L.querySelectorAll('[data-cworld]').forEach(b=>b.onclick=e=>{e.stopPropagation();Object.assign(ui.modal,{world:b.dataset.cworld,page:0,wdd:false});renderLayer()});
