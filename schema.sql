@@ -26,6 +26,12 @@ CREATE TABLE IF NOT EXISTS loot_prices (
   updated_at TEXT,
   PRIMARY KEY (d, item)
 );
+-- 관리 화면에서 정한 사이트 설정 (물욕 등급 기준 'tiers', 기본 물욕템 'lootOn'). 값은 JSON
+CREATE TABLE IF NOT EXISTS site_conf (
+  k TEXT PRIMARY KEY,
+  v TEXT NOT NULL,
+  updated_at TEXT
+);
 -- 관리 비밀번호를 틀린 횟수 (주소마다, 5번 틀리면 15분 막힘)
 CREATE TABLE IF NOT EXISTS admin_fail (
   ip TEXT PRIMARY KEY,

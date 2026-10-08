@@ -34,12 +34,19 @@
  *   그 밖에 로그인은 주소마다 1분 20번, 기록 저장은 계정마다 1분 40번
  *
  * 물욕 시세 (D1 데이터베이스 DB, 비밀값 ADMIN_PASSWORD 필요 — 없으면 시세 고치기는 꺼짐)
- *   GET  /api/loot-prices            날짜별 시세 전체  { hist:[{ d:'2026.10.03', p:{ 템이름: 억 } }] } (누구나)
+ *   GET  /api/loot-prices            날짜별 시세 전체  { hist:[{ d:'2026.10.03', p:{ 템이름: 억 } }], conf, ver } (누구나, 30초 기억)
+ *   GET  /api/loot-ver               판 번호만 { ver } — 열어 둔 사이트가 1분마다 바뀌었는지 확인 (한 줄 읽기)
+ *                                    안전장치: 접속 주소마다 1분에 전체 RATE_LOOT_MIN(60)번 · 판 번호 RATE_LOOT_VER_MIN(120)번 넘으면 잠깐 429
  *                                    관리 화면은 '한 벌 시세'(d=2000.01.01)만 저장하고, 저장할 때 예전 날짜 행은 지움
  *   POST /api/admin/login            { password } 비밀번호 확인
  *   POST /api/admin/prices           { d, p } 그 날짜 시세를 통째로 저장 (빈 목록은 거절)
  *   POST /api/admin/delete           { d } 그 날짜 시세 지우기 (관리 쿠키 또는 password 필요)
  *   POST /api/admin/logout           관리 쿠키 지우기
+ *   POST /api/admin/state            관리 화면용: /api/loot-prices와 같은 내용을 기억 없이 바로 읽음
+ *   POST /api/admin/conf             { k, v } 사이트 설정 저장 (v가 null이면 지워서 기본값으로)
+ *                                    k='tiers'  물욕 등급 기준 { black, red, dia, gold, silver, bronze } (억 이상)
+ *                                    k='lootOn' 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템…] }
+ *                                    → GET /api/loot-prices 응답의 conf로 사이트에 전달
  *   관리 화면: /admin  (비밀번호를 5번 틀리면 그 주소에서 15분, 사이트 전체로 1시간에 30번 넘게 틀리면 막힘.
  *                      맞으면 30분짜리 관리 쿠키를 줘서 그동안은 비밀번호 없이 저장 — 비밀번호는 브라우저에 안 남김)
  */
@@ -74,10 +81,10 @@ export default {
       }
     }
     // 물욕 시세: 읽기는 누구나, 고치기는 관리 비밀번호
-    if (url.pathname === '/api/loot-prices' || url.pathname.startsWith('/api/admin/')) {
+    if (url.pathname === '/api/loot-prices' || url.pathname === '/api/loot-ver' || url.pathname.startsWith('/api/admin/')) {
       try { return await lootPrices(req, env, url, cors); }
       catch (e) {
-        if (e instanceof HttpError) return fail(e.status, e.code, e.message, {});
+        if (e instanceof HttpError) return fail(e.status, e.code, e.message, e.retry ? { ...cors, 'retry-after': String(e.retry) } : {});
         return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', {});
       }
     }
@@ -374,11 +381,17 @@ async function lootPrices(req, env, url, cors) {
   if (!env.DB) throw new HttpError(503, 'NO_DB', '데이터베이스가 아직 설정되지 않았어요');
   await ensurePriceSchema(env.DB);
 
+  // 안전장치: 공개 조회를 한 접속 주소에서 비정상적으로 많이 부르면 잠깐 막음 (정상 사용은 1분에 1~2번)
+  if (m === 'GET' && (p === '/api/loot-ver' || p === '/api/loot-prices')) guardLoot(req, env, p === '/api/loot-ver' ? 'v' : 'f');
+  // 열어 둔 사이트가 1분마다 묻는 '바뀌었나?' — 한 줄만 읽음. 같은 서버(isolate) 안에선 10초 동안 기억
+  if (p === '/api/loot-ver' && m === 'GET') {
+    if (!VER_MEMO || Date.now() - VER_MEMO.at > VER_MEMO_MS) VER_MEMO = { at: Date.now(), ver: await lootVer(env.DB) };
+    return json({ ver: VER_MEMO.ver }, 200, { ...cors, ...noStore() });
+  }
   if (p === '/api/loot-prices' && m === 'GET') {
-    const { results } = await env.DB.prepare('SELECT d, item, price FROM loot_prices ORDER BY d, item').all();
-    const by = new Map();
-    for (const r of results || []) { if (!by.has(r.d)) by.set(r.d, {}); by.get(r.d)[r.item] = r.price; }
-    return json({ hist: [...by].map(([d, pr]) => ({ d, p: pr })) }, 200, { ...cors, 'cache-control': 'public, max-age=60' });
+    // 새로고침을 연달아 해도 데이터베이스는 30초에 한 번만 읽음 (같은 서버 안에서 응답을 기억). 관리 화면에서 저장하면 바로 잊음
+    if (!LOOT_MEMO || Date.now() - LOOT_MEMO.at >= LOOT_MEMO_MS) LOOT_MEMO = { at: Date.now(), body: await lootBody(env.DB) };
+    return json(LOOT_MEMO.body, 200, { ...cors, 'cache-control': 'public, max-age=60' });
   }
   if (m !== 'POST') throw new HttpError(405, 'METHOD', 'POST 요청만 받아요');
   if (!env.ADMIN_PASSWORD) throw new HttpError(503, 'ADMIN_OFF', '관리 비밀번호가 아직 설정되지 않았어요');
@@ -395,6 +408,17 @@ async function lootPrices(req, env, url, cors) {
   const keep = viaCookie ? {} : { 'set-cookie': adminCookie(await adminToken(env, Date.now() + ADMIN_COOKIE_MIN * 60000), ADMIN_COOKIE_MIN * 60) };
 
   if (p === '/api/admin/login') return json({ ok: true, min: ADMIN_COOKIE_MIN }, 200, { ...noStore(), ...keep });
+  if (p === '/api/admin/state') return json(await lootBody(env.DB), 200, { ...noStore(), ...keep }); // 관리 화면: 기억해 둔 값 말고 바로 지금 값
+  if (p === '/api/admin/conf') { // { k, v } 사이트 설정 하나 저장 · v가 null이면 지워서 기본값으로
+    const k = String(body.k || '');
+    if (!CONF_KEYS.includes(k)) throw new HttpError(400, 'CONF', '없는 설정이에요');
+    if (body.v === null) { await env.DB.prepare('DELETE FROM site_conf WHERE k = ?1').bind(k).run(); await bumpVer(env.DB); return json({ ok: true, k, reset: true }, 200, { ...noStore(), ...keep }); }
+    const v = k === 'tiers' ? confTiers(body.v) : confLootOn(body.v);
+    await env.DB.prepare('INSERT INTO site_conf (k, v, updated_at) VALUES (?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET v = ?2, updated_at = ?3')
+      .bind(k, JSON.stringify(v), new Date().toISOString()).run();
+    await bumpVer(env.DB);
+    return json({ ok: true, k, v }, 200, { ...noStore(), ...keep });
+  }
   const d = String(body.d || '');
   if (!validDay(d)) throw new HttpError(400, 'DATE', '날짜는 2026.10.03 모양으로 적어 주세요');
 
@@ -422,13 +446,88 @@ async function lootPrices(req, env, url, cors) {
       d === ALL_DAY ? env.DB.prepare('DELETE FROM loot_prices') : env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d),
       ...rows.map(([name, n]) => env.DB.prepare('INSERT INTO loot_prices (d, item, price, updated_at) VALUES (?1, ?2, ?3, ?4)').bind(d, name, n, now)),
     ]);
+    await bumpVer(env.DB);
     return json({ ok: true, d, count: rows.length }, 200, { ...noStore(), ...keep });
   }
   if (p === '/api/admin/delete') {
     await (d === ALL_DAY ? env.DB.prepare('DELETE FROM loot_prices') : env.DB.prepare('DELETE FROM loot_prices WHERE d = ?1').bind(d)).run();
+    await bumpVer(env.DB);
     return json({ ok: true, d }, 200, { ...noStore(), ...keep });
   }
   throw new HttpError(404, 'NOT_FOUND', '없는 주소예요');
+}
+
+// 시세 + 사이트 설정 + 판 번호 한 벌 (공개 조회와 관리 화면이 같이 씀)
+async function lootBody(db) {
+  const { results } = await db.prepare('SELECT d, item, price FROM loot_prices ORDER BY d, item').all();
+  const by = new Map();
+  for (const r of results || []) { if (!by.has(r.d)) by.set(r.d, {}); by.get(r.d)[r.item] = r.price; }
+  // 관리 화면에서 정한 사이트 설정 (기본 물욕템·등급 기준). 없으면 빈 칸 → 사이트는 페이지 안 기본값
+  const conf = {}; let ver = '0';
+  const cr = await db.prepare('SELECT k, v FROM site_conf').all();
+  for (const r of cr.results || []) {
+    if (r.k === 'ver') ver = r.v;
+    else if (CONF_KEYS.includes(r.k)) { try { conf[r.k] = JSON.parse(r.v); } catch (e) { /* 깨진 값은 무시 */ } }
+  }
+  const body = { hist: [...by].map(([d, pr]) => ({ d, p: pr })), conf, ver };
+  return body;
+}
+// 공개 조회 안전장치 — 데이터베이스에 안 쓰고 서버 메모리에서만 셈 (무료 쓰기 한도를 안 씀)
+//  접속 주소(IPv6는 /64 묶음)마다 1분에 전체 조회 RATE_LOOT_MIN번(기본 60), 판 번호 RATE_LOOT_VER_MIN번(기본 120)
+//  PC방처럼 한 주소를 여럿이 써도 넉넉한 수. 넘으면 그 1분이 끝날 때까지 429
+//  ※ Cloudflare는 서버를 여러 개 띄울 수 있어서 정확한 수는 아니고 '과한 것만 막는' 정도
+const LOOT_HITS = new Map();
+function guardLoot(req, env, kind) {
+  const raw = req.headers.get('CF-Connecting-IP') || 'unknown';
+  const ip = raw.includes(':') ? raw.split(':').slice(0, 4).join(':') + '::/64' : raw;
+  const lim = parseInt(env[kind === 'v' ? 'RATE_LOOT_VER_MIN' : 'RATE_LOOT_MIN'], 10) || (kind === 'v' ? 120 : 60);
+  const now = Date.now(), win = Math.floor(now / 60000), k = kind + ':' + ip;
+  if (LOOT_HITS.size > 5000) for (const [kk, v] of LOOT_HITS) if (v.win !== win) LOOT_HITS.delete(kk); // 지난 칸 정리
+  let h = LOOT_HITS.get(k);
+  if (!h || h.win !== win) { h = { win, n: 0 }; LOOT_HITS.set(k, h); }
+  if (++h.n > lim) {
+    const wait = Math.max(1, Math.ceil(((win + 1) * 60000 - now) / 1000));
+    const e = new HttpError(429, 'RATE', `요청이 너무 많아요. ${wait}초 뒤에 다시 시도해 주세요`); e.retry = wait; throw e;
+  }
+}
+
+// 시세·설정 판 번호 (site_conf의 'ver'): 관리 화면에서 저장할 때마다 바뀜 → 열어 둔 사이트가 1분마다 비교해서 바뀌었을 때만 다시 받음
+let LOOT_MEMO = null, VER_MEMO = null;
+const LOOT_MEMO_MS = 30000, VER_MEMO_MS = 10000;
+async function lootVer(db) { const r = await db.prepare("SELECT v FROM site_conf WHERE k = 'ver'").first(); return r ? String(r.v) : '0'; }
+async function bumpVer(db) {
+  await db.prepare("INSERT INTO site_conf (k, v, updated_at) VALUES ('ver', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, updated_at = ?2")
+    .bind(String(Date.now()), new Date().toISOString()).run();
+  LOOT_MEMO = null; VER_MEMO = null;
+}
+
+// 사이트 설정 (관리 화면)
+//   tiers  : 물욕 등급 기준 { black, red, dia, gold, silver, bronze } 억 이상 — 위 등급일수록 커야 함
+//   lootOn : 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템이름…] } — 적은 칸만 바뀌고 나머지는 페이지 기본값
+const CONF_KEYS = ['tiers', 'lootOn'], TIER_KEYS = ['black', 'red', 'dia', 'gold', 'silver', 'bronze'];
+function confTiers(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw new HttpError(400, 'TIERS', '등급 기준이 이상해요');
+  const out = {}; let prev = Infinity;
+  for (const t of TIER_KEYS) {
+    const n = typeof v[t] === 'number' ? v[t] : typeof v[t] === 'string' && /^\s*\d+(\.\d+)?\s*$/.test(v[t]) ? Number(v[t]) : NaN;
+    if (!Number.isFinite(n) || n <= 0 || n > 100000) throw new HttpError(400, 'TIERS', `${t} 기준은 0보다 크고 10만 이하인 숫자로 적어 주세요 (억 단위)`);
+    if (n >= prev) throw new HttpError(400, 'TIERS', '위 등급일수록 기준 금액이 커야 해요');
+    out[t] = prev = Math.round(n * 1000) / 1000;
+  }
+  return out;
+}
+function confLootOn(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw new HttpError(400, 'LOOT_ON', '기본 물욕템 설정이 이상해요');
+  const out = {}, bosses = Object.entries(v);
+  if (bosses.length > 200) throw new HttpError(400, 'LOOT_ON', '보스가 너무 많아요');
+  for (const [b, list] of bosses) {
+    const name = String(b).trim();
+    if (!name || name.length > 40 || !Array.isArray(list) || list.length > 80) throw new HttpError(400, 'LOOT_ON', '기본 물욕템 설정이 이상해요: ' + name.slice(0, 20));
+    const items = [...new Set(list.map(x => String(x).replace(/\s+/g, ' ').trim()))];
+    if (items.some(x => !x || x.length > 60)) throw new HttpError(400, 'LOOT_ON', '템 이름이 이상해요 (' + name.slice(0, 20) + ')');
+    out[name] = items;
+  }
+  return out;
 }
 
 // 날짜 칸: 관리 화면의 '한 벌 시세'(2000.01.01) 또는 실제 있는 날짜만 (2026.02.31 같은 건 거절, V6)
@@ -484,6 +583,7 @@ async function ensurePriceSchema(db) {
     db.prepare(`CREATE TABLE IF NOT EXISTS loot_prices (
       d TEXT NOT NULL, item TEXT NOT NULL, price REAL NOT NULL, updated_at TEXT, PRIMARY KEY (d, item))`),
     db.prepare('CREATE TABLE IF NOT EXISTS admin_fail (ip TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0, until INTEGER NOT NULL DEFAULT 0)'),
+    db.prepare('CREATE TABLE IF NOT EXISTS site_conf (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at TEXT)'),
   ]);
   priceSchemaReady = true;
 }

@@ -1653,12 +1653,42 @@ const lootBase=n=>LOOT_BASE[lootPKey(n)];
 const lootLatest=h=>Object.assign({},...h.map(s=>s.p)),lootDateTxt=h=>(d=>`${+d.slice(5,7)}/${+d.slice(8)}`)(h[h.length-1].d);
 let LOOT_HIST=LOOT_HIST_RAW,LOOT_BASE=lootLatest(LOOT_HIST),LOOT_BASE_DATE=lootDateTxt(LOOT_HIST);
 let lootHistC=null;
-// 서버(관리 화면 /admin에서 넣은 시세)가 있으면 그걸 우선. 서버가 안 되면 페이지 안 기본 시세 그대로
-function lootServerLoad(){fetch('/api/loot-prices',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
-  const H=j&&Array.isArray(j.hist)?j.hist.filter(s=>s&&/^\d{4}\.\d\d\.\d\d$/.test(s.d)&&s.p&&typeof s.p==='object'):[];if(!H.length)return;
-  // 테스트 기간: 서버 시세는 날짜 구분 없이 한 벌 → 모든 날짜에 적용 (서버에 없는 템은 페이지 기본 시세의 최신 값)
-  const p=lootLatest(LOOT_HIST_RAW);H.sort((a,b)=>a.d<b.d?-1:1).forEach(s=>Object.entries(s.p).forEach(([k,v])=>{if(Number.isFinite(+v))p[k]=+v}));
-  LOOT_HIST=[{d:'2000.01.01',p}];LOOT_BASE=p;LOOT_BASE_DATE='최신';lootHistC=null;render()}).catch(()=>{})}
+// 서버(관리 화면 /admin에서 넣은 시세·설정)가 있으면 그걸 우선. 서버가 안 되면 페이지 안 기본값 그대로
+// 받은 내용 적용: 시세 · 기본 물욕템(보스·난이도마다 기록 창에 켜 둘 템) · 물욕 등급 기준. 서버에서 지운 건 페이지 기본값으로 돌아감
+let LOOT_VER=null,lootSig=null;
+function lootApply(j){if(!j||typeof j!=='object')return;
+  const sig=JSON.stringify([j.hist||[],j.conf||{}]);LOOT_VER=j.ver!=null?String(j.ver):LOOT_VER;if(sig===lootSig)return;lootSig=sig;
+  const cf=j.conf&&typeof j.conf==='object'?j.conf:{};
+  LOOT_ON_SRV=cf.lootOn&&typeof cf.lootOn==='object'&&!Array.isArray(cf.lootOn)?cf.lootOn:null;
+  if(typeof sxSetTiers==='function')sxSetTiers(cf.tiers||null);
+  const H=Array.isArray(j.hist)?j.hist.filter(s=>s&&/^\d{4}\.\d\d\.\d\d$/.test(s.d)&&s.p&&typeof s.p==='object'):[];
+  if(!H.length){LOOT_HIST=LOOT_HIST_RAW;LOOT_BASE=lootLatest(LOOT_HIST);LOOT_BASE_DATE=lootDateTxt(LOOT_HIST)}
+  else{// 테스트 기간: 서버 시세는 날짜 구분 없이 한 벌 → 모든 날짜에 적용 (서버에 없는 템은 페이지 기본 시세의 최신 값)
+    const p=lootLatest(LOOT_HIST_RAW);H.sort((a,b)=>a.d<b.d?-1:1).forEach(s=>Object.entries(s.p).forEach(([k,v])=>{if(Number.isFinite(+v))p[k]=+v}));
+    LOOT_HIST=[{d:'2000.01.01',p}];LOOT_BASE=p;LOOT_BASE_DATE='최신'}
+  lootHistC=null;render()}
+// 받아 오는 때 (관리 화면에서 바꾼 게 열어 둔 사이트에도 들어가게)
+//  · 열 때: 1분 안에 이 브라우저(다른 탭 포함)가 받아 둔 게 있으면 그걸 씀 → 새로고침을 연달아 해도 서버에 안 감
+//  · 열어 두면 1분마다 '판 번호'만 물어보고 바뀌었을 때만 전체를 받음. 다른 탭이 1분 안에 물어봤으면 그 결과를 같이 씀
+//  · 화면이 숨겨져 있으면 안 물어봄. 아무것도 안 누른 채 3번 지나면 쉬고, 다시 누르거나 화면을 보면 이어서
+const LOOT_POLL=60000,LOOT_IDLE=3,LOOT_LS='mepuri-loot-srv';
+let lootIdleN=0,lootSleep=false,lootLast=0,lootBusy=false,lootHold=0;
+// 서버가 '너무 많다'(429)고 하면 알려 준 시간(최소 1분)만큼 안 물어봄 — 그동안은 받아 둔 값·페이지 기본값 그대로
+const lootRes=r=>{if(r.status===429){lootHold=Date.now()+Math.max(60,+r.headers.get('retry-after')||60)*1000;return null}return r.ok?r.json():null};
+const lootLS=()=>{try{const c=JSON.parse(localStorage.getItem(LOOT_LS)||'null');return c&&c.j&&typeof c.at==='number'?c:null}catch(e){return null}};
+const lootLSPut=(j,at)=>{try{localStorage.setItem(LOOT_LS,JSON.stringify({at,j}))}catch(e){}};
+function lootFull(){if(Date.now()<lootHold)return Promise.resolve();lootLast=Date.now();return fetch('/api/loot-prices',{cache:'no-store'}).then(lootRes).then(j=>{if(!j)return;lootLSPut(j,Date.now());lootApply(j)}).catch(()=>{})}
+async function lootCheck(){if(lootBusy||document.hidden||Date.now()<lootHold)return;lootBusy=true;
+  try{const c=lootLS();if(c&&Date.now()-c.at<LOOT_POLL-5000){lootLast=c.at;lootApply(c.j);return} // 다른 탭이 방금 물어봄
+    lootLast=Date.now();const r=await fetch('/api/loot-ver',{cache:'no-store'}).then(lootRes).catch(()=>null);if(!r||r.ver==null)return;
+    if(String(r.ver)!==String(LOOT_VER))await lootFull();else{const c2=lootLS();if(c2&&String(c2.j.ver)===String(r.ver))lootLSPut(c2.j,Date.now())}}
+  finally{lootBusy=false}}
+function lootServerLoad(){const c=lootLS();if(c&&Date.now()-c.at<LOOT_POLL){lootLast=c.at;lootApply(c.j)}else lootFull();
+  setInterval(()=>{if(lootSleep||document.hidden)return;if(lootIdleN>=LOOT_IDLE){lootSleep=true;return}lootIdleN++;lootCheck()},LOOT_POLL);
+  const wake=()=>{lootIdleN=0;if(lootSleep){lootSleep=false;if(Date.now()-lootLast>=LOOT_POLL)lootCheck()}};
+  ['pointerdown','keydown','touchstart','wheel'].forEach(e=>addEventListener(e,wake,{passive:true,capture:true}));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){lootIdleN=0;if(Date.now()-lootLast>=LOOT_POLL){lootSleep=false;lootCheck()}}});
+  addEventListener('storage',e=>{if(e.key===LOOT_LS){const c=lootLS();if(c)lootApply(c.j)}})} // 다른 탭이 새로 받으면 이 탭도 바로
 // 그 날짜(d) 기준 시세: d 이전 중 가장 최근 값, 그보다 앞선 기록이 없으면 가장 오래된 값
 function lootBaseAt(n,d){n=lootPKey(n);if(!d)return LOOT_BASE[n];if(!lootHistC)lootHistC=typeof REAL==='string'?lootHistCompact(LOOT_HIST,REAL):LOOT_HIST;
   let v=null,f=null;for(const s of lootHistC){if(s.p[n]==null)continue;if(f==null)f=s.p[n];if(s.d<=d)v=s.p[n]}return v!=null?v:f}
@@ -1826,8 +1856,11 @@ function lootList(id,diff){const data=((LOOT[BY[id].name]||{})[diff]||[]).map(x=
 // 보스 설정 · 보상: 시세가 없거나 1천만 메소(0.1억) 아래인 템은 목록에서 접어 둠 — 직접 켜거나 끄거나 값을 적은 템은 그대로 보임
 const LOOT_CHEAP=0.1,lootCheap=n=>{if(boxOf(n))return false;const v=lootBase(n);return v==null||v<LOOT_CHEAP}; // 시세가 없는 템도 접음 (결과를 고르는 상자는 결과 시세로 보니 빼고)
 const lootTouched=(id,n)=>{const c=cfgOf(id),o=c.loot[n];return c.custom.includes(n)||(!!o&&(typeof o.on==='boolean'||!!o.price))}; // 직접 켜고 끈 · 값을 적은 · 직접 추가한 템
-function lootDefault(id,n){for(const arr of Object.values(LOOT[BY[id].name]||{})){const hit=arr.find(x=>x[0]===n);if(hit)return hit[1]}return true}
-function isOn(id,n){const o=cfgOf(id).loot[n];return o&&typeof o.on==='boolean'?o.on:lootDefault(id,n)}
+// 기본으로 켜 둘지: 관리 화면에서 그 보스·난이도를 정해 뒀으면 그 목록('보스|난이도'), 아니면 페이지 기본값(loot.js). 직접 추가한 템은 켬
+let LOOT_ON_SRV=null;
+function lootDefault(id,n,diff){const bn=BY[id].name,L0=LOOT[bn]||{},d=diff&&L0[diff]&&L0[diff].some(x=>x[0]===n)?diff:Object.keys(L0).find(k=>L0[k].some(x=>x[0]===n));
+  if(!d)return true;const s=LOOT_ON_SRV&&LOOT_ON_SRV[bn+'|'+d];return Array.isArray(s)?s.includes(n):L0[d].find(x=>x[0]===n)[1]}
+function isOn(id,n,diff){const o=cfgOf(id).loot[n];return o&&typeof o.on==='boolean'?o.on:lootDefault(id,n,diff)}
 // 물욕템 기본 시세(억) — 9/29 본서버 시세를 반올림 (10억↓ 1억 · 50억↓ 5억 · 100억↓ 10억 · 500억↓ 50억 · 1000억↓ 100억 단위).
 // 보상 탭에 직접 적은 값이 있으면 그게 우선. 상자는 고른 결과 템의 시세로 계산
 function lootUserPrice(id,n){const o=cfgOf(id).loot[n];return (o&&o.price)||''}
@@ -2283,7 +2316,7 @@ function bossCard(c,s){
   else if(mine==null)pr=`${coin(14,1)}<span class="na">가격 정보 없음</span>`;
   else pr=`${coin(14)}<b class="num">${mesoH(mine)}</b><span>메소${t==='D'?' / 1회':''}</span>`;
   const open=ui.pop===s.boss;
-  const base=lootList(s.boss,s.diff).filter(n=>isOn(s.boss,n));const opts=[...base,...loot.filter(n=>!base.includes(n))];
+  const base=lootList(s.boss,s.diff).filter(n=>isOn(s.boss,n,s.diff));const opts=[...base,...loot.filter(n=>!base.includes(n))];
   return `<div class="bcard brw${done?' done':''}" data-row="${s.boss}" style="${open||ui.cfg===s.boss?'z-index:5':''}">
     ${frame(s,'s40')}
     <div class="bmid"><div class="brow"><span class="bname">${esc(b.name)}</span>${dk(s.diff)}${tmpTag(s)}</div><div class="bline"><span class="bprice">${pr}</span>${sub}</div></div>
@@ -2767,7 +2800,7 @@ function rewardPanel(){
     </div>
     <div class="fsec">
       <div class="fhead"><b style="color:var(--text2)">${DKO[f.diff]} 물욕템 <span style="font-weight:500;color:var(--muted)" class="num">${lootList(f.boss,f.diff).length}</span></b><span style="font-size:12px;color:var(--muted)">기록 · 예상 판매가</span></div>
-      ${(()=>{const all=lootList(f.boss,f.diff),hid=all.filter(n=>lootCheap(n)&&!lootTouched(f.boss,n)),show=ui.lmore?all:all.filter(n=>!hid.includes(n));return show.map(n=>{const o=isOn(f.boss,n);return `<div class="lrow"><span class="gem" style="width:28px;height:28px">${lootIcon(n)}</span><span class="n" style="${o?'':'color:var(--muted)'}">${esc(n)}</span><button type="button" data-lon="${esc(n)}" aria-pressed="${o}" aria-label="${esc(n)} 기록" style="display:grid;place-items:center;width:40px;height:28px;flex-shrink:0"><span class="tg${o?' on':''}"></span></button><input class="inp" type="text" data-lp="${esc(n)}" placeholder="${lootBase(n)!=null?`${lootBase(n)}억`:boxOf(n)?'결과 시세':'예상 판매가'}" title="${lootBase(n)!=null?`비워두면 ${LOOT_BASE_DATE} 시세 ${lootBase(n)}억으로 계산`:boxOf(n)?'상자는 고른 결과 템 시세로 계산돼요. 결과 템 시세가 없을 때만 이 값을 써요':'숫자만 쓰면 억 단위예요 (12 → 12억)'}" value="${esc(lootUserPrice(f.boss,n))}" aria-label="${esc(n)} 예상 판매가">${cfg.custom.includes(n)?`<button type="button" class="ibtn lr-del" data-ldel="${esc(n)}" aria-label="${esc(n)} 지우기" title="직접 추가한 템 지우기">${I.x(11)}</button>`:''}</div>`}).join('')+(hid.length?`<button type="button" class="linkish" data-lmore style="align-self:flex-start;margin-top:4px;font-size:12px;color:var(--muted)">${ui.lmore?'시세 없거나 싼 템 접기':`시세 없거나 1천만 메소 아래인 템 ${hid.length}개 더 보기`}</button>`:'')})()||'<span style="font-size:12px;color:var(--muted)">이 난이도는 등록된 물욕템이 없어요.</span>'}
+      ${(()=>{const all=lootList(f.boss,f.diff),hid=all.filter(n=>lootCheap(n)&&!lootTouched(f.boss,n)),show=ui.lmore?all:all.filter(n=>!hid.includes(n));return show.map(n=>{const o=isOn(f.boss,n,f.diff);return `<div class="lrow"><span class="gem" style="width:28px;height:28px">${lootIcon(n)}</span><span class="n" style="${o?'':'color:var(--muted)'}">${esc(n)}</span><button type="button" data-lon="${esc(n)}" aria-pressed="${o}" aria-label="${esc(n)} 기록" style="display:grid;place-items:center;width:40px;height:28px;flex-shrink:0"><span class="tg${o?' on':''}"></span></button><input class="inp" type="text" data-lp="${esc(n)}" placeholder="${lootBase(n)!=null?`${lootBase(n)}억`:boxOf(n)?'결과 시세':'예상 판매가'}" title="${lootBase(n)!=null?`비워두면 ${LOOT_BASE_DATE} 시세 ${lootBase(n)}억으로 계산`:boxOf(n)?'상자는 고른 결과 템 시세로 계산돼요. 결과 템 시세가 없을 때만 이 값을 써요':'숫자만 쓰면 억 단위예요 (12 → 12억)'}" value="${esc(lootUserPrice(f.boss,n))}" aria-label="${esc(n)} 예상 판매가">${cfg.custom.includes(n)?`<button type="button" class="ibtn lr-del" data-ldel="${esc(n)}" aria-label="${esc(n)} 지우기" title="직접 추가한 템 지우기">${I.x(11)}</button>`:''}</div>`}).join('')+(hid.length?`<button type="button" class="linkish" data-lmore style="align-self:flex-start;margin-top:4px;font-size:12px;color:var(--muted)">${ui.lmore?'시세 없거나 싼 템 접기':`시세 없거나 1천만 메소 아래인 템 ${hid.length}개 더 보기`}</button>`:'')})()||'<span style="font-size:12px;color:var(--muted)">이 난이도는 등록된 물욕템이 없어요.</span>'}
       <span style="font-size:11px;color:var(--faint)">난이도마다 드롭 목록이 달라요. 켜고 끄기와 판매가는 보스마다 저장돼요. 판매가를 비워두면 ${LOOT_BASE_DATE} 시세(흐린 글자)로, 상자는 고른 결과 템 시세로 계산해요.</span>
       <div class="frow"><input class="inp" id="loot-new" type="text" placeholder="물욕템 직접 추가" style="flex:1"><button class="btn out" type="button" id="loot-add">${I.plus(11)} 추가</button></div>
     </div>
@@ -2911,7 +2944,7 @@ function bindSettings(){
   const sell=document.getElementById('sell');if(sell)sell.onclick=()=>set(()=>{const c=cfgOf(rw.boss);c.sell=!c.sell});
   const rep=document.getElementById('report');if(rep)rep.onclick=()=>toast('가격 제보는 준비 중이에요');
   v.querySelectorAll('[data-lmore]').forEach(b=>b.onclick=()=>{ui.lmore=!ui.lmore;render()});
-  v.querySelectorAll('[data-lon]').forEach(b=>b.onclick=()=>set(()=>{const n=b.dataset.lon,c=cfgOf(rw.boss);c.loot[n]={...(c.loot[n]||{}),on:!isOn(rw.boss,n)}}));
+  v.querySelectorAll('[data-lon]').forEach(b=>b.onclick=()=>set(()=>{const n=b.dataset.lon,c=cfgOf(rw.boss);c.loot[n]={...(c.loot[n]||{}),on:!isOn(rw.boss,n,rw.diff)}}));
   // 예상 판매가: 숫자만 넣으면 억 단위 ('12' → 12억, '3.5' → 3억 5000만), '12억 5000만'처럼 써도 됨
   v.querySelectorAll('[data-lp]').forEach(inp=>inp.onchange=()=>{const n=inp.dataset.lp,raw=inp.value.trim().replace(/,/g,'');let val='';
     if(raw){const num=/^\d+(\.\d+)?$/.test(raw)?Math.round(+raw*1e8):(typeof sxMeso==='function'?sxMeso(raw):null);
@@ -3248,7 +3281,12 @@ function sxLedger(everyone,p){const ms=p.members.map((_,j)=>({key:'#'+j,name:sxP
 function sxPager(total,per,pg,key){const pages=Math.ceil(total/per);if(pages<2)return '';const last=pg===pages-1,w0=Math.max(0,Math.min(pg-2,pages-5)),win=Array.from({length:Math.min(5,pages)},(_,n)=>w0+n);
   return `<div class="cm-pages sx-pages"><button type="button" data-${key}="0" ${pg===0?'disabled':''} aria-label="처음">«</button><button type="button" data-${key}="${pg-1}" ${pg===0?'disabled':''} aria-label="이전">‹</button>${win.map(n=>`<button type="button" data-${key}="${n}" class="${n===pg?'on':''}">${n+1}</button>`).join('')}<button type="button" data-${key}="${pg+1}" ${last?'disabled':''} aria-label="다음">›</button><button type="button" data-${key}="${pages-1}" ${last?'disabled':''} aria-label="마지막">»</button></div>`}
 // 물욕 등급 경계 (억 메소) — 노작 시세 구간에 맞춰 등급마다 2~3배씩 (2026.10 기준)
-const SX_TIERS=[[1000,'black'],[750,'red'],[500,'dia'],[250,'gold'],[100,'silver'],[50,'bronze']].map(([v,t])=>[v*1e8,t]);
+const SX_TIERS0=[[1000,'black'],[750,'red'],[500,'dia'],[250,'gold'],[100,'silver'],[50,'bronze']];
+let SX_TIERS=SX_TIERS0.map(([v,t])=>[v*1e8,t]);
+// 관리 화면(/admin)에서 정한 등급 기준 { black:억, … } — 이상한 값이면 기본 기준 그대로
+function sxSetTiers(o){if(!o){SX_TIERS=SX_TIERS0.map(([v,t])=>[v*1e8,t]);return true} // 없으면 기본 기준으로
+  const a=SX_TIERS0.map(([v,t])=>[o&&Number.isFinite(+o[t])&&+o[t]>0?+o[t]:NaN,t]);
+  if(a.some(x=>Number.isNaN(x[0]))||a.some((x,i)=>i&&x[0]>=a[i-1][0]))return false;SX_TIERS=a.map(([v,t])=>[v*1e8,t]);return true}
 const sxPIcon=ids=>ids.length>1?`<span class="fr s40"><span class="pmz">${[0,1,2,3].map(i=>ids[i]?`<img src="${BY[ids[i]].img}" alt="">`:'<i></i>').join('')}</span></span>`:ids.length?`<span class="fr s40"><img src="${BY[ids[0]].img}" alt=""></span>`:`<span class="sx-all">${SX_ALL}</span>`;
 // 몫 나누기: 내 몫(없으면 정분배) + 파티원 몫(적은 사람은 그 값, 안 적은 사람은 남은 몫을 똑같이) → % 배열
 function sxSplit(party,my,arr){const n=Math.max(0,party-1),me=my!=null?+my:100/party,ms=Array.from({length:n},(_,j)=>arr&&arr[j]!=null&&arr[j]!==''?+arr[j]:null);
