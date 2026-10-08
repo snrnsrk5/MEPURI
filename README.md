@@ -48,7 +48,9 @@ schema.sql          데이터베이스 표 구조 (참고용, Worker가 자동�
    테스트 상태로 두면 테스트 사용자로 등록한 계정만 로그인돼요. (이름·이메일만 쓰면 구글 심사는 필요 없어요)
 4. **API 및 서비스 → 사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID**
    - 애플리케이션 유형: **웹 애플리케이션**
-   - **승인된 JavaScript 원본**: `https://mepuri.ut0101ut-8fb.workers.dev` (내 도메인을 붙이면 그 주소도 추가)
+   - **승인된 JavaScript 원본**: `https://mepuri.bosslog.workers.dev` (내 도메인을 붙이면 그 주소도 추가)
+   - 동의 화면(브랜딩)의 홈페이지 `https://mepuri.bosslog.workers.dev`, 개인정보처리방침 `https://mepuri.bosslog.workers.dev/privacy.html`, 승인된 도메인 `bosslog.workers.dev`도 같은 주소로 맞춰요.
+   - 사이트 주소(Cloudflare 계정 서브도메인)를 바꾸면 위 칸들도 모두 새 주소로 바꿔야 로그인이 돼요.
    - 리디렉션 URI는 비워둬도 돼요.
 5. 만들어진 **클라이언트 ID**(`…apps.googleusercontent.com`)를 복사해요.
 
