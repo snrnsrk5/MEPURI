@@ -28,7 +28,7 @@
  *   DELETE /api/account             계정과 기록 모두 삭제
  *
  * 캐릭터 조회(/api/character, /api/character/basic, /api/scheduler)는 구글 로그인한 사람만 쓸 수 있음
- *   남발 방지: 계정마다 1분 RATE_USER_MIN번 · 하루 RATE_USER_DAY번, 접속 주소(IP)마다 1분 RATE_IP_MIN번 (넘으면 429)
+ *   남발 방지: 계정마다 1분 RATE_USER_MIN번 · 하루 RATE_USER_DAY번(넥슨을 실제로 부를 때만 셈), 접속 주소(IP)마다 1분 RATE_IP_MIN번(요청마다) (넘으면 429)
  *   기본값 60 · 3000 · 120 — 대시보드 변수로 바꿀 수 있음. /api/look(외형 그림)은 로그인 없이 되고 IP 제한만 (따로 1분 RATE_LOOK_MIN번, 기본 600)
  *   RATE_SITE_DAY를 넣으면 사이트 전체 하루 조회도 그 수에서 멈춤 (넥슨 개발 키 동안 450 추천). 하루는 한국 시간 자정에 바뀜
  *   그 밖에 로그인은 주소마다 1분 20번, 기록 저장은 계정마다 1분 40번
@@ -91,8 +91,10 @@ export default {
     if (req.method !== 'GET') return fail(405, 'METHOD', 'GET 요청만 받아요', cors);
 
     // 넥슨 조회: 로그인 확인 + 남발 방지 (외형 그림은 IP 제한만)
+    // 계정·하루·사이트 한도는 넥슨을 실제로 부를 때(캐시에 없을 때)만 셈 → 아래 charge
+    let me = null;
     if (url.pathname === '/api/look' || NEXON_PATHS.includes(url.pathname)) {
-      try { await guardNexon(req, env, url.pathname !== '/api/look'); }
+      try { me = await guardNexon(req, env, url.pathname !== '/api/look'); }
       catch (e) {
         if (e instanceof HttpError) return fail(e.status, e.code, e.message, e.retry ? { ...cors, 'retry-after': String(e.retry) } : cors);
         return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', cors);
@@ -128,12 +130,15 @@ export default {
     }
     if (!env.NEXON_API_KEY) return fail(500, 'NO_KEY', '서버에 NEXON_API_KEY가 설정되지 않았어요', cors);
 
+    // 한 요청에서 넥슨을 여러 번 불러도(이름→ocid→기본 정보) 한도는 한 번만 셈
+    let charged = false;
+    const charge = me ? async () => { if (charged) return; charged = true; await chargeNexon(env, me); } : null;
     try {
       if (url.pathname === '/api/character') {
         const name = (url.searchParams.get('name') || '').trim();
         if (!name || name.length > 12) return fail(400, 'OPENAPI00004', '캐릭터 이름을 확인해 주세요', cors);
-        const { ocid } = await nexon(env, ctx, 'id', { character_name: name }, TTL.id);
-        const basic = await nexon(env, ctx, 'character/basic', { ocid }, TTL.basic);
+        const { ocid } = await nexon(env, ctx, 'id', { character_name: name }, TTL.id, charge);
+        const basic = await nexon(env, ctx, 'character/basic', { ocid }, TTL.basic, charge);
         return json(slim(ocid, basic), 200, cors);
       }
 
@@ -143,20 +148,21 @@ export default {
         // date=YYYY-MM-DD 를 붙이면 그날 기준 정보 (예: 챌린저스 월드에 있던 때의 월드 확인)
         const date = url.searchParams.get('date') || '';
         if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return fail(400, 'OPENAPI00004', '날짜는 YYYY-MM-DD 형식이에요', cors);
-        const basic = await nexon(env, ctx, 'character/basic', date ? { ocid, date } : { ocid }, date ? TTL.id : TTL.basic);
+        const basic = await nexon(env, ctx, 'character/basic', date ? { ocid, date } : { ocid }, date ? TTL.id : TTL.basic, charge);
         return json(slim(ocid, basic), 200, cors);
       }
 
       if (url.pathname === '/api/scheduler') {
         const ocid = url.searchParams.get('ocid');
         if (!ocid) return fail(400, 'OPENAPI00003', 'ocid가 필요해요', cors);
-        const data = await nexon(env, ctx, 'scheduler/character-state', { ocid }, TTL.scheduler);
+        const data = await nexon(env, ctx, 'scheduler/character-state', { ocid }, TTL.scheduler, charge);
         return json(data, 200, cors);
       }
 
       return fail(404, 'NOT_FOUND', '없는 주소예요', cors);
     } catch (e) {
       if (e instanceof NexonError) return fail(e.status, e.code, e.message, cors);
+      if (e instanceof HttpError) return fail(e.status, e.code, e.message, e.retry ? { ...cors, 'retry-after': String(e.retry) } : cors);
       return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', cors);
     }
   },
@@ -171,7 +177,7 @@ class NexonError extends Error {
 }
 
 // 넥슨 API 호출 (키는 헤더로만 보내고, 캐시 주소에는 넣지 않음)
-async function nexon(env, ctx, path, params, ttl) {
+async function nexon(env, ctx, path, params, ttl, charge) {
   const u = new URL(NEXON + path);
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
 
@@ -179,6 +185,9 @@ async function nexon(env, ctx, path, params, ttl) {
   const cacheKey = new Request(u.toString());
   const hit = await cache.match(cacheKey);
   if (hit) return hit.json();
+  // 캐시에 없어서 넥슨을 실제로 부를 때만 한도를 씀. 한도 셈이 없으면(로그인 확인을 안 거친 길) 부르지 않음
+  if (!charge) throw new NexonError(503, 'NO_AUTH', '로그인 확인 없이 넥슨을 부를 수 없어요');
+  await charge();
 
   // 넥슨이 오래 답이 없으면 15초에 끊고 알려 줌 (조회 창이 끝없이 도는 걸 막음, V12)
   let res;
@@ -345,6 +354,11 @@ async function guardNexon(req, env, needLogin) {
   await ensureSchema(env.DB);
   const me = await sessionUser(req, env);
   if (!me) throw new HttpError(401, 'LOGIN', '구글 계정으로 로그인해야 캐릭터를 조회할 수 있어요');
+  return me;
+}
+// 넥슨을 실제로 부를 때만 세는 한도: 계정 1분·하루, 사이트 전체 하루 (캐시에서 돌려준 응답은 안 셈)
+async function chargeNexon(env, me) {
+  const lim = (k, d) => { const n = parseInt(env[k], 10); return n > 0 ? n : d; };
   await hit(env.DB, 'u:' + me.id, 60, lim('RATE_USER_MIN', 60), '조회를 너무 자주 했어요');
   await hit(env.DB, 'ud:' + me.id, 86400, lim('RATE_USER_DAY', 3000), '오늘 조회 횟수를 다 썼어요');
   // 사이트 전체 하루 한도 (넣었을 때만): 넥슨 개발 키(하루 1,000건) 동안 한 사람이 다 써 버리는 걸 막음 (V3)
