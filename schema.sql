@@ -45,3 +45,14 @@ CREATE TABLE IF NOT EXISTS api_rate (
   n INTEGER NOT NULL,
   reset INTEGER NOT NULL             -- 이 칸이 끝나는 시각 (초)
 );
+
+-- 방문 통계 (익명). 날짜(한국 시간)마다 브라우저 하나에 한 줄. 180일 지난 날은 자동으로 지워요
+CREATE TABLE IF NOT EXISTS stat_vis (
+  d TEXT NOT NULL,                   -- 'YYYY.MM.DD'
+  v TEXT NOT NULL,                   -- 사이트가 브라우저에 둔 무작위 번호의 해시 (원래 값·IP는 저장 안 함)
+  li INTEGER NOT NULL DEFAULT 0,     -- 그날 로그인한 채로 열었나
+  nw INTEGER NOT NULL DEFAULT 0,     -- 이 브라우저의 첫 방문이었나
+  pv INTEGER NOT NULL DEFAULT 0,     -- 그날 화면을 연 횟수
+  st INTEGER NOT NULL DEFAULT 0,     -- 그날 화면을 보고 있던 초 (하루 12시간까지)
+  PRIMARY KEY (d, v)
+);

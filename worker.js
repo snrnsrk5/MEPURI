@@ -47,6 +47,12 @@
  *                                    k='tiers'  물욕 등급 기준 { black, red, dia, gold, silver, bronze } (억 이상)
  *                                    k='lootOn' 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템…] }
  *                                    → GET /api/loot-prices 응답의 conf로 사이트에 전달
+ *   POST /api/admin/stats            { days } 방문 통계 (최근 days일, 1~90) — 날짜별 조회수·실사용자·로그인·새 방문·체류, 가입자 수
+ *
+ * 방문 통계 (D1 데이터베이스 DB — 익명)
+ *   POST /api/stat                   사이트가 보내는 방문 신호 { t:'pv'|'stay', v: 브라우저 무작위 번호, li, nw, s } → 늘 204
+ *                                    같은 사이트(Origin)에서 온 것만, 봇 이름이 붙은 브라우저는 안 셈, 접속 주소마다 1분 20번까지 (메모리에서만 셈)
+ *                                    번호는 해시로만 저장하고 IP는 저장 안 함. 180일 지난 날은 신호 100번에 한 번꼴·관리 화면에서 통계를 볼 때 지움
  *   관리 화면: /admin  (비밀번호를 5번 틀리면 그 주소에서 15분, 사이트 전체로 1시간에 30번 넘게 틀리면 막힘.
  *                      맞으면 30분짜리 관리 쿠키를 줘서 그동안은 비밀번호 없이 저장 — 비밀번호는 브라우저에 안 남김)
  */
@@ -87,6 +93,13 @@ export default {
         if (e instanceof HttpError) return fail(e.status, e.code, e.message, e.retry ? { ...cors, 'retry-after': String(e.retry) } : {});
         return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', {});
       }
+    }
+    // 방문 통계 신호: 응답은 늘 바로 204 (실패해도 사이트에 영향 없음). 본문은 응답 전에 읽고, 저장은 응답 뒤에
+    if (url.pathname === '/api/stat') {
+      if (req.method === 'POST' && env.DB) {
+        try { const hitv = statGuard(req) ? await statRead(req, url) : null; if (hitv) ctx.waitUntil(statSave(env.DB, hitv).catch(() => {})); } catch (e) { /* 조용히 */ }
+      }
+      return new Response(null, { status: 204, headers: noStore() });
     }
     if (req.method !== 'GET') return fail(405, 'METHOD', 'GET 요청만 받아요', cors);
 
@@ -433,6 +446,7 @@ async function lootPrices(req, env, url, cors) {
     await bumpVer(env.DB);
     return json({ ok: true, k, v }, 200, { ...noStore(), ...keep });
   }
+  if (p === '/api/admin/stats') return json(await statReport(env.DB, body.days), 200, { ...noStore(), ...keep });
   const d = String(body.d || '');
   if (!validDay(d)) throw new HttpError(400, 'DATE', '날짜는 2026.10.03 모양으로 적어 주세요');
 
@@ -588,6 +602,80 @@ async function adminCookieOk(req, env) {
   const [exp, sig] = v.split('.'); const e = Number(exp);
   if (!Number.isFinite(e) || e < Date.now() || e > Date.now() + ADMIN_COOKIE_MIN * 60000 + 60000 || !sig) return false;
   return sig === await adminSig(env, e);
+}
+
+// ── 방문 통계 (익명) ──
+// 사이트를 연 브라우저마다 무작위 번호(사이트가 만들어 브라우저에 둠)를 해시해서, 날짜(한국 시간)별로 한 줄씩:
+//   pv 그날 화면을 연 횟수 · li 로그인한 채로 열었나 · nw 이 브라우저의 첫 방문이었나 · st 화면을 보고 있던 초 (하루 12시간까지)
+// 신호 하나에 데이터베이스 쓰기 한 번. IP는 남발 방지로 메모리에서만 셈
+const STAT_BOT = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|curl|wget|python|axios|node-fetch|undici|go-http|okhttp|java\/|phantom/i;
+const STAT_STAY_MAX = 3 * 3600, STAT_DAY_ST = 12 * 3600, STAT_KEEP_DAYS = 180;
+let STAT_PRUNE_P = 0.01;
+async function statRead(req, url) {
+  // 다른 사이트에서 보낸 건 안 셈. Origin이 없는 브라우저는 같은 사이트 표시(Sec-Fetch-Site·Referer)로 확인
+  const og = req.headers.get('Origin');
+  if (og ? og !== url.origin : !(req.headers.get('Sec-Fetch-Site') === 'same-origin' || (req.headers.get('Referer') || '').startsWith(url.origin + '/'))) return null;
+  const ua = req.headers.get('User-Agent') || '';
+  if (!ua || STAT_BOT.test(ua)) return null;
+  if (+(req.headers.get('content-length') || 0) > 512) return null;
+  const text = await req.text(); if (text.length > 512) return null;
+  let o; try { o = JSON.parse(text); } catch { return null; }
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+  const v = typeof o.v === 'string' && /^[A-Za-z0-9_-]{8,40}$/.test(o.v) ? o.v : null;
+  if (!v) return null;
+  if (o.t === 'pv') return { t: 'pv', v, li: o.li ? 1 : 0, nw: o.nw ? 1 : 0 };
+  if (o.t === 'stay') { const s = Math.round(Number(o.s)); return s >= 1 ? { t: 'stay', v, s: Math.min(s, STAT_STAY_MAX) } : null; }
+  return null;
+}
+const STAT_HITS = new Map();
+function statGuard(req) { // 접속 주소(IPv6는 /64)마다 1분 20번까지 — 넘으면 조용히 안 셈
+  const raw = req.headers.get('CF-Connecting-IP') || 'unknown';
+  const ip = raw.includes(':') ? raw.split(':').slice(0, 4).join(':') : raw;
+  const win = Math.floor(Date.now() / 60000);
+  if (STAT_HITS.size > 5000) for (const [k, h] of STAT_HITS) if (h.win !== win) STAT_HITS.delete(k);
+  let h = STAT_HITS.get(ip); if (!h || h.win !== win) { h = { win, n: 0 }; STAT_HITS.set(ip, h); }
+  return ++h.n <= 20;
+}
+async function statSave(db, x) {
+  await ensureStatSchema(db);
+  const d = kstDay(0), v = (await sha256('mepuri-vid:' + x.v)).slice(0, 16);
+  if (Math.random() < STAT_PRUNE_P) await db.prepare('DELETE FROM stat_vis WHERE d < ?1').bind(kstDay(-STAT_KEEP_DAYS)).run(); // 180일 지난 날 가끔 청소
+  if (x.t === 'pv') {
+    await db.prepare('INSERT INTO stat_vis (d, v, li, nw, pv, st) VALUES (?1, ?2, ?3, ?4, 1, 0) ON CONFLICT(d, v) DO UPDATE SET pv = pv + 1, li = MAX(li, ?3)')
+      .bind(d, v, x.li, x.nw).run();
+  } else {
+    await db.prepare('INSERT INTO stat_vis (d, v, li, nw, pv, st) VALUES (?1, ?2, 0, 0, 0, MIN(?3, ?4)) ON CONFLICT(d, v) DO UPDATE SET st = MIN(st + ?3, ?4)')
+      .bind(d, v, x.s, STAT_DAY_ST).run();
+  }
+}
+// 한국 시간 날짜 'YYYY.MM.DD' (add: 며칠 뒤/앞)
+function kstDay(add, at) {
+  const t = new Date((at ?? Date.now()) + 9 * 3600000 + (add || 0) * 86400000);
+  return `${t.getUTCFullYear()}.${String(t.getUTCMonth() + 1).padStart(2, '0')}.${String(t.getUTCDate()).padStart(2, '0')}`;
+}
+async function statReport(db, daysIn) {
+  await ensureStatSchema(db); await ensureSchema(db);
+  const days = Math.min(90, Math.max(1, parseInt(daysIn, 10) || 30)), from = kstDay(-(days - 1));
+  await db.prepare('DELETE FROM stat_vis WHERE d < ?1').bind(kstDay(-STAT_KEEP_DAYS)).run(); // 오래된 날 정리
+  const r = await db.prepare(`SELECT d, COUNT(*) AS uv, SUM(pv) AS pv, SUM(li) AS li, SUM(nw) AS nw,
+      SUM(CASE WHEN st > 0 THEN 1 ELSE 0 END) AS stn, SUM(st) AS st FROM stat_vis WHERE d >= ?1 GROUP BY d ORDER BY d`).bind(from).all();
+  const uniq = async n => ((await db.prepare('SELECT COUNT(DISTINCT v) AS n FROM stat_vis WHERE d >= ?1').bind(kstDay(-(n - 1))).first()) || {}).n || 0;
+  // 가입: users.created_at(ISO, UTC) → 한국 날짜로 묶음
+  const since = new Date(Date.now() - (days + 1) * 86400000).toISOString();
+  const ur = await db.prepare('SELECT created_at FROM users WHERE created_at >= ?1').bind(since).all();
+  const join = {};
+  for (const u of ur.results || []) { const t = Date.parse(u.created_at); if (Number.isFinite(t)) { const k = kstDay(0, t); if (k >= from) join[k] = (join[k] || 0) + 1; } }
+  const tot = await db.prepare('SELECT COUNT(*) AS n FROM users').first();
+  const rows = (r.results || []).map(x => ({ d: x.d, pv: x.pv || 0, uv: x.uv || 0, li: x.li || 0, nw: x.nw || 0, stn: x.stn || 0, st: x.st || 0 }));
+  return { days, today: kstDay(0), rows, join, users: (tot && tot.n) || 0, u7: await uniq(7), u30: await uniq(30) };
+}
+let statSchemaReady = false;
+async function ensureStatSchema(db) {
+  if (statSchemaReady) return;
+  await db.prepare(`CREATE TABLE IF NOT EXISTS stat_vis (
+    d TEXT NOT NULL, v TEXT NOT NULL, li INTEGER NOT NULL DEFAULT 0, nw INTEGER NOT NULL DEFAULT 0,
+    pv INTEGER NOT NULL DEFAULT 0, st INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (d, v))`).run();
+  statSchemaReady = true;
 }
 
 let priceSchemaReady = false;

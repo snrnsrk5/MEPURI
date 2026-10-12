@@ -74,6 +74,8 @@ schema.sql          데이터베이스 표 구조 (참고용, Worker가 자동�
 
 `/api/character`, `/api/character/basic`, `/api/scheduler`는 구글 로그인이 필요해요. 남발 방지로 계정마다 1분 60번 · 하루 3000번(넥슨을 실제로 부를 때만 셈 · 캐시에 있으면 안 셈), 접속 주소(IP)마다 1분 120번(요청마다 셈)까지예요. 외형 그림(`/api/look`)은 따로 접속 주소마다 1분 600번이에요. 로그인은 접속 주소마다 1분 20번, 기록 저장은 계정마다 1분 40번이에요. 넘으면 `429`와 `retry-after`(초)가 와요. 하루 한도는 한국 시간 자정에 바뀌어요.
 
+방문 통계(`/api/stat`)는 같은 사이트에서 온 신호만, 접속 주소마다 1분 20번까지 세고(메모리에서만), 브라우저 번호는 해시로만 저장해요. IP는 저장하지 않고, 180일 지난 날은 지워요.
+
 물욕 가격 공개 조회는 접속 주소마다 1분에 전체 `/api/loot-prices` 60번 · 판 번호 `/api/loot-ver` 120번까지예요(과하게 부르는 것만 막는 안전장치라 서버 메모리에서만 세요).
 
 숫자는 대시보드 변수 `RATE_USER_MIN` · `RATE_USER_DAY` · `RATE_IP_MIN` · `RATE_LOOK_MIN` · `RATE_LOOT_MIN` · `RATE_LOOT_VER_MIN`으로 바꿀 수 있어요. `wrangler.toml`의 `keep_vars = true` 덕분에 대시보드에서 넣은 값은 배포해도 남아요. `RATE_SITE_DAY`를 넣으면 사이트 전체 하루 조회 수도 그 수에서 멈춰요 (넥슨 개발 키 동안 450 추천, 서비스 키로 바꾸면 지우기).
@@ -90,6 +92,7 @@ schema.sql          데이터베이스 표 구조 (참고용, Worker가 자동�
 | `GET /api/state` · `PUT /api/state` | 내 기록 불러오기 · 저장하기 (겹치면 409) |
 | `DELETE /api/account` | 계정과 기록 삭제 |
 | `GET /api/look?u=…` | 넥슨 외형 이미지 전달 (넥슨 외형 이미지 주소만, 이미지 응답만) |
+| `POST /api/stat` | 방문 통계 신호 (익명 · 늘 204). 관리 화면 「방문 통계」 탭에서 봐요 |
 
 응답 예시 (`/api/character`):
 
