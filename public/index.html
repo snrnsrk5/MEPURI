@@ -1690,6 +1690,7 @@ button.sx-tml.more{cursor:pointer}button.sx-tml.more:hover{box-shadow:inset 0 0 
 
 .sx-mnote{display:block;margin-top:6px;padding:0;border:0;background:none;font:inherit;font-size:12px;color:var(--muted);cursor:pointer;text-align:left}.sx-mnote:hover{color:var(--accent)}
 
+.crash{gap:8px}.crash-b{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:6px}.crash-t{margin-top:4px;font-size:11px;color:var(--faint);word-break:break-all}
 </style>
 
 <header class="top"><div class="wrap">
@@ -1823,7 +1824,7 @@ const MON_START=(()=>{const f=PRICE_HIST[0].from,d=new Date(Date.UTC(+f.slice(0,
 const noMon=d=>d.slice(0,7)<MON_START;
 function priceTable(date,type='W'){let t=PRICE_HIST[0];for(const h of PRICE_HIST){const f=typeof h.from==='object'?h.from[type]:h.from;if(date>=f)t=h}return t}
 const tblLabel=(date,type)=>{const l=priceTable(date,type).label;return typeof l==='object'?l[type]:l};
-function priceAt(id,diff,date){const t=priceTable(date||TODAY,BY[id].diffs[diff]||'W');const p=t.price?(t.price[id]||{})[diff]:BY[id].price[diff];return p==null?BY[id].price[diff]??null:p}
+function priceAt(id,diff,date){if(!BY[id]||!BY[id].diffs[diff])return null;const t=priceTable(date||TODAY,BY[id].diffs[diff]||'W');const p=t.price?(t.price[id]||{})[diff]:BY[id].price[diff];return p==null?BY[id].price[diff]??null:p}
 const KNOWN={
  '강은호':{lv:299,job:'칼리',world:'스카니아',img:ASSETS.char_eunho},
  '아델':{lv:297,job:'아델',world:'스카니아',img:ASSETS.char_adele},
@@ -2044,7 +2045,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.23.1", "d": "2026-10-13", "l": ["물욕 관리 목록에서 파티 템의 정산 완료·정산 남음을 바로 볼 수 있어요", "새 보스를 넣거나 다른 보스로 바꿀 때도 「과거 주부터」를 쓸 수 있어요", "「과거 주부터」 시작 주를 달력에서 골라요", "히트맵의 물욕 칸이 실제 금액 비율대로 나와요", "보스 설정 검색이 제대로 돼요 · 물욕템 이름으로도 찾아요"], "prev": [{"v": "0.23.0", "d": "2026-10-12", "l": ["프리셋 「과거 주부터」를 넣기 전에 주마다 고를 수 있어요", "보스 설정에서도 「과거 주부터」로 바꿀 수 있어요", "첫 화면이 빨라졌어요", "「과거 주부터」로 넣으면 이번 주 보스가 두 번 들어가던 문제를 고쳤어요", "시즌 보스 에테르넬 방어구 상자에도 가격이 붙어요"]}]};
+const NEWS={"v": "0.23.2", "d": "2026-10-14", "l": ["파티 물욕을 「분배 · 블빵 · 순환 획득」으로 나눠 적어요", "예전 버전부터 쓰던 기록에서 화면이 멈추던 문제를 고쳤어요"], "prev": [{"v": "0.23.1", "d": "2026-10-13", "l": ["물욕 관리 목록에서 파티 템의 정산 완료·정산 남음을 바로 볼 수 있어요", "새 보스를 넣거나 다른 보스로 바꿀 때도 「과거 주부터」를 쓸 수 있어요", "「과거 주부터」 시작 주를 달력에서 골라요", "히트맵의 물욕 칸이 실제 금액 비율대로 나와요", "보스 설정 검색이 제대로 돼요 · 물욕템 이름으로도 찾아요"]}, {"v": "0.23.0", "d": "2026-10-12", "l": ["프리셋 「과거 주부터」를 넣기 전에 주마다 고를 수 있어요", "보스 설정에서도 「과거 주부터」로 바꿀 수 있어요", "첫 화면이 빨라졌어요", "「과거 주부터」로 넣으면 이번 주 보스가 두 번 들어가던 문제를 고쳤어요", "시즌 보스 에테르넬 방어구 상자에도 가격이 붙어요"]}]};
 const HAD_DATA=(()=>{try{return !!localStorage.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 let st,LOAD_LOST=false; // LOAD_LOST: 이 기기 기록을 읽지 못해 새로 시작함 → 계정 기록을 덮어쓰지 않게 동기화 상태도 지움
 try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null;LOAD_LOST=true}
@@ -2054,7 +2055,25 @@ if(st&&st.v===3){const r=st.chars.find(c=>c.id==='c1'),l=r&&r.slots.find(s=>s.bo
 if(st&&st.v===undefined&&Array.isArray(st.chars))st.v=4; // 기록 모양 번호가 빠진 기록도 버리지 않음 (예시로 바뀌면 계정 기록까지 덮일 수 있음)
 if(!st||st.v!==4){if(st)LOAD_LOST=true;st=sample()}
 // 불러온 기록 검사: 빠진 칸은 채우고, 없어진 보스·난이도 슬롯은 건너뜀 (패치로 난이도가 빠져도 앱이 멈추지 않게)
-function sanitize(o){if(!o||typeof o!=='object')return sample();if(!Array.isArray(o.chars))o.chars=[];if(o.v===undefined)o.v=4;if(!o.cfg||typeof o.cfg!=='object')o.cfg={};if(!Array.isArray(o.presets))o.presets=[];
+// 기록 모양 다듬기: 예전 버전·다른 기기에서 온 기록에 빠진 칸·엉뚱한 값(null·숫자·배열)이 있어도 앱이 멈추지 않게 (모르는 칸은 건드리지 않음)
+function fixShape(o){const isD=x=>typeof x==='string'&&/^\d{4}\.\d\d\.\d\d$/.test(x),isO=x=>!!x&&typeof x==='object'&&!Array.isArray(x),num=x=>typeof x==='number'&&Number.isFinite(x);
+  const objOf=(m,f)=>{if(!isO(m))return {};Object.keys(m).forEach(k=>{const v=f(m[k]);if(v===undefined)delete m[k];else m[k]=v});return m};
+  if(!isO(o.cfg))o.cfg={};objOf(o.cfg,v=>{if(!isO(v))return undefined;if(!isO(v.loot))v.loot={};if(!Array.isArray(v.custom))v.custom=[];v.custom=v.custom.filter(x=>typeof x==='string'&&x);return v});
+  if(Array.isArray(o.presets))o.presets=o.presets.filter(isO).map(p=>{if(typeof p.name!=='string')p.name=String(p.name||'프리셋');if(!Array.isArray(p.slots))p.slots=[];p.slots=p.slots.filter(isO);return p});
+  if(o.sx!==undefined&&!isO(o.sx))delete o.sx;if(isO(o.pgrp))objOf(o.pgrp,g=>{if(!isO(g))return undefined;if(g.name!=null&&typeof g.name!=='string')delete g.name;return g});if(isO(o.people))objOf(o.people,v=>isO(v)?v:undefined);if(o.form!==undefined&&!isO(o.form))delete o.form;
+  if(!Array.isArray(o.chars))return o;
+  o.chars.forEach(c=>{if(!isO(c))return;if(typeof c.name!=='string')c.name=String(c.name||'캐릭터');
+    if(c.chal!=null&&!(isO(c.chal)&&Number.isFinite(+c.chal.s)&&(c.chal.from==null||isD(c.chal.from))))delete c.chal;['job','world','ocid','img'].forEach(k=>{if(c[k]!=null&&typeof c[k]!=='string')delete c[k]});if(c.lv!=null&&!num(+c.lv))delete c.lv;
+    if(Array.isArray(c.slots))c.slots=c.slots.filter(isO).map(sl=>{const pt=Math.round(+sl.party);sl.party=pt>=1&&pt<=6?pt:1;['cshare','lshare'].forEach(k=>{if(sl[k]!=null&&!num(+sl[k]))sl[k]=null});
+      ['start','end','only','skip','back'].forEach(k=>{if(sl[k]!=null&&typeof sl[k]!=='string')delete sl[k]});['skips','backs'].forEach(k=>{if(sl[k]!=null){if(!Array.isArray(sl[k]))delete sl[k];else sl[k]=sl[k].filter(x=>typeof x==='string')}});
+      if(sl.prev!=null){if(!Array.isArray(sl.prev))delete sl.prev;else sl.prev=sl.prev.filter(x=>isO(x)&&typeof x.until==='string')}if(sl.tmps!=null&&!isO(sl.tmps))delete sl.tmps;if(sl.tmp!=null&&!isO(sl.tmp))delete sl.tmp;if(sl.memo!=null&&typeof sl.memo!=='string')sl.memo='';return sl});
+    c.clears=objOf(c.clears,a=>{if(!Array.isArray(a))return undefined;a=a.filter(e=>isD(e)||(isO(e)&&isD(e.d))).map(e=>{if(isO(e)){if(e.v!=null&&!num(e.v))delete e.v;if(e.diff!=null&&typeof e.diff!=='string')delete e.diff}return e});return a.length?a:undefined});
+    c.loot=objOf(c.loot,a=>{if(!Array.isArray(a))return undefined;a=a.filter(x=>typeof x==='string'&&x);return a.length?a:undefined});
+    if(c.lootSub!=null)c.lootSub=objOf(c.lootSub,m=>isO(m)?objOf(m,v=>typeof v==='string'?v:undefined):undefined);
+    if(c.lootMeta!=null)c.lootMeta=objOf(c.lootMeta,m=>isO(m)?objOf(m,v=>isO(v)?v:undefined):undefined);
+    if(c.dist!=null)c.dist=objOf(c.dist,v=>isO(v)?v:undefined)});
+  return o}
+function sanitize(o){if(!o||typeof o!=='object')return sample();fixShape(o);if(!Array.isArray(o.chars))o.chars=[];if(o.v===undefined)o.v=4;if(!o.cfg||typeof o.cfg!=='object')o.cfg={};if(!Array.isArray(o.presets))o.presets=[];
   o.chars=o.chars.filter(c=>c&&typeof c==='object');o.chars.forEach((c,i)=>{if(!c.id)c.id='c'+Date.now()+i;if(!Array.isArray(c.slots))c.slots=[];['clears','loot'].forEach(k=>{if(!c[k]||typeof c[k]!=='object')c[k]={}});
     c.slots=c.slots.filter(sl=>sl&&BY[sl.boss]);c.slots.forEach(sl=>{const b=BY[sl.boss];if(!b.diffs[sl.diff])sl.diff=Object.keys(b.diffs).find(d=>b.diffs[d]===(sl.t||'W'))||Object.keys(b.diffs)[0];if(!sl.party)sl.party=1;
       const mf=o=>{if(o&&o.mates!==undefined&&!Array.isArray(o.mates))delete o.mates;else if(o&&o.mates)o.mates=o.mates.map(x=>typeof x==='string'?x.slice(0,16):'').slice(0,5)};mf(sl);(sl.prev||[]).forEach(mf);Object.values(sl.tmps||{}).forEach(mf);
@@ -2067,7 +2086,7 @@ function sanitize(o){if(!o||typeof o!=='object')return sample();if(!Array.isArra
   if(!o.form||typeof o.form!=='object')o.form=sample().form;if(!o.chars.find(c=>c.id===o.sel))o.sel=o.chars[0]?o.chars[0].id:null;
   if(window.SX_READY)try{sxMigrateMates(o)}catch(e){console.error(e)} // 예전 '파티' 데이터 → 같이 간 사람 (한 번만)
   return o}
-try{st=sanitize(st)}catch(e){console.error(e);st=sample();LOAD_LOST=true}
+try{st=sanitize(st)}catch(e){console.error(e);try{const raw=localStorage.getItem(KEY);if(raw)localStorage.setItem(KEY+'-backup',raw);localStorage.setItem('mepuri-last-err',String(e&&e.stack||e).slice(0,2000))}catch(e2){}st=sample();LOAD_LOST=true} // 못 읽은 기록은 지우지 않고 따로 보관
 if(LOAD_LOST)try{localStorage.removeItem('mepuri-cloud')}catch(e){} // 계정에 있는 기록을 빈 기록으로 덮지 않고, 처음 쓰는 기기처럼 계정 기록을 받아 옴
 if(!EMPTY_START&&st.sv!==22&&st.chars.length&&st.chars.every(c=>['c1','c2','c3'].includes(c.id)&&!c.ocid)){const th=st.theme;st=sample();if(th)st.theme=th} // 통계 테스트용 예시로 한 번 교체
 
@@ -3465,7 +3484,7 @@ const sxKeyDate=k=>k[0]==='M'?k.slice(1)+'.01':k.slice(1);
 const SX_FEE={hi:5,lo:3,tax:10,mp:1}; // mp: 타섭 파티원에게 메소→메이플포인트(1%)로 보냄 (메포→메소는 0%)
 // 파티원 설정 (분배 탭): c.dist[보스] = {members:[{name,fee:5|3,tax:bool}], rot:'turn'|'amount'}
 function sxMembers(c,id,party){const d=(c.dist||{})[id]||{},ms=d.members||[];return Array.from({length:Math.max(0,party-1)},(_,j)=>{const m=ms[j]||{},xs=sxXs(m);return{name:m.name||`파티원 ${j+1}`,xs,fee:m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,ex:sxXP(xs)}})}
-// 물욕템 한 개 계산. m = c.lootMeta[key][템] = {sell:'sold'|'keep'|'rot', fee:5|3, taker:'me'|이름, after:'keep'|'sold'(순환으로 내가 먹은 뒤 팔았나), sp:실제 판매 금액(수수료 떼기 전)}
+// 물욕템 한 개 계산. m = c.lootMeta[key][템] = {sell:'sold'|'keep'|'rot'|'bb' (bb = 블빵: 한 명이 독식, 순환 장부엔 안 들어감), fee:5|3, taker:'me'|이름, after:'keep'|'sold'(순환으로 내가 먹은 뒤 팔았나), sp:실제 판매 금액(수수료 떼기 전)}
 //  판매함: 판매 수수료 + 교환 수수료 / 안 팜: 가진 사람이 몫만큼 메소를 보냄 → 교환 수수료만 / 순환 획득: 먹은 사람이 통째로 → 수수료 없음
 //  판매: 예상가 − 판매 수수료(5·3%) → 나와 파티원 몫으로 나눔 → 파티원마다 메소 교환 수수료(5·3%)와 관세(10%)를 받는 쪽에서 뺌
 //  안 팜(순환·교환): 판매 수수료만 0이고 분배는 똑같이 함. 먹은 사람(taker)은 순환 장부에서 차례 계산에만 씀
@@ -3473,11 +3492,11 @@ function sxMembers(c,id,party){const d=(c.dist||{})[id]||{},ms=d.members||[];ret
 function sxDistAt(c,id,pk){const d=((c.dist||{})[id])||{};if(!d.hist||!pk)return d;const h=d.hist.filter(x=>x.until[0]===pk[0]&&sxKD(pk)<sxKD(x.until)).sort((a,b)=>sxKD(a.until)<sxKD(b.until)?-1:1)[0];return h?{...d,lm:h.lm,cm:h.cm}:d}
 function sxLootCalc(c,id,key,n,P,sl,nores){
   const pt=sxVPof(c,sl),same=true; // 그 주 보스 설정의 같이 간 사람 = 그 드랍의 파티
-  const m=((c.lootMeta||{})[key]||{})[n]||{},party=pt?sxPSize(pt):(sl.party||1),rot=party>1&&m.sell==='rot',sold=m.sell!=='keep'&&m.sell!=='rot',fee=m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,saleFee=sold?fee:0,taker=rot?sxTk(pt,m.taker):(m.taker||'me');
+  const m=((c.lootMeta||{})[key]||{})[n]||{},party=pt?sxPSize(pt):(sl.party||1),bb=party>1&&m.sell==='bb',turn=party>1&&m.sell==='rot',rot=turn||bb,sold=m.sell!=='keep'&&m.sell!=='rot'&&m.sell!=='bb',fee=m.fee===SX_FEE.lo?SX_FEE.lo:SX_FEE.hi,saleFee=sold?fee:0,taker=rot?sxTk(pt,m.taker):(m.taker||'me');
   const sp=sxSplit(party,party<=1?100:same?sl.lshare:null,same?sxDistAt(c,id,key.split('|')[1]).lm:null),my=party<=1?1:sp.me/100;
   const rotSold=rot&&taker==='me'&&m.after!=='keep', /* 순환 획득 '그 다음' 기본값은 팔았음 */sold$=(sold||rotSold||(rot&&taker!=='me'))&&m.sp!=null?+m.sp:null; // 파티원이 먹은 템도 판 금액은 기록
   const val=sold$!=null?sold$:P; // 순환 장부 금액: 판 금액을 적었으면 그걸로, 아니면 예상가
-  const out={m,pt,party,sold,rot,rotSold,fee,saleFee,taker,takerName:taker==='me'?'나':pt&&/^#\d+$/.test(taker)?sxPMem(pt,+taker.slice(1)).name:'파티원',sp:sold$,cut:my,fair:rot&&val!=null?val*my:null,rows:[],fees:{sale:0,xfer:0,tax:0,all:0}};
+  const out={m,pt,party,sold,rot,turn,bb,rotSold,fee,saleFee,taker,takerName:taker==='me'?'나':pt&&/^#\d+$/.test(taker)?sxPMem(pt,+taker.slice(1)).name:'파티원',sp:sold$,cut:my,fair:rot&&val!=null?val*my:null,rows:[],fees:{sale:0,xfer:0,tax:0,all:0}};
   if(sold$!=null&&!nores)P=sold$; // 실제로 판 금액을 적었으면 예상가 대신 그걸로 (상자 결과가 없거나 꽝이면 판매가가 남아 있어도 0)
   if(P==null){out.v=0;return out}
   if(rot){if(taker!=='me'){out.v=0;return out}
@@ -3510,7 +3529,7 @@ const sxInM=(d,m)=>{const R=sxWMR(m.slice(0,7)+'.01');return d<R.from?R.from:d>R
 function sxCollect(chars){const clears=[],loots=[];if(SX_SC.n!==SAVE_N||SX_SC.m.size>60000){SX_SC.n=SAVE_N;SX_SC.m=new Map()}const SC=SX_SC.m;
   chars.forEach(c=>{
     Object.entries(c.clears||{}).forEach(([id,arr])=>{if(!BY[id])return;const sell=cfgOf(id).sell!==false;
-      arr.forEach(e=>{const d=dOf(e),sl=sxSlotAt(c,id,d,SC)||{party:1},diff=typeof e==='object'?e.diff:sl.diff;const v=!sell?0:typeof e==='object'&&e.v!=null?e.v:(myPrice({...sl,diff},d)||0);
+      arr.forEach(e=>{const d=dOf(e),sl=sxSlotAt(c,id,d,SC)||{party:1,boss:id,diff:Object.keys(BY[id].diffs)[0]},diff=typeof e==='object'?e.diff:sl.diff;const v=!sell?0:typeof e==='object'&&e.v!=null?e.v:(myPrice({...sl,diff},d)||0);
         clears.push(BY[id].diffs[diff]==='M'?{c,id,d:sxInM(d,d),d0:d,diff,v}:{c,id,d,diff,v})})}); // 월간 보스는 무조건 그 달 (그 달 주 안으로)
     Object.entries(c.loot||{}).forEach(([key,items])=>{const[id,pk]=key.split('|');if(!BY[id]||!pk)return;const d=sxKeyDate(pk),sub=((c.lootSub||{})[key])||{};
       // 드롭한 날: 그 기간 안 첫 클리어 날 (없으면 기간 시작일) — 그날 시세로 예상가
@@ -3694,7 +3713,7 @@ const sxMemKey=p=>p.gk||null;
 function sxLedger(everyone,p){const ms=p.members.map((_,j)=>({key:'#'+j,name:sxPMem(p,j).name})),same=q=>q===p||(!!p.gk&&q.gk===p.gk),G=new Set([p]);
   const P={me:{key:'me',name:'나',n:0,v:0,fair:0,en:0}};ms.forEach(pp=>{P[pp.key]={...pp,n:0,v:0,fair:0,en:0}});const drops=[];
   const map=(q,j)=>{if(q===p)return '#'+j;const i=p.members.findIndex(m=>(m.name||'').trim()===(q.members[j].name||'').trim());return '#'+(i<0?j:i)};
-  everyone.loots.forEach(e=>{const q=e.k.pt;if(!e.k.rot||e.k.fair==null||!q||!same(q))return;G.add(q);const my=e.k.cut,sl=e.sl||sxSlot(e.c,e.id)||{},same2=(sl.party||1)===sxPSize(q);
+  everyone.loots.forEach(e=>{const q=e.k.pt;if(!e.k.turn||e.k.fair==null||!q||!same(q))return;G.add(q);const my=e.k.cut,sl=e.sl||sxSlot(e.c,e.id)||{},same2=(sl.party||1)===sxPSize(q);
     const spl=sxSplit(sxPSize(q),same2?sl.lshare:null,same2?sxDistAt(e.c,e.id,e.key.split('|')[1]).lm:null),tk=e.k.taker,who=tk==='me'?'me':(P[map(q,+tk.slice(1))]?map(q,+tk.slice(1)):'#0');
     const val=e.k.sp!=null?e.k.sp:e.price; // 판 금액을 적었으면 그걸로
     P.me.fair+=val*my;P.me.en+=my;q.members.forEach((_,j)=>{const ot=spl.others[j]/100,k=map(q,j);P[k].fair+=val*ot;P[k].en+=ot});P[who].n++;P[who].v+=val;
@@ -3995,7 +4014,8 @@ function statsView(){
     const LPER=20,lpages=Math.max(1,Math.ceil(shown.length/LPER));if(x.lpgSel!==x.lsel){const ix=shown.findIndex(o=>o.i===si);if(ix>=0)x.lpg=Math.floor(ix/LPER);x.lpgSel=x.lsel}
     const lpg=Math.min(Math.max(0,x.lpg||0),lpages-1),shownP=shown.slice(lpg*LPER,lpg*LPER+LPER);
     const tag=e=>{const k=e.k;if(e.pending)return '<span class="sx-tag warn">결과 미선택</span>';if(e.res==='꽝')return '<span class="sx-tag">꽝</span>';
-      const t=[k.rot?'순환 획득':k.sold?`판매 ${k.fee}%`:'안 팜'];if(k.rot)t.push(k.taker==='me'?'내가 먹음':`${esc(k.takerName)} 먹음`);else if(k.party>1)t.push(`${k.party}인 분배`);
+      const t=[];if(k.rot){t.push(k.bb?'블빵':'순환 획득',k.taker==='me'?'내가 먹음':`${esc(k.takerName)} 먹음`);if(k.taker==='me')t.push(k.rotSold?`판매 ${k.fee}%`:'안 팜')}
+      else{if(k.party>1)t.push(`${k.party}인 분배`);t.push(k.sold?`판매 ${k.fee}%`:'안 팜')}
       const sd=!k.rot&&k.party>1&&k.settle?(k.settle.done?'<span class="sx-tag ok">정산 완료</span>':'<span class="sx-tag warn">정산 남음</span>'):''; // 파티 템: 정산 상태
       return t.map(s=>`<span class="sx-tag">${s}</span>`).join('')+sd};
     const sdm=e=>{const k=e.k;return !e.pending&&e.res!=='꽝'&&k&&!k.rot&&k.party>1&&k.settle?`<span class="sx-sdm${k.settle.done?' ok':''}">${k.settle.done?'정산 완료':'정산 남음'}</span>`:''}; // 좁은 화면: 판매 칸이 숨으니 날짜 줄 맨 앞에 (긴 보스 이름에 잘리지 않게)
@@ -4016,7 +4036,9 @@ function statsView(){
       form=`<div class="sx-sel">${ifr(itn,e)}<span class="sx-ln"><b>${esc(itn)}</b><small>${bxi(e)}${md(e.dd||e.d)} · ${esc(nm(e.c))} · ${esc(BY[e.id].name)}${k.party>1?` · ${k.party}인`:''}</small></span></div>`;
       if(bx)form+=`<div class="sx-bxr"><span class="bxl">${I.corner}${esc(e.n)}에서 나온 것</span><div class="bxo">${bx.opts.map(([kk,full])=>`<button type="button" class="${e.res===full?'on':''}${kk==='꽝'?' trash':''}" data-sxsub="${i}|${esc(full)}" title="${esc(full)}"><span class="bi">${kk==='꽝'?TRASH.replace(/13/g,'16'):(ITEM_ICONS[full]?`<img src="${ITEM_ICONS[full]}" alt="">`:I.gem)}</span>${esc(kk)}</button>`).join('')}</div></div>`;
       if(!e.pending&&e.res!=='꽝'){
-        form+=`<div class="frow"><span class="flbl">처리</span>${seg(i,'sell',k.rot?'rot':k.sold?'sold':'keep',[['sold','판매함'],['keep','안 팜'],...(k.party>1?[['rot','순환 획득']]:[])])}</div>`;
+        // 파티 템: 방식(분배 · 블빵 · 순환 획득) → 먹은 사람(블빵·순환) → 판매 여부(분배, 또는 내가 먹었을 때)
+        if(k.party>1)form+=`<div class="frow"><span class="flbl">방식</span>${seg(i,'way',k.bb?'bb':k.rot?'rot':'split',[['split','분배'],['bb','블빵'],['rot','순환 획득']])}</div>`;
+        if(!k.rot)form+=`<div class="frow"><span class="flbl">판매</span>${seg(i,'sell',k.sold?'sold':'keep',[['sold','판매함'],['keep','안 팜']])}</div>`;
         const spRow=()=>`<div class="frow"><span class="flbl">판매한 금액</span><input class="inp sx-spin num${sxNoSp(e)?' need':''}" type="text" inputmode="text" data-sxsp="${i}" value="${k.sp!=null?meso(k.sp):''}" placeholder="${e.price!=null?'예상가 '+meso(e.price):'예) 10억 2500만'}" aria-label="판매한 금액 (수수료 떼기 전)"></div><div class="sx-spv"><b class="num" data-sxspv></b></div>`;
         // 기본 칸은 form, 상세 설정 칸은 advH, 정산 상자는 box → 순서: 기본 · [상세 설정 스위치 · 상세 칸] · 정산 상자
         let advH='',box='';const feeRow=()=>`<div class="frow"><span class="flbl">판매 수수료</span>${seg(i,'fee',k.fee,[[SX_FEE.hi,`${SX_FEE.hi}%`],[SX_FEE.lo,`${SX_FEE.lo}%`]])}</div>`;
@@ -4024,11 +4046,11 @@ function statsView(){
         if(k.rot){const opts=[['me','나'],...Array.from({length:k.party-1},(_,j)=>[k.pt?sxTkVal(k.pt,j):'#'+j,k.pt?sxPMem(k.pt,j).name:sxMembers(e.c,e.id,k.party)[j].name])],who=k.taker==='me'?'me':k.pt?sxTkVal(k.pt,+k.taker.slice(1)):k.taker;
           form+=`<div class="frow"><span class="flbl">먹은 사람</span>${opts.length<=4?`<div class="sx-mseg">${opts.map(([v,l])=>`<button type="button" class="${who===v?'on':''}" data-sxt="${e.c.id}::${esc(e.key)}::${esc(e.n)}::${esc(v)}">${esc(l)}</button>`).join('')}</div>`
             :`<label class="sel sx-tsel" style="margin-left:auto"><span class="t">${esc((opts.find(q=>q[0]===who)||opts[0])[1])}</span>${I.caret()}<select data-sxts="${e.c.id}::${esc(e.key)}::${esc(e.n)}" aria-label="먹은 사람">${opts.map(([v,l])=>`<option value="${esc(v)}"${who===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}</div>`;
-          if(who==='me'){form+=`<div class="frow"><span class="flbl">그 다음</span>${seg(i,'after',k.rotSold?'sold':'keep',[['sold','팔았음'],['keep','안 팔았음']])}</div>`;
+          if(who==='me'){form+=`<div class="frow"><span class="flbl">판매</span>${seg(i,'after',k.rotSold?'sold':'keep',[['sold','판매함'],['keep','안 팜']])}</div>`;
             if(k.rotSold){form+=spRow();advH+=feeRow()}}
           else form+=spRow()+`<p class="sx-hint sx-sph">${esc(jo(k.takerName,'이'))} 판 금액 · 비워 두면 예상가로 장부 계산</p>`;
           const base=k.sp!=null?k.sp:e.price;
-          if(base!=null)box+=`<div class="sx-split"><div class="sx-sh"><span>${k.sp!=null?`판매가 ${M(k.sp)}${e.price!=null&&who!=='me'?` <small class="sx-z">예상 ${S(e.price)}</small>`:''}`:`예상가 ${M(e.price)}`}</span><span>${who!=='me'?'순환 획득 · 파티원이 가져감':k.rotSold?`판매 수수료 ${k.fee}% · ${Mr(k.fees.sale)}`:'순환 획득 · 안 팔고 가짐'}</span></div>${who==='me'?`<div class="sx-sr sx-sfee"><span>내가 가져감</span><b class="num" style="color:var(--price)!important">${M(k.v)}</b></div>`
+          if(base!=null)box+=`<div class="sx-split"><div class="sx-sh"><span>${k.sp!=null?`판매가 ${M(k.sp)}${e.price!=null&&who!=='me'?` <small class="sx-z">예상 ${S(e.price)}</small>`:''}`:`예상가 ${M(e.price)}`}</span><span>${who!=='me'?`${k.bb?'블빵':'순환 획득'} · 파티원이 가져감`:k.rotSold?`판매 수수료 ${k.fee}% · ${Mr(k.fees.sale)}`:`${k.bb?'블빵':'순환 획득'} · 안 팔고 가짐`}</span></div>${who==='me'?`<div class="sx-sr sx-sfee"><span>내가 가져감</span><b class="num" style="color:var(--price)!important">${M(k.v)}</b></div>`
             :`<div class="sx-sr"><span>${esc(jo(k.takerName,'이'))} 가져감</span><b class="num">${M(base)}</b></div><div class="sx-sr sx-sfee"><span>내 수익</span><b class="num" style="color:var(--price)!important">0</b></div>`}</div>`}
         else if(e.price!=null||k.sp!=null){
             const st=k.settle;
@@ -4190,7 +4212,7 @@ function bindStats(){const v=document.getElementById('view'),x=sxState();
   v.querySelectorAll('[data-sxsub]').forEach(b=>b.onclick=()=>{const[i,full]=b.dataset.sxsub.split('|'),e=sxRows[+i];if(!e)return;
     set(()=>{const c=e.c;sxUnsnap(e);c.lootSub=c.lootSub||{};const m=c.lootSub[e.key]=c.lootSub[e.key]||{};if(m[e.n]===full)delete m[e.n];else m[e.n]=full})});
   v.querySelectorAll('[data-sxm]').forEach(b=>b.onclick=()=>{const[i,f,val]=b.dataset.sxm.split('|'),e=sxRows[+i];if(!e)return;
-    set(()=>{const m=sxMeta(e);if(f!=='settled')delete m.snap;if(f==='fee')m.fee=+val;else m[f]=val})});
+    set(()=>{const m=sxMeta(e);if(f!=='settled')delete m.snap;if(f==='fee')m.fee=+val;else if(f==='way')m.sell=val==='split'?(m.sell==='keep'?'keep':'sold'):val;else m[f]=val})}); // way: 분배면 판매 여부는 그대로(없으면 판매함)
   v.querySelectorAll('[data-sxq]').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.sxq;sxHelpOpen=sxHelpOpen===k?null:k;render()});
   v.querySelectorAll('[data-sxadv]').forEach(b=>b.onclick=()=>set(()=>{x.adv=!x.adv}));
   const xfSet=(i,j,fn)=>{const e=sxRows[+i];if(!e)return;const mb0=(e.k.ms||[])[+j]||{},who=e.k.pt?((e.k.pt.members[+j]||{}).name||'').trim():'',pm0=who||null;
@@ -4698,7 +4720,8 @@ function manualBox(fo){const wo=ui.mnw,jo=ui.mnj,ch=fo.chs||0;
       ${jo?`<div class="cm-dd mn-dd" role="listbox" data-scroll="mnj">${JOBS_ALL.map(j=>`<button type="button" role="option" class="${j===fo.job?'on':''}" data-mnj="${esc(j)}"><span>${esc(j)}</span></button>`).join('')}</div>`:''}</div></div>
     <div class="frow"><span class="flbl">챌린저스</span><div class="mn-ch">${[0,...chalOn().map(x=>x.n)].map(n=>{const x=CHAL_SEASONS.find(y=>y.n===n);return `<button type="button" class="${ch===n?'on':''}"${x?` style="${chalCol(n)}"`:''} data-mnc="${n}">${x?`<span><b>챌${x.n}</b><small>${esc(x.boss||x.name)}</small></span>`:'<span><b>아님</b></span>'}</button>`}).join('')}</div></div>
     <small class="mn-h">지금 월드를 골라 주세요. 챌린저스에서 옮겨 왔다면 시즌을 고르면, 그 시즌 동안 시즌 보스 줄이 떠요.</small></div>`}
-function renderLayer(){
+function renderLayer(){try{renderLayer0.apply(this,arguments)}catch(err){noteErr(err);ui.modal=null;const L=document.getElementById('layer');if(L)L.innerHTML='';setTimeout(()=>toast('창을 여는 중 문제가 생겨서 닫았어요'),0)}}
+function renderLayer0(){
   if(NEWS_PEND&&!ui.modal){NEWS_PEND=false;ui.modal={kind:'news'}} // 다른 창이 떠 있으면 닫힌 뒤에 띄움
   const L=document.getElementById('layer');let h='';
   const m=ui.modal;
@@ -5130,17 +5153,28 @@ function placeDD(){
 }
 addEventListener('resize',()=>{if(ui.dd)placeDD()});
 function noChars(){return `<div class="page"><div class="dev" style="flex:1;align-self:flex-start"><h2>등록된 캐릭터가 없어요</h2><p>캐릭터 이름만 입력하면 월드·레벨·직업·코디를 불러와요.</p><button class="btn pri lg" type="button" id="nc-add" style="margin-top:8px">${I.plus()} 캐릭터 추가</button></div></div>`}
+// 화면을 그리다 오류가 나면: 빈 화면 대신 안내 + 다른 화면으로 · 오류 복사 · 기록 백업 (크롬 초기화 없이 빠져나오게)
+let CRASH_N=0;
+function noteErr(err){const t=String(err&&err.stack||err).slice(0,2000);try{localStorage.setItem('mepuri-last-err',`${new Date().toISOString()} · ${typeof NEWS!=='undefined'&&NEWS?NEWS.v:''} · ${st&&st.tab||''}\n${t}`)}catch(e){}console.error(err);return t}
+function backupDL(){try{const raw=localStorage.getItem(KEY)||JSON.stringify(st),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([raw],{type:'application/json'}));a.download=`mepuri-backup-${ymd(new Date()).replace(/\./g,'')}.json`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}catch(e){toast('백업 파일을 만들지 못했어요')}}
+function crashView(v,err){const t=noteErr(err);CRASH_N++;const tabs=[['status','보스 현황'],['settings','보스 설정'],['stats','수익 관리']].filter(([k])=>k!==st.tab);
+  v.innerHTML=`<div class="page"><section class="col-r" style="width:100%"><div class="empty crash" style="margin-top:12px"><b>이 화면을 그리다 문제가 생겼어요</b><span>기록은 그대로 있어요. 다른 화면으로 가거나, 아래 버튼으로 오류 내용을 복사해 알려 주세요.</span>
+    <div class="crash-b">${tabs.map(([k,l])=>`<button type="button" class="btn out" data-crtab="${k}">${l}로</button>`).join('')}<button type="button" class="btn out" id="cr-copy">오류 내용 복사</button><button type="button" class="btn out" id="cr-bk">기록 백업 받기</button></div>
+    <small class="crash-t">${esc(String(err&&err.message||err).slice(0,160))}</small></div></section></div>`;
+  v.querySelectorAll('[data-crtab]').forEach(b=>b.onclick=()=>{st.tab=b.dataset.crtab;ui.modal=null;save(true);render()});
+  const cp=document.getElementById('cr-copy');if(cp)cp.onclick=()=>{const txt=`메푸리 오류\n${t}`;(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('오류 내용을 복사했어요'),()=>toast('복사하지 못했어요'))};
+  const bk=document.getElementById('cr-bk');if(bk)bk.onclick=backupDL}
 function render(){
   // 보스 설정·수익 기록은 늘 오늘 기준 (지난 기록 수정은 보스 현황에서만) — 보스 현황으로 돌아오면 보던 날짜 그대로
   if(st.tab!=='status'&&VIEW_OFF){ui.voff=VIEW_OFF;VIEW_OFF=0;ui.cal=null;calcDates()}
   else if(st.tab==='status'&&ui.voff){VIEW_OFF=ui.voff;ui.voff=0;calcDates()}
-  renderBanner();renderTabs();paintThemeBtn();saveScroll();
   const v=document.getElementById('view');
+  try{renderBanner();renderTabs();paintThemeBtn();saveScroll();
   if(!st.chars.length&&st.tab!=='stats'){v.innerHTML=noChars();document.getElementById('nc-add').onclick=e=>{e.stopPropagation();openAdd()}}
   else if(st.tab==='settings'){v.innerHTML=settingsView();bindSettings()}
   else if(st.tab==='stats'){v.innerHTML=statsView();bindStats()}
   else{v.innerHTML=statusView();bindStatus()}
-  restoreScroll();fitPopups();refocusTab();keepTap('#view');
+  restoreScroll();fitPopups();refocusTab();keepTap('#view');}catch(err){crashView(v,err);return}
   if(ui.fsheet&&st.tab==='stats'){const ap=document.querySelector('#view .sx-arow.picked'),sh=document.querySelector('#view .fs-open .col-l>.panel');
     if(ap&&sh){const r=ap.getBoundingClientRect(),t=sh.getBoundingClientRect().top-8;if(r.bottom>t)window.scrollBy(0,Math.max(0,Math.min(r.bottom-t,r.top-60)))}} // 고른 줄이 시트에 가리지 않게
   if(ui.fsheet){const pk=document.querySelector('#view .strow.picked');if(pk){const r=pk.getBoundingClientRect();if(Math.abs(r.top-70)>4)window.scrollBy(0,r.top-70)}} // 고른 줄이 시트 위에 보이게
@@ -5192,7 +5226,7 @@ document.addEventListener('keydown',e=>{const h=(e.key==='Enter'||e.key===' ')&&
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(ui.acct){ui.acct=false;paintAcct();return}if(ui.fsheet&&!ui.modal&&!ui.bdd&&!ui.dd){ui.fsheet=false;render();return}if(ui.modal){if(ui.modal.kind==='cloud')return;if(ui.modal.kind==='news')newsSeen();if(ui.cchs||ui.mnw||ui.mnj){ui.cchs=null;ui.mnw=ui.mnj=false;renderLayer();return}if(mnDirty()){toast('입력 중이라 닫지 않았어요 · × 버튼으로 닫아 주세요');return}ui.modal=ui.modal.kind==='cedit'&&ui.modal.back||null;renderLayer();return}if(ui.menu||ui.pop||ui.cfg||ui.dd||ui.bdd||ui.cal||ui.vo||ui.rm||ui.rv){ui.rm=null;ui.rv=null;ui.cfg=null;ui.vo=false;ui.menu=false;ui.pop=null;ui.dd=false;ui.bdd=null;ui.cal=null;render()}});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',paintThemeBtn);
 // 가격표 적용 날짜가 종류별로 바뀌어서, 이미 저장된 클리어 금액을 한 번 다시 계산
-if(!st.pfix){st.chars.forEach(c=>Object.keys(c.clears||{}).forEach(id=>{if(!BY[id])return;const sl=c.slots.find(x=>x.boss===id)||{party:1};
+if(!st.pfix){st.chars.forEach(c=>Object.keys(c.clears||{}).forEach(id=>{if(!BY[id])return;const sl=c.slots.find(x=>x.boss===id)||{party:1,boss:id,diff:Object.keys(BY[id].diffs)[0]};
   c.clears[id]=c.clears[id].map(e=>typeof e==='object'&&e.diff?{...e,v:(priceAt(id,e.diff,e.d)??0)*share({...sl,diff:e.diff})}:e)}));st.pfix=1;save()}
 window.SX_READY=true;try{if(sxMigrateMates(st))save(true)}catch(e){console.error(e)}
 render();paintTimers();
