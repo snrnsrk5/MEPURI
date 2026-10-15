@@ -3640,9 +3640,9 @@ function sxSplitM(clears){const out=[];clears.forEach(e=>{if(BY[e.id].diffs[e.di
   wk.forEach(w=>{const hit=w===hw||(!wk.includes(hw)&&w===wk[0]);out.push({...e,d:hit?e.d:w,v:(e.v||0)/n,n1:hit,split:true})})});return out}
 const sxIn=(d,r)=>d>=r.from&&d<=r.to;
 // 주간으로 볼 때 월간 보스: 기본은 빼기(안 잡은 주에 돈이 들어온 것처럼 보여서 헷갈림), '나눠서'를 고르면 그 달 주들에 나눠 넣음
-//  누적·잔디는 총액·날짜가 맞아야 해서 늘 나눠서 넣음
+//  누적은 총액이 맞아야 해서 늘 나눠서 넣음. 잔디는 '실제로 깬 날'을 보여 주는 거라 나누지 않고 깬 날에 통째로 (나누면 안 한 주·안 한 목요일에도 칸이 칠해지고 주 합계가 생겼음)
 const sxMwOff=x=>x.unit==='W'&&x.mw!=='split'&&!['cum','heat'].includes(x.gt),sxIsM=e=>BY[e.id].diffs[e.diff]==='M';
-function sxWeekCl(clears,x){return x.unit!=='W'?clears:sxMwOff(x)?clears.filter(e=>!sxIsM(e)):sxSplitM(clears)}
+function sxWeekCl(clears,x){return x.unit!=='W'||x.gt==='heat'?clears:sxMwOff(x)?clears.filter(e=>!sxIsM(e)):sxSplitM(clears)}
 // 보스 그룹 — 낮은 구간부터 순서대로 (보스:난이도 목록). 목록에 없는 주간 보스는 가격으로 카파풀 / '그 외 상위'
 // 노세 위쪽은 난이도 별 등급 기준: 2~4★ / 5★ / 6★ / 7★ / 8★ / 9★ / 10★
 const SX_G=[
@@ -4273,7 +4273,7 @@ function statsView(){
     <div class="sx-box sx-tc" data-sxhov='${['part','heat','tree'].includes(x.vw)?'[]':esc(JSON.stringify(bars.map((bb,i)=>{const v=dispS.reduce((t,g)=>t+g.vals[i],0),pv=i?dispS.reduce((t,g)=>t+g.vals[i-1],0):null;return{l:bb.lab.length<6&&gu==='W'?`${md(bb.f)} ~ ${md(bb.t)}`:bb.lab,v:M(v),d:pv==null||bars[i-1].pre?'':(v>=pv?'▲ ':'▼ ')+S(Math.abs(v-pv)),u:v>=(pv||0)}})))}'>
       <div class="sx-th"><span class="sx-tl" data-sxh="l">${r.label} <small>${r.now?{W:'이번 주',M:'이번 달',Y:'올해'}[x.unit]:x.off===-1?`지난 ${uP}`:x.unit==='W'?`${+sxWM(r.from).slice(5,7)}월 ${sxWkOfMonth(r.from)}주차`:`${-x.off}${x.unit==='M'?'달':'년'} 전`}${x.unit!=='W'?(()=>{const f0=[...all.clears,...all.loots].reduce((m,e)=>e.d&&e.d<m?e.d:m,'9999'),fw=f0<'9999'?sxWeek(f0):null,a=fw&&fw>r.from&&fw<=r.to?fw:r.from,z=r.now&&REAL<r.to?REAL:r.to,F=d=>x.unit==='Y'?d.slice(2):md(d);return ` · ${F(a)} ~ ${F(z)}`})():''}</small></span>
         <div class="sx-tv0w">${coin(18)}<b class="sx-tv0 num" data-sxh="v">${M(cum?cumTot:cur)}<small>메소</small></b></div>
-        <span class="sx-td" data-sxh="d">${cum?`<b class="num sx-up">▲ ${S(cur)}</b> ${r.now?{W:'이번 주',M:'이번 달',Y:'올해'}[x.unit]:`이 ${uP}`}에 늘었어요 <small class="sx-ing">· 기록 시작부터 누적</small>`:dlt==null?'':`<b class="num ${dlt>=0?'sx-up':'sx-down'}">${dlt>=0?'▲':'▼'} ${S(Math.abs(dlt))}</b> 지난 ${uP}보다${r.now?` <small class="sx-ing">· ${uP==='해'?'올해':'이번 '+uP} 진행 중</small>`:''}`}</span>
+        <span class="sx-td" data-sxh="d">${cum?`<b class="num sx-up">▲ ${S(cur)}</b> ${r.now?{W:'이번 주',M:'이번 달',Y:'올해'}[x.unit]:`이 ${uP}`}에 늘었어요 <small class="sx-ing">· 기록 시작부터 누적</small>`:dlt==null?'':S(Math.abs(dlt))==='0'?`<span style="color:var(--muted)">지난 ${{주:"주와",달:"달과",해:"해와"}[uP]} 같아요</span>${r.now?` <small class="sx-ing">· ${uP==='해'?'올해':'이번 '+uP} 진행 중</small>`:''}`:`<b class="num ${dlt>=0?'sx-up':'sx-down'}">${dlt>=0?'▲':'▼'} ${S(Math.abs(dlt))}</b> 지난 ${uP}보다${r.now?` <small class="sx-ing">· ${uP==='해'?'올해':'이번 '+uP} 진행 중</small>`:''}`}</span>
         <span class="sx-tchips"><span>결정석 <b class="num">${S(cSum)}</b></span><span>물욕 <b class="num">${S(lSum)}</b>${lEst>0?` <small>(예상가 ${S(lEst)})</small>`:''}</span></span>${(mv=>mv>0?`<button type="button" class="sx-mnote" data-sxu="M" title="월간으로 바꿔서 보기">월간 보스 ${S(mv)}은 빠져 있어요 · 월간에서 보기 ›</button>`:'')(sum(mOut.filter(e=>sxIn(e.d,r))))}</div>
       ${x.vw==='heat'?sxHeat(all,r,x,S):x.vw==='part'?sxPart(series,x.fP,S):x.vw==='tree'?sxTree(chars,C,L,r,x,S)
         :x.vw==='cum'?(x.fC==='stack'?sxChart(bars,cumS,'stackc',S):sxToss(bars,cumS,S,true))
@@ -5323,15 +5323,16 @@ addEventListener('resize',()=>{if(TIP_ON)tipPaint()});
    (폰에서 목록 위에 있는 상세 칸 높이가 바뀌면 목록이 통째로 위아래로 튀던 문제). 누른 칸을 그 뒤 처음 다시 그릴 때 한 번만 맞춤 */
 let TAPA=null;
 const tapKey=t=>{for(let e=t;e&&e.nodeType===1&&e!==document.body;e=e.parentElement){if(e.id==='view'||e.id==='layer')break;const k=elKey(e);if(k){try{if(document.querySelectorAll(k).length===1)return {e,k}}catch(x){}}}return null};
-const tapRec=t=>{const a=tapKey(t);TAPA=a?{k:a.k,y:a.e.getBoundingClientRect().top,at:Date.now()}:null};
+const tapScroller=el=>{for(let s=el.parentElement;s&&s!==document.body&&s.id!=='view'&&s.id!=='layer';s=s.parentElement){const o=getComputedStyle(s).overflowY;if((o==='auto'||o==='scroll')&&s.scrollHeight>s.clientHeight+1)return s}return null};
+const tapRec=t=>{const a=tapKey(t);if(!a){TAPA=null;return}const r=a.e.getBoundingClientRect().top,sc=tapScroller(a.e);TAPA={k:a.k,y:r,ry:sc?r-sc.getBoundingClientRect().top:null,at:Date.now()}}; // ry: 스크롤 칸 안에서의 자리
 document.addEventListener('click',e=>tapRec(e.target),true);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')tapRec(e.target)},true);
 function keepTap(root){const a=TAPA;if(!a||Date.now()-a.at>600)return; // 누르고 바로 다시 그린 경우만 (나중에 다른 일로 다시 그릴 땐 안 건드림)
 let el;try{const l=document.querySelectorAll(a.k);if(l.length!==1)return;el=l[0]}catch(x){return}
   if(!el.closest(root))return;TAPA=null;
   const d=el.getBoundingClientRect().top-a.y;if(Math.abs(d)<1)return;
-  for(let s=el.parentElement;s&&s!==document.body&&s.id!=='view'&&s.id!=='layer';s=s.parentElement){const o=getComputedStyle(s).overflowY;
-    if((o==='auto'||o==='scroll')&&s.scrollHeight>s.clientHeight+1){const b0=s.scrollTop;s.scrollTop=b0+d;if(Math.abs(s.scrollTop-b0-d)<1)return;break}}
+  // 스크롤 칸 안 목록은 '칸 안에서의 자리'만 맞춤: 칸 위(지난 주 안내 등)가 커져서 칸째 내려간 건 목록을 굴리지 않음 (캐릭터 제목이 위로 잘리던 문제)
+  const sc=tapScroller(el);if(sc){const di=a.ry==null?d:(el.getBoundingClientRect().top-sc.getBoundingClientRect().top)-a.ry;if(Math.abs(di)>=1){const b0=sc.scrollTop;sc.scrollTop=b0+di;if(Math.abs(sc.scrollTop-b0-di)<1)return}else if(a.ry!=null)return}
   if(root==='#view'&&!el.closest('.pop,.fs-open .col-l>.panel'))window.scrollBy(0,el.getBoundingClientRect().top-a.y)}
 /* 폰 아래 시트 (보스 설정·수익 관리 상세·물욕 기록·다르게 잡았어요)
    - 위쪽 손잡이처럼 생긴 대로: 맨 위에서 아래로 끌어내리면 닫힘 (조금만 끌면 제자리로)
