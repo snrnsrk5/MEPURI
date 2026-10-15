@@ -19,7 +19,7 @@
  *   GET /api/look?u=외형이미지주소     넥슨 외형 이미지를 같은 주소로 전달 (사이트가 캐릭터 부분만 잘라 쓰려고)
  *
  * 구글 로그인 + 기록 저장 (D1 데이터베이스 DB, 비밀값 GOOGLE_CLIENT_ID 필요)
- *   GET    /api/config              로그인 사용 가능 여부 + 구글 클라이언트 ID (공개값)
+ *   GET    /api/config              로그인 사용 가능 여부 + 구글 클라이언트 ID (공개값) + 손님 조회 하루 횟수 guest
  *   POST   /api/auth/google         구글 로그인 토큰 확인 → 로그인 쿠키 발급
  *   POST   /api/auth/logout         로그아웃
  *   GET    /api/me                  지금 로그인한 계정
@@ -28,6 +28,11 @@
  *   DELETE /api/account             계정과 기록 모두 삭제
  *
  * 캐릭터 조회(/api/character, /api/character/basic, /api/scheduler)는 구글 로그인한 사람만 쓸 수 있음
+ *   단, 이름으로 찾기(/api/character)는 로그인 없이도 조금 됨 (손님 조회 — 처음 온 사람이 바로 써 볼 수 있게)
+ *     접속 주소(IPv6는 /64, 해시로만 셈)마다 하루 RATE_GUEST_IP번(기본 3) · 손님 전체 하루 RATE_GUEST_DAY번(기본 100, 0이면 손님 조회 끔)
+ *     손님 조회 1번 = 넥슨 호출 약 2번(이름→ocid→기본 정보). 사이트 전체 한도(RATE_SITE_DAY)에도 같이 셈
+ *     최근에 찾은 이름은 12시간 동안 D1에 기억해 두고, 손님이 같은 이름을 찾으면 넥슨을 다시 안 부름 (workers.dev에선 Cache API가 저장을 안 해서)
+ *     넘으면 429 GUEST — 사이트가 '로그인하면 계속 찾을 수 있어요' 안내를 띄움
  *   남발 방지: 계정마다 1분 RATE_USER_MIN번 · 하루 RATE_USER_DAY번(넥슨을 실제로 부를 때만 셈), 접속 주소(IP)마다 1분 RATE_IP_MIN번(요청마다) (넘으면 429)
  *   기본값 60 · 3000 · 120 — 대시보드 변수로 바꿀 수 있음. /api/look(외형 그림)은 로그인 없이 되고 IP 제한만 (따로 1분 RATE_LOOK_MIN번, 기본 600)
  *   RATE_SITE_DAY를 넣으면 사이트 전체 하루 조회도 그 수에서 멈춤 (넥슨 개발 키 동안 450 추천). 하루는 한국 시간 자정에 바뀜
@@ -46,6 +51,7 @@
  *   POST /api/admin/conf             { k, v } 사이트 설정 저장 (v가 null이면 지워서 기본값으로)
  *                                    k='tiers'  물욕 등급 기준 { black, red, dia, gold, silver, bronze } (억 이상)
  *                                    k='lootOn' 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템…] }
+ *                                    k='crystal' 결정석 가격표·출시일·안내 { tables:[{from:{D,W,M},price}], open, notice } — 사이트는 없으면 페이지 안 기본 표
  *                                    → GET /api/loot-prices 응답의 conf로 사이트에 전달
  *   POST /api/admin/stats            { days } 방문 통계 (최근 days일, 1~90) — 날짜별 조회수·실사용자·로그인·새 방문·체류, 가입자 수
  *
@@ -107,7 +113,7 @@ export default {
     // 계정·하루·사이트 한도는 넥슨을 실제로 부를 때(캐시에 없을 때)만 셈 → 아래 charge
     let me = null;
     if (url.pathname === '/api/look' || NEXON_PATHS.includes(url.pathname)) {
-      try { me = await guardNexon(req, env, url.pathname !== '/api/look'); }
+      try { me = await guardNexon(req, env, url.pathname !== '/api/look', url.pathname); }
       catch (e) {
         if (e instanceof HttpError) return fail(e.status, e.code, e.message, e.retry ? { ...cors, 'retry-after': String(e.retry) } : cors);
         return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', cors);
@@ -145,14 +151,24 @@ export default {
 
     // 한 요청에서 넥슨을 여러 번 불러도(이름→ocid→기본 정보) 한도는 한 번만 셈
     let charged = false;
-    const charge = me ? async () => { if (charged) return; charged = true; await chargeNexon(env, me); } : null;
+    // 손님(로그인 안 함)은 손님 풀에서, 로그인한 사람은 계정 한도에서 셈 — 둘 다 사이트 전체 한도도 셈
+    const charge = me ? async () => { if (charged) return; charged = true; await (me.guest ? chargeGuest(env) : chargeNexon(env, me)); } : null;
     try {
       if (url.pathname === '/api/character') {
         const name = (url.searchParams.get('name') || '').trim();
         if (!name || name.length > 12) return fail(400, 'OPENAPI00004', '캐릭터 이름을 확인해 주세요', cors);
+        let guest = null;
+        if (me && me.guest) { // 손님: 찾을 때마다 접속 주소 하루 횟수를 셈 (기억해 둔 이름이어도 셈)
+          const max = guestIp(env), n = await hit(env.DB, await guestKey(req), 86400, max, `로그인 없이 찾기는 하루 ${max}번까지예요. 구글 로그인하면 계속 찾을 수 있어요`, 'GUEST', true);
+          guest = { left: Math.max(0, max - n), max };
+        }
+        const memo = guest ? await nameMemoGet(env.DB, name).catch(() => null) : null; // 기억해 둔 결과는 손님에게만 (로그인한 사람은 늘 최신)
+        if (memo) return json(guest ? { ...memo, guest } : memo, 200, cors);
         const { ocid } = await nexon(env, ctx, 'id', { character_name: name }, TTL.id, charge);
         const basic = await nexon(env, ctx, 'character/basic', { ocid }, TTL.basic, charge);
-        return json(slim(ocid, basic), 200, cors);
+        const out = slim(ocid, basic);
+        if (env.DB) ctx.waitUntil(nameMemoPut(env.DB, name, out).catch(() => {}));
+        return json(guest ? { ...out, guest } : out, 200, cors);
       }
 
       if (url.pathname === '/api/character/basic') {
@@ -276,7 +292,8 @@ async function account(req, env, url) {
   const ready = !!(env.DB && env.GOOGLE_CLIENT_ID);
 
   if (p === '/api/config' && m === 'GET') {
-    return json({ auth: ready, googleClientId: ready ? env.GOOGLE_CLIENT_ID : null }, 200, noStore());
+    // guest: 로그인 없이 이름으로 찾을 수 있는 하루 횟수(접속 주소마다) — 0이면 손님 조회 없음
+    return json({ auth: ready, googleClientId: ready ? env.GOOGLE_CLIENT_ID : null, guest: ready && guestDay(env) > 0 ? guestIp(env) : 0 }, 200, noStore());
   }
   if (!ready) throw new HttpError(503, 'NO_AUTH', '로그인 기능이 아직 설정되지 않았어요');
 
@@ -355,7 +372,7 @@ async function account(req, env, url) {
 
 // ── 캐릭터 조회 지키기: 구글 로그인 + 남발 방지 ──
 const NEXON_PATHS = ['/api/character', '/api/character/basic', '/api/scheduler'];
-async function guardNexon(req, env, needLogin) {
+async function guardNexon(req, env, needLogin, path) {
   if (!env.DB) { if (needLogin) throw new HttpError(503, 'NO_AUTH', '로그인 기능이 아직 설정되지 않아서 조회할 수 없어요'); return; }
   await ensureRateSchema(env.DB);
   const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
@@ -366,8 +383,41 @@ async function guardNexon(req, env, needLogin) {
   if (!env.GOOGLE_CLIENT_ID) throw new HttpError(503, 'NO_AUTH', '로그인 기능이 아직 설정되지 않아서 조회할 수 없어요');
   await ensureSchema(env.DB);
   const me = await sessionUser(req, env);
-  if (!me) throw new HttpError(401, 'LOGIN', '구글 계정으로 로그인해야 캐릭터를 조회할 수 있어요');
+  if (!me) {
+    if (path === '/api/character' && guestDay(env) > 0) return { guest: true }; // 이름으로 찾기만 손님 허용
+    throw new HttpError(401, 'LOGIN', '구글 계정으로 로그인해야 캐릭터를 조회할 수 있어요');
+  }
   return me;
+}
+// 손님 조회 한도: 손님 전체 하루(RATE_GUEST_DAY, 기본 100 · 0이면 끔) · 접속 주소마다 하루(RATE_GUEST_IP, 기본 3)
+function guestDay(env) { const v = env.RATE_GUEST_DAY; if (v === undefined || v === null || String(v).trim() === '') return 100; const n = parseInt(v, 10); return n > 0 ? n : 0; }
+function guestIp(env) { const n = parseInt(env.RATE_GUEST_IP, 10); return n > 0 ? n : 3; }
+// 접속 주소는 IPv6면 앞 64비트(/64, 한 집·한 폰 단위)로 묶고, 해시로만 셈
+async function guestKey(req) {
+  const raw = req.headers.get('CF-Connecting-IP') || 'unknown';
+  const ip = raw.includes(':') ? raw.split(':').slice(0, 4).join(':') : raw;
+  return 'gip:' + (await sha256('mepuri-gip:' + ip)).slice(0, 16);
+}
+async function chargeGuest(env) {
+  await hit(env.DB, 'gsite', 86400, guestDay(env), '오늘은 로그인 없이 찾기를 다 썼어요. 구글 로그인하면 바로 찾을 수 있어요', 'GUEST', true);
+  const site = parseInt(env.RATE_SITE_DAY, 10);
+  if (site > 0) await hit(env.DB, 'site', 86400, site, '오늘 사이트 전체 조회 한도를 다 썼어요');
+}
+// 이름 → 찾은 결과를 12시간 기억 (같은 이름을 다시 찾으면 넥슨을 안 부름). 영문 이름은 대소문자 구분 없이
+const NAME_MEMO_SEC = 12 * 3600;
+let memoReady = false;
+async function nameMemoGet(db, name) {
+  if (!db) return null;
+  if (!memoReady) { await db.prepare('CREATE TABLE IF NOT EXISTS name_memo (k TEXT PRIMARY KEY, v TEXT NOT NULL, exp INTEGER NOT NULL)').run(); memoReady = true; }
+  const r = await db.prepare('SELECT v, exp FROM name_memo WHERE k = ?1').bind(name.toLowerCase()).first();
+  if (!r || r.exp < Math.floor(Date.now() / 1000)) return null;
+  try { return JSON.parse(r.v); } catch { return null; }
+}
+async function nameMemoPut(db, name, out) {
+  const now = Math.floor(Date.now() / 1000);
+  if (!memoReady) { await db.prepare('CREATE TABLE IF NOT EXISTS name_memo (k TEXT PRIMARY KEY, v TEXT NOT NULL, exp INTEGER NOT NULL)').run(); memoReady = true; }
+  await db.prepare('INSERT INTO name_memo (k, v, exp) VALUES (?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET v = ?2, exp = ?3').bind(name.toLowerCase(), JSON.stringify(out), now + NAME_MEMO_SEC).run();
+  if (Math.random() < 0.02) await db.prepare('DELETE FROM name_memo WHERE exp < ?1').bind(now).run(); // 지난 것 가끔 청소
 }
 // 넥슨을 실제로 부를 때만 세는 한도: 계정 1분·하루, 사이트 전체 하루 (캐시에서 돌려준 응답은 안 셈)
 async function chargeNexon(env, me) {
@@ -379,19 +429,18 @@ async function chargeNexon(env, me) {
   if (site > 0) await hit(env.DB, 'site', 86400, site, '오늘 사이트 전체 조회 한도를 다 썼어요');
 }
 // 고정 시간 칸(초)마다 횟수 세기. 넘으면 429 + 몇 초 뒤 다시
-async function hit(db, key, sec, max, msg) {
+async function hit(db, key, sec, max, msg, code, bare) { // code: 오류 이름(기본 RATE) · bare: 'N시간 뒤에' 안 붙임. 돌려주는 값 = 이번까지 센 횟수
   // 하루 칸은 한국 시간 자정에 바뀜 (예전엔 UTC 자정 = 오전 9시) (V11)
   const off = sec >= 86400 ? 9 * 3600 : 0;
   const now = Math.floor(Date.now() / 1000), win = Math.floor((now + off) / sec), k = `${key}:${sec}:${win}`, reset = (win + 1) * sec - off;
   // 이미 한도를 넘은 칸이면 DB에 쓰지 않고 바로 거절 (무료 쓰기 한도 아끼기, V7)
   const cur = await db.prepare('SELECT n FROM api_rate WHERE k = ?1').bind(k).first();
-  if (cur && cur.n >= max) { const wait = reset - now, e = new HttpError(429, 'RATE', `${msg}. ${wait >= 3600 ? Math.ceil(wait / 3600) + '시간' : wait >= 60 ? Math.ceil(wait / 60) + '분' : wait + '초'} 뒤에 다시 시도해 주세요`); e.retry = wait; throw e; }
+  const tooMany = () => { const wait = reset - now, e = new HttpError(429, code || 'RATE', bare ? msg : `${msg}. ${wait >= 3600 ? Math.ceil(wait / 3600) + '시간' : wait >= 60 ? Math.ceil(wait / 60) + '분' : wait + '초'} 뒤에 다시 시도해 주세요`); e.retry = wait; return e; };
+  if (cur && cur.n >= max) throw tooMany();
   const row = await db.prepare('INSERT INTO api_rate (k, n, reset) VALUES (?1, 1, ?2) ON CONFLICT(k) DO UPDATE SET n = n + 1 RETURNING n').bind(k, reset).first();
   if (Math.random() < 0.02) await db.prepare('DELETE FROM api_rate WHERE reset < ?1').bind(now).run(); // 지난 칸 가끔 청소
-  if (row && row.n > max) {
-    const wait = reset - now, e = new HttpError(429, 'RATE', `${msg}. ${wait >= 3600 ? Math.ceil(wait / 3600) + '시간' : wait >= 60 ? Math.ceil(wait / 60) + '분' : wait + '초'} 뒤에 다시 시도해 주세요`);
-    e.retry = wait; throw e;
-  }
+  if (row && row.n > max) throw tooMany();
+  return row ? row.n : 1;
 }
 let rateSchemaReady = false;
 async function ensureRateSchema(db) {
@@ -426,7 +475,7 @@ async function lootPrices(req, env, url, cors) {
   const origin = req.headers.get('Origin');
   if (origin && origin !== url.origin) throw new HttpError(403, 'ORIGIN', '다른 사이트에서는 요청할 수 없어요');
 
-  const body = await readJson(req, 64 * 1024);
+  const body = await readJson(req, p === '/api/admin/conf' ? 160 * 1024 : 64 * 1024); // 결정석 가격표는 표가 쌓이면 커져서 넉넉히 (안에서 다시 12만 자로 막음)
   if (p === '/api/admin/logout') return json({ ok: true }, 200, { ...noStore(), 'set-cookie': adminCookie('', 0) });
   const viaCookie = await adminCookieOk(req, env);
   if (!viaCookie && !body.password) throw new HttpError(401, 'LOGIN', '다시 로그인해 주세요 (관리 쿠키가 없거나 30분이 지났어요)'); // 틀린 횟수에 안 셈
@@ -440,7 +489,7 @@ async function lootPrices(req, env, url, cors) {
     const k = String(body.k || '');
     if (!CONF_KEYS.includes(k)) throw new HttpError(400, 'CONF', '없는 설정이에요');
     if (body.v === null) { await env.DB.prepare('DELETE FROM site_conf WHERE k = ?1').bind(k).run(); await bumpVer(env.DB); return json({ ok: true, k, reset: true }, 200, { ...noStore(), ...keep }); }
-    const v = k === 'tiers' ? confTiers(body.v) : confLootOn(body.v);
+    const v = k === 'tiers' ? confTiers(body.v) : k === 'crystal' ? confCrystal(body.v) : confLootOn(body.v);
     await env.DB.prepare('INSERT INTO site_conf (k, v, updated_at) VALUES (?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET v = ?2, updated_at = ?3')
       .bind(k, JSON.stringify(v), new Date().toISOString()).run();
     await bumpVer(env.DB);
@@ -532,7 +581,7 @@ async function bumpVer(db) {
 // 사이트 설정 (관리 화면)
 //   tiers  : 물욕 등급 기준 { black, red, dia, gold, silver, bronze } 억 이상 — 위 등급일수록 커야 함
 //   lootOn : 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템이름…] } — 적은 칸만 바뀌고 나머지는 페이지 기본값
-const CONF_KEYS = ['tiers', 'lootOn'], TIER_KEYS = ['black', 'red', 'dia', 'gold', 'silver', 'bronze'];
+const CONF_KEYS = ['tiers', 'lootOn', 'crystal'], TIER_KEYS = ['black', 'red', 'dia', 'gold', 'silver', 'bronze'];
 function confTiers(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw new HttpError(400, 'TIERS', '등급 기준이 이상해요');
   const out = {}; let prev = Infinity;
@@ -543,6 +592,53 @@ function confTiers(v) {
     out[t] = prev = Math.round(n * 1000) / 1000;
   }
   return out;
+}
+// 결정석 가격표 { tables:[{ from:{D,W,M}, price:{보스:{난이도:메소|null}} }], open:{'보스' 또는 '보스|난이도': 날짜}, notice:{id,text} }
+//  가격표는 적용일(일간·주간 W 기준) 순서대로, 메소는 0 ~ 1000억 정수 또는 null(가격 미정)
+const DIFFS = ['easy', 'normal', 'hard', 'chaos', 'extreme'];
+function confCrystal(v) {
+  const bad = m => new HttpError(400, 'CRYSTAL', m);
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw bad('결정석 가격 설정이 이상해요');
+  if (JSON.stringify(v).length > 120000) throw bad('결정석 가격 설정이 너무 커요');
+  const day = d => typeof d === 'string' && d !== ALL_DAY && validDay(d);
+  if (!Array.isArray(v.tables) || !v.tables.length || v.tables.length > 60) throw bad('가격표가 없거나 너무 많아요');
+  const tables = []; let prev = null;
+  for (const [i, t] of v.tables.entries()) {
+    const f = t && t.from;
+    if (!f || !day(f.D) || !day(f.W) || !day(f.M)) throw bad(`${i + 1}번째 가격표의 적용일이 이상해요 (2026.10.22 모양)`);
+    if (prev && !(f.W > prev.W && f.D > prev.D && f.M >= prev.M)) throw bad(`${i + 1}번째 가격표의 적용일은 앞 가격표보다 뒤여야 해요`);
+    if (!t.price || typeof t.price !== 'object' || Array.isArray(t.price)) throw bad(`${i + 1}번째 가격표에 가격이 없어요`);
+    const price = {}, ids = Object.keys(t.price);
+    if (ids.length > 120) throw bad('보스가 너무 많아요');
+    for (const id of ids) {
+      if (!/^[a-z0-9]{1,24}$/.test(id)) throw bad('보스 이름이 이상해요: ' + String(id).slice(0, 24));
+      const row = t.price[id]; if (!row || typeof row !== 'object' || Array.isArray(row)) throw bad('가격이 이상해요: ' + id);
+      price[id] = {};
+      for (const [d, x] of Object.entries(row)) {
+        if (!DIFFS.includes(d)) throw bad(`난이도가 이상해요: ${id} ${String(d).slice(0, 12)}`);
+        if (x !== null && !(Number.isInteger(x) && x >= 0 && x <= 1e11)) throw bad(`가격은 0 ~ 1000억 사이 정수(메소)로 적어 주세요: ${id} ${d}`);
+        price[id][d] = x;
+      }
+    }
+    tables.push({ from: { D: f.D, W: f.W, M: f.M }, price }); prev = f;
+  }
+  const open = {};
+  if (v.open != null) {
+    if (typeof v.open !== 'object' || Array.isArray(v.open) || Object.keys(v.open).length > 120) throw bad('출시일 설정이 이상해요');
+    for (const [k, d] of Object.entries(v.open)) {
+      if (!/^[a-z0-9]{1,24}(\|(easy|normal|hard|chaos|extreme))?$/.test(k) || !day(d)) throw bad('출시일이 이상해요: ' + String(k).slice(0, 30));
+      open[k] = d;
+    }
+  }
+  let notice = null;
+  if (v.notice != null) {
+    const n = v.notice;
+    if (!n || typeof n !== 'object' || typeof n.id !== 'string' || !/^[\w.-]{1,40}$/.test(n.id) || typeof n.text !== 'string') throw bad('안내 문구가 이상해요');
+    const text = n.text.replace(/\s+/g, ' ').trim();
+    if (!text || text.length > 300) throw bad('안내 문구는 1 ~ 300자로 적어 주세요');
+    notice = { id: n.id, text };
+  }
+  return notice ? { tables, open, notice } : { tables, open };
 }
 function confLootOn(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw new HttpError(400, 'LOOT_ON', '기본 물욕템 설정이 이상해요');

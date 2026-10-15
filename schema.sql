@@ -46,6 +46,13 @@ CREATE TABLE IF NOT EXISTS api_rate (
   reset INTEGER NOT NULL             -- 이 칸이 끝나는 시각 (초)
 );
 
+-- 이름으로 찾은 결과를 12시간 기억 (손님 조회가 같은 이름이면 넥슨을 다시 안 부름). 누가 찾았는지는 저장 안 함
+CREATE TABLE IF NOT EXISTS name_memo (
+  k TEXT PRIMARY KEY,                -- 캐릭터 이름 (소문자)
+  v TEXT NOT NULL,                   -- 찾은 결과 (JSON: ocid·이름·월드·레벨·직업·외형 주소)
+  exp INTEGER NOT NULL               -- 이 시각(초)이 지나면 안 씀
+);
+
 -- 방문 통계 (익명). 날짜(한국 시간)마다 브라우저 하나에 한 줄. 180일 지난 날은 자동으로 지워요
 CREATE TABLE IF NOT EXISTS stat_vis (
   d TEXT NOT NULL,                   -- 'YYYY.MM.DD'
