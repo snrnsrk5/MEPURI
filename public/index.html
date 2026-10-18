@@ -529,6 +529,15 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 @media (max-width:430px){.seg button{min-width:0;padding:0 2px}.seg button.sd-extreme,.seg button.sd-chaos{font-size:12px;letter-spacing:-.02em}} /* 좁은 폰: 익스트림 글자가 테두리에 안 닿게 (U17) */
 .fsec{display:flex;flex-direction:column;gap:10px;padding:12px 4px;border-bottom:1px dashed var(--dash)}
 .fsec:last-child{border-bottom:0}
+.tot-sep{border-top:1px dashed var(--dash);margin:2px -4px 4px}
+.tot-mini{display:flex;flex-direction:column;gap:8px}
+.pr-nudge{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:12px 12px 12px 14px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--accent)}
+.pr-nudge .pn-ic{display:inline-flex;color:var(--accent);flex-shrink:0}.pr-nudge .pn-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pr-nudge .pn-t b{font-size:14px;color:var(--text)}.pr-nudge .pn-t span{font-size:12px;color:var(--sub)}
+.pr-nudge .pn-go{flex-shrink:0;height:32px;padding:0 14px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:700}.pr-nudge .pn-x{flex-shrink:0;display:inline-flex;padding:6px;border-radius:6px;color:var(--muted)}.pr-nudge .pn-x:hover{color:var(--text)}
+@media (max-width:640px){.pr-nudge{flex-wrap:wrap}.pr-nudge .pn-t{flex-basis:calc(100% - 64px)}.pr-nudge .pn-go{order:3;width:100%}}
+.crow,.cm-card{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.crow img,.cm-card img{-webkit-user-drag:none}
+.ds-hold{opacity:.7;transition:opacity .5s}.ds-on{cursor:grabbing}.ds-on *{cursor:grabbing!important}
+.ds-drag{position:relative;z-index:6;transition:none!important;background:var(--card);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.28);outline:2px solid var(--accent);outline-offset:-2px}.cm-card.ds-drag{background:var(--cm-card)}.cm-card.on.ds-drag{background:var(--cm-on)}.tot-tg{all:unset;box-sizing:border-box;cursor:pointer;width:100%}.tot-tg .tot-r{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);font-weight:400}.tot-tg .tot-r i{display:inline-flex;transition:transform .15s}.tot-tg .tot-r i.up{transform:rotate(180deg)}.tot-tg:hover .tot-r{color:var(--sub)}.tot-tg:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}.tot-mini .sx-big{font-size:17px}.fbody .tot-mini .frow{padding:4px 12px;min-height:24px}.tot-mini .flbl{font-size:12px}.tot-mini .sx-fv b{font-size:13px}.tot-mini .sx-fv small{font-size:11px}
 .frow{display:flex;align-items:center;gap:6px;min-height:28px}
 .flbl{width:122px;flex-shrink:0;font-size:13px;font-weight:500;color:var(--sub)}
 .fblock{display:flex;flex-direction:column;gap:8px}
@@ -2137,7 +2146,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.24.1", "d": "2026-10-17", "l": [], "prev": [{"v": "0.24.0", "d": "2026-10-15", "l": ["로그인 없이도 캐릭터를 하루 3번 찾아볼 수 있어요", "6월 18일부터 기록할 수 있어요", "익스트림 림보 · 익스트림 발드릭스를 넣었어요", "10월 22일 결정석 조정을 반영했어요"]}, {"v": "0.23.2", "d": "2026-10-14", "l": ["파티 물욕을 「분배 · 블빵 · 순환 획득」으로 나눠 적어요", "예전 버전부터 쓰던 기록에서 화면이 멈추던 문제를 고쳤어요"]}]};
+const NEWS={"v": "0.24.2", "d": "2026-10-19", "l": ["이번 주에 얼마 버는지 한눈에 봐요", "캐릭터 순서를 바꿀 수 있어요"], "prev": [{"v": "0.24.0", "d": "2026-10-15", "l": ["로그인 없이도 캐릭터를 하루 3번 찾아볼 수 있어요", "6월 18일부터 기록할 수 있어요", "익스트림 림보 · 익스트림 발드릭스를 넣었어요", "10월 22일 결정석 조정을 반영했어요"]}]};
 const HAD_DATA=(()=>{try{return !!localStorage.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 let st,LOAD_LOST=false; // LOAD_LOST: 이 기기 기록을 읽지 못해 새로 시작함 → 계정 기록을 덮어쓰지 않게 동기화 상태도 지움
 try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null;LOAD_LOST=true}
@@ -2558,7 +2567,7 @@ function renderTabs(){
 
 /* ---------- status view ---------- */
 function charList(){
-  return `<div class="clist" data-scroll="clist">${vis().map(c=>{const k=charStats(c);return `<button class="crow${c.id===cur().id?' on':''}" type="button" data-sel="${c.id}">${ava(c)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">${esc(nm(c))}</span>${cinfo(c)?`<span class="sb">Lv.${esc(lvS(c))} | ${esc(c.job||'직업 미확인')}</span>`:''}</span><span class="cnt num">${k.W.done}/${k.W.all}</span></button>`}).join('')}
+  return `<div class="clist" data-scroll="clist">${vis().map(c=>{const k=charStats(c);return `<button class="crow${c.id===cur().id?' on':''}" type="button" data-sel="${c.id}" data-dsid="${c.id}">${ava(c)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="nm">${esc(nm(c))}</span>${cinfo(c)?`<span class="sb">Lv.${esc(lvS(c))} | ${esc(c.job||'직업 미확인')}</span>`:''}</span><span class="cnt num">${k.W.done}/${k.W.all}</span></button>`}).join('')}
     <button class="add-row" type="button" data-add><span class="dash-c">${I.plus()}</span>캐릭터 이름으로 추가</button></div>`;
 }
 /* 카드의 설정 버튼: '이번엔 다른 난이도로 잡았어요' — 이번 기간만 / 이번 기간부터 */
@@ -2871,9 +2880,17 @@ function statusView(){
         <div class="fsec"><div class="fhead">캐릭터<span style="font-size:12px;color:var(--muted)">주간 클리어</span></div>${charList()}</div>
         <div class="fsec"><div class="fhead">${esc(nm(c))} · ${VIEW_OFF&&pastP('W')?'그 주':'이번 주'}<span style="font-size:12px;color:var(--muted)">결정석</span></div>
           <div class="rw-price"><span class="coin" style="width:18px;height:18px"></span><b class="pret num sx-big">${meso(k.earned)||'0'}</b><span style="font-size:12px">메소</span></div>
-          <div class="frow"><span class="flbl">나눠 보면</span><span class="sx-fv"><small>주간 ${meso(k.eW)||'0'} · 일간 ${meso(k.eD)||'0'}${k.eM?` · 월간 ${meso(k.eM)}`:''}</small></span></div>
-          <div class="frow"><span class="flbl">남은 보스</span><span class="sx-fv"><b class="num">${k.D.all-k.D.done+k.W.all-k.W.done+k.M.all-k.M.done}개</b><small>일간 ${k.D.all-k.D.done} · 주간 ${k.W.all-k.W.done} · 월간 ${k.M.all-k.M.done}</small></span></div>
-          <div class="frow"><span class="flbl">더 벌 수 있어요</span><span class="sx-fv"><b class="num" style="color:var(--accent)">${meso(k.left)||'0'}</b><small>주간 다 잡으면</small></span></div>
+          <div class="frow"><span class="flbl">남은 보스</span><span class="sx-fv"><b class="num">${k.D.all-k.D.done+k.W.all-k.W.done+k.M.all-k.M.done}개</b><small>${[['일간',k.D],['주간',k.W],['월간',k.M]].filter(([,x])=>x.all>0).map(([n,x])=>`${n} ${x.all-x.done}`).join(' · ')}</small></span></div>
+          <div class="frow"><span class="flbl">더 벌 수 있어요</span><span class="sx-fv"><b class="num" style="color:var(--accent)">${meso(k.left)||'0'}</b><small>남은 주간</small></span></div>
+          <div class="frow"><span class="flbl">다 잡으면</span><span class="sx-fv"><b class="num">${meso(k.earned+k.left)||'0'}</b><small>${VIEW_OFF&&pastP('W')?'그 주':'이번 주'} 최종</small></span></div>
+          ${(()=>{const V=vis();if(V.length<2)return '';const T=V.map(charStats),sum=f=>T.reduce((x,y)=>x+f(y),0),e=sum(y=>y.earned),l=sum(y=>y.left),R=t=>({all:sum(y=>y[t].all),done:sum(y=>y[t].done)}),K={D:R('D'),W:R('W'),M:R('M')}; // 캐릭터가 둘 이상이면 전체 합계 — 위 캐릭터 칸과 같은 모양, 조금 작게 (보는 것만)
+            const hid=!!st.hideTot,tg=`<button type="button" class="fhead tot-tg" data-tottg aria-expanded="${!hid}">전체 캐릭터<span class="tot-r">${V.length}명 · ${hid?'보기':'숨기기'}<i class="${hid?'':'up'}">${I.caret('currentColor',8)}</i></span></button>`;
+            if(hid)return `<div class="tot-mini"><div class="tot-sep"></div>${tg}</div>`;
+            return `<div class="tot-mini"><div class="tot-sep"></div>${tg}
+          <div class="rw-price"><span class="coin" style="width:15px;height:15px"></span><b class="pret num sx-big">${meso(e)||'0'}</b><span style="font-size:12px">메소</span></div>
+          <div class="frow"><span class="flbl">남은 보스</span><span class="sx-fv"><b class="num">${K.D.all-K.D.done+K.W.all-K.W.done+K.M.all-K.M.done}개</b><small>${[['일간',K.D],['주간',K.W],['월간',K.M]].filter(([,x])=>x.all>0).map(([n,x])=>`${n} ${x.all-x.done}`).join(' · ')}</small></span></div>
+          <div class="frow"><span class="flbl">더 벌 수 있어요</span><span class="sx-fv"><b class="num" style="color:var(--accent)">${meso(l)||'0'}</b><small>남은 주간</small></span></div>
+          <div class="frow"><span class="flbl">다 잡으면</span><span class="sx-fv"><b class="num">${meso(e+l)||'0'}</b><small>${VIEW_OFF&&pastP('W')?'그 주':'이번 주'} 최종</small></span></div></div>`})()}
           <small style="font-size:12px;color:var(--muted);line-height:16px">결정석 가격 · 일간·주간 ${tblLabel(TODAY,'W')} · 월간 ${tblLabel(TODAY,'M')} 표 기준</small></div>
       </div></div></div>
       <div class="foot"><span>Data based on NEXON Open API${SAME_API?' · <a class="linkish" href="/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>':''}</span><button class="linkish danger-link" type="button" id="reset">${EMPTY_START?'초기화':'예시 데이터로 초기화'}</button></div>${LEGAL}
@@ -3076,6 +3093,7 @@ function bindCfg(v){
 function bindStatus(){
   const v=document.getElementById('view');
   v.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{ui.pop=null;set(()=>{st.sel=b.dataset.sel;st.form.targets=[st.sel]})});
+  dragSort(v.querySelector('.clist'),'.crow',ids=>{set(()=>reorderChars(ids));toast('캐릭터 순서를 바꿨어요')}); // 캐릭터를 꾹 눌러 끌면 순서 바꾸기
   v.querySelectorAll('[data-add]').forEach(b=>b.onclick=openAdd);
   const cb=document.getElementById('cal-btn');if(cb)cb.onclick=e=>{e.stopPropagation();ui.cal=ui.cal?null:(w=>({y:w.y,m:w.m-1}))(wkNo(TODAY));render()}; // 보는 날이 속한 주의 달로 열기
   v.querySelectorAll('.cal').forEach(x=>x.onclick=e=>e.stopPropagation());
@@ -3089,6 +3107,7 @@ function bindStatus(){
   const vb=document.getElementById('vo-btn');if(vb)vb.onclick=e=>{e.stopPropagation();ui.vo=!ui.vo;render()};
   v.querySelectorAll('.vo-menu').forEach(m=>{m.onclick=e=>e.stopPropagation();fitIn(m)});
   v.querySelectorAll('[data-vsort]').forEach(b=>b.onclick=()=>{ui.vo=false;set(()=>{st.sort=b.dataset.vsort})});
+  v.querySelectorAll('[data-tottg]').forEach(b=>b.onclick=()=>set(()=>{st.hideTot=!st.hideTot})); // 보스 현황 왼쪽 「전체 캐릭터」 접기
   v.querySelectorAll('[data-vhide]').forEach(b=>b.onclick=()=>set(()=>{const k=b.dataset.vhide;if(k==='clear')st.hide=!st.hide;else{st.hideT=st.hideT||{};st.hideT[k]=!st.hideT[k]}}));
   v.querySelectorAll('[data-vreset]').forEach(b=>b.onclick=()=>{ui.vo=false;set(()=>{st.sort='set';st.hide=false;st.hideT={}});toast('보기 설정을 초기화했어요')});
   const r=document.getElementById('reset');if(r)r.onclick=()=>{ui.modal={kind:'reset'};renderLayer()};
@@ -3338,6 +3357,7 @@ function slotTable(){
   }else body=counts[f]||SLOTN[f]?group(f):empty(`${TKO[f]} 보스가 없어요`,'보스 설정 칸에서 보스를 골라 목록에 추가해 보세요.');
   return `<div class="bar"><div class="dots" role="tablist" aria-label="${esc(nm(c))} 보스 목록 보기">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}" data-sfilter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
     <div class="bar-r"><span>${esc(nm(c))}</span><span style="color:var(--faint)">|</span><span>주간 슬롯 <b class="num" style="color:${counts.W>=12?'var(--accent)':'var(--text2)'}">${counts.W}</b> / 12</span></div></div>
+  ${st.stab==='form'&&(f==='all'||f==='W')&&counts.W<=4&&!st.prNudge?`<div class="pr-nudge" role="note"><span class="pn-ic">${I.info}</span><span class="pn-t"><b>${counts.W?`주간 보스가 ${counts.W}개만 있어요`:'주간 보스가 비어 있어요'}</b><span>프리셋을 쓰면 내 스펙에 맞는 주간 보스 묶음을 한 번에 넣을 수 있어요.</span></span><button type="button" class="pn-go" id="pn-go">추천 프리셋 보기</button><button type="button" class="pn-x" id="pn-x" aria-label="이 안내 닫기" title="다시 보지 않기">${I.x(12)}</button></div>`:''}
   <div class="stable">${f==='all'?'':`<div class="sthead"><span style="width:12px"></span><span style="width:48px"></span><span class="c-name">보스</span><span class="c-diff">난이도</span><span class="c-party">인원</span><span class="c-price">결정석 1개</span><span class="c-act"></span></div>`}
   <div class="stbody" data-scroll="tb-${c.id}-${f}">${body}</div>
   </div>
@@ -3449,6 +3469,8 @@ function bindSettings(){
   ui.formApply=formApply;
   const add=document.getElementById('add-slot');if(add)add.onclick=()=>formApply(null);
   v.querySelectorAll('[data-fspan]').forEach(b=>b.onclick=()=>set(()=>{f.span=b.dataset.fspan;f.forced=false}));
+  const pg=document.getElementById('pn-go');if(pg)pg.onclick=()=>{ui.dd=false;ui.bdd=null;set(()=>{st.stab='preset';st.ptab='rec';if(!REC_PRESETS.some(p=>p.id===st.psel))st.psel=REC_PRESETS[0]&&REC_PRESETS[0].id})}; // 주간 보스가 적으면 프리셋 권하기
+  const px=document.getElementById('pn-x');if(px)px.onclick=()=>set(()=>{st.prNudge=1});
   const tp=document.getElementById('to-preset');if(tp)tp.onclick=()=>{ui.newPreset=`${nm(cur())} 주간`;set(()=>{st.stab='preset';st.ptab='my'})};
   v.querySelectorAll('[data-psel]').forEach(b=>b.onclick=()=>{set(()=>{st.psel=b.dataset.psel});
     const r=document.querySelector('#view .col-r'),l=document.querySelector('#view .col-l');if(r&&l&&r.getBoundingClientRect().top>=l.getBoundingClientRect().bottom-1)r.scrollIntoView({behavior:'smooth',block:'start'})});
@@ -3538,6 +3560,47 @@ function bindSettings(){
     b.oncontextmenu=e=>e.preventDefault();
     b.onclick=()=>{if(Date.now()-(b._lp||0)<800)return;mv(i,d)}});
 }
+
+/* ---------- 꾹 눌러서 순서 바꾸기 (캐릭터 목록·편집 창) ----------
+   터치·펜: 0.5초 꾹 누른 뒤 끌기 (그 전에 10px 넘게 움직이면 그냥 스크롤) / 마우스: 누른 채 6px 넘게 끌면 바로
+   끄는 동안 다른 칸은 자리를 비켜 주고(FLIP), 놓으면 done(새 id 순서) — 그냥 누른 건 원래 클릭 그대로 */
+function dragSort(box,sel,done){
+  if(!box||box._ds)return;box._ds=1;let d=null;
+  const items=()=>[...box.querySelectorAll(sel)];
+  const lay=el=>{const b=box.getBoundingClientRect();return {l:b.left+box.clientLeft+el.offsetLeft-box.scrollLeft,t:b.top+box.clientTop+el.offsetTop-box.scrollTop,w:el.offsetWidth,h:el.offsetHeight}}; // 옮기는 중(transform)과 상관없는 제자리
+  const place=()=>{const L=lay(d.el);d.el.style.transform=`translate(${d.x0+d.px-d.sx-L.l}px,${d.y0+d.py-d.sy-L.t}px)`};
+  const hit=()=>{for(const s of items()){if(s===d.el)continue;const L=lay(s);if(d.px>=L.l&&d.px<=L.l+L.w&&d.py>=L.t&&d.py<=L.t+L.h){
+      const all=items(),before=new Map(all.map(x=>[x,x.getBoundingClientRect()]));
+      const a=all.indexOf(d.el),b=all.indexOf(s);if(b>a)all.slice(a+1,b+1).forEach(x=>d.el.before(x));else all.slice(b,a).reverse().forEach(x=>d.el.after(x)); // 끄는 칸은 그대로 두고 사이 칸들을 반대편으로 (끄는 칸을 떼면 포인터를 놓쳐서)
+      all.forEach(x=>{if(x===d.el)return;const a=before.get(x),b=x.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;if(!dx&&!dy)return;
+        x.style.transition='none';x.style.transform=`translate(${dx}px,${dy}px)`;x.offsetWidth;x.style.transition='transform .16s';x.style.transform=''});
+      d.moved=true;break}}place()};
+  const auto=()=>{const tick=()=>{if(!d||!d.on)return;const b=box.getBoundingClientRect(),E=40;let v=0;
+      if(box.scrollHeight>box.clientHeight+1){if(d.py<b.top+E)v=-Math.ceil((b.top+E-d.py)/5);else if(d.py>b.bottom-E)v=Math.ceil((d.py-(b.bottom-E))/5)}
+      if(v){box.scrollTop+=Math.max(-16,Math.min(16,v));hit()}d.raf=requestAnimationFrame(tick)};d.raf=requestAnimationFrame(tick)};
+  const go=()=>{d.on=true;clearTimeout(d.tm);const r=d.el.getBoundingClientRect();d.x0=r.left;d.y0=r.top;
+    if(getComputedStyle(box).position==='static'){box.style.position='relative';d.pos=1}
+    box.classList.add('ds-on');d.el.classList.remove('ds-hold');d.el.classList.add('ds-drag');try{d.el.setPointerCapture(d.pid)}catch(_){}try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}place();auto()};
+  const end=ok=>{if(!d)return;const x=d;d=null;clearTimeout(x.tm);cancelAnimationFrame(x.raf);x.el.classList.remove('ds-hold');
+    if(!x.on)return;box._dsAt=Date.now();if(x.pos)box.style.position='';box.classList.remove('ds-on');x.el.classList.remove('ds-drag');
+    items().forEach(i=>{i.style.transition='';i.style.transform=''});
+    const ids=items().map(i=>i.dataset.dsid);if(ok&&x.moved&&ids.join()!==x.ids0.join())done(ids);else if(x.moved)render()}; // 취소면 원래 순서로 다시 그림
+  box.addEventListener('pointerdown',e=>{if(e.button>0||d)return;const el=e.target.closest(sel);if(!el||!box.contains(el))return;const ctl=e.target.closest('button,a,input,select,label,summary');if(ctl&&ctl!==el&&!ctl.classList.contains('cm-pick'))return; // 칸 안의 다른 버튼(숨김·×·챌린저스…)은 그대로 누르기
+    d={el,pid:e.pointerId,mouse:e.pointerType==='mouse',sx:e.clientX,sy:e.clientY,px:e.clientX,py:e.clientY,on:false,moved:false,ids0:items().map(i=>i.dataset.dsid)};
+    if(!d.mouse){el.classList.add('ds-hold');d.tm=setTimeout(()=>{if(d&&d.el===el)go()},500)}});
+  box.addEventListener('pointermove',e=>{if(!d||e.pointerId!==d.pid)return;d.px=e.clientX;d.py=e.clientY;const far=Math.hypot(d.px-d.sx,d.py-d.sy);
+    if(!d.on){if(d.mouse){if(far>6)go();else return}else{if(far>10)end(false);return}}
+    e.preventDefault();hit()});
+  box.addEventListener('pointerup',()=>end(true));box.addEventListener('pointercancel',()=>end(false));
+  box.addEventListener('lostpointercapture',()=>{if(d&&d.on)end(true)});
+  box.addEventListener('click',e=>{if(Date.now()-(box._dsAt||0)<400){e.stopPropagation();e.preventDefault()}},true); // 끌고 놓은 손은 클릭으로 안 침
+  box.addEventListener('contextmenu',e=>{if(e.target.closest(sel))e.preventDefault()});
+  box.addEventListener('touchmove',e=>{if(d&&d.on)e.preventDefault()},{passive:false});
+  box.addEventListener('dragstart',e=>e.preventDefault()); // 그림을 끌어 가는 브라우저 기본 동작 막기
+}
+// 보이는 캐릭터끼리 순서만 바꾸고, 숨긴 캐릭터 등 나머지는 원래 자리에
+function reorderChars(ids){const pos=ids.map(id=>st.chars.findIndex(c=>c.id===id)).filter(i=>i>=0).sort((a,b)=>a-b),by=new Map(st.chars.map(c=>[c.id,c]));
+  if(pos.length!==ids.length)return;ids.forEach((id,n)=>{st.chars[pos[n]]=by.get(id)})}
 
 /* ---------- stats (dev) ---------- */
 /* ================= 수익 기록 (통계) =================
@@ -4886,9 +4949,9 @@ function renderLayer0(){
         <button type="button" class="cm-x" id="m-x" aria-label="닫기">${I.x(18)}</button>
       </div>
       <div class="cm-body">
-        ${m.edit?`<div class="cm-hint">${I.info}지울 캐릭터의 × 버튼을 누르세요. 그 캐릭터의 보스 설정과 클리어·물욕 기록도 같이 지워져요. 아래 버튼으로 스크린샷용으로 캐릭터·이름·정보·코디를 숨길 수 있어요.</div>`:''}
+        ${m.edit?`<div class="cm-hint">${I.info}지울 캐릭터의 × 버튼을 누르세요. 그 캐릭터의 보스 설정과 클리어·물욕 기록도 같이 지워져요. 아래 버튼으로 스크린샷용으로 캐릭터·이름·정보·코디를 숨길 수 있어요. 카드를 꾹 눌러 끌면 순서를 바꿀 수 있어요.</div>`:''}
         <div class="cm-grid">
-          ${cards.map(c=>`<div class="cm-card${c.id===cur().id?' on':''}${m.edit?' edit':''}${HID(c).all?' hid':''}">${m.edit&&!c.ocid?`<button type="button" class="cm-pen" data-cpen="${c.id}" aria-label="${esc(c.name)} 정보 고치기" title="레벨·월드·직업·챌린저스 고치기"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>`:''}
+          ${cards.map(c=>`<div class="cm-card${c.id===cur().id?' on':''}${m.edit?' edit':''}${HID(c).all?' hid':''}" data-dsid="${c.id}">${m.edit&&!c.ocid?`<button type="button" class="cm-pen" data-cpen="${c.id}" aria-label="${esc(c.name)} 정보 고치기" title="레벨·월드·직업·챌린저스 고치기"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>`:''}
             <button type="button" class="cm-pick" data-cpick="${c.id}" aria-label="${esc(nm(c))} 선택"${m.edit?' tabindex="-1"':''}>
               <span class="cm-pic">${cimg(c)?`<img src="${esc(c.img)}" alt=""${lkc(c)?` class="${lkc(c)}"`:''}${idl(c)}>`:jillImg(c,'',`<span class="cm-sil">${sil(72)}</span>`)}</span>
               <b>${esc(nm(c))}</b>${cinfo(c)?`<small>Lv.${esc(lvS(c))} | ${esc(c.job||'직업 미확인')}</small>`:'<small>&nbsp;</small>'}</button>
@@ -5180,6 +5243,7 @@ function renderLayer0(){
     if(k==='all'&&HID(c).all&&st.sel===c.id){const v=vis()[0];if(v)st.sel=v.id} // 보던 캐릭터를 숨기면 보이는 캐릭터로 옮김 (설정이 숨긴 캐릭터에 들어가지 않게)
     save();renderLayer();render()});
   L.querySelectorAll('[data-cdel]').forEach(b=>b.onclick=()=>{ui.modal={kind:'delchar',id:b.dataset.cdel,back:ui.modal};renderLayer()});
+  if(ui.modal&&ui.modal.kind==='chars'&&ui.modal.edit)dragSort(L.querySelector('.cm-grid'),'.cm-card[data-dsid]',ids=>{reorderChars(ids);save();renderLayer();render();toast('캐릭터 순서를 바꿨어요')}); // 편집 중엔 카드를 끌어서 순서 바꾸기
   const dn=document.getElementById('dc-no');if(dn)dn.onclick=()=>{ui.modal=ui.modal.back||null;renderLayer()};
   const dk2=document.getElementById('dc-ok');if(dk2)dk2.onclick=()=>{const id=ui.modal.id,back=ui.modal.back,c=st.chars.find(x=>x.id===id);
     set(()=>{st.chars=st.chars.filter(x=>x.id!==id);if(st.sel===id)st.sel=st.chars[0]?st.chars[0].id:null;st.form.targets=st.form.targets.filter(x=>x!==id);if(!st.form.targets.length&&st.sel)st.form.targets=[st.sel]});
