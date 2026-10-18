@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin
+
+Sitemap: https://mepuri.bosslog.workers.dev/sitemap.xml

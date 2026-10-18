@@ -1,7 +1,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>메푸리 테스트</title>
-<meta name="description" content="메푸리 보스 관리 테스트 웹">
+<title>메푸리 – 메이플스토리 주간 보스 결정석·물욕 수익 관리</title>
+<meta name="description" content="메이플스토리 보스 클리어를 캐릭터별로 체크하고, 결정석·물욕템 수익을 주간·월간으로 정리해 주는 무료 보스 트래커예요. 캐릭터 이름만 넣으면 바로 시작할 수 있어요.">
+<link rel="canonical" href="https://mepuri.bosslog.workers.dev/">
+<meta name="google-site-verification" content="A1sGY3GXTiqVAXdcKTwHscYfUJ6TRkdi4TvI4hepBYw">
+<meta property="og:type" content="website"><meta property="og:site_name" content="메푸리">
+<meta property="og:title" content="메푸리 – 메이플스토리 주간 보스 결정석·물욕 수익 관리">
+<meta property="og:description" content="보스 클리어 체크와 결정석·물욕 수익 정리를 한 곳에서. 캐릭터 이름만 넣으면 바로 시작해요.">
+<meta property="og:url" content="https://mepuri.bosslog.workers.dev/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'"><!-- 폰트가 늦거나 막혀도 화면은 먼저 그림 -->
@@ -1997,13 +2003,14 @@ let LOOT_HIST=LOOT_HIST_RAW,LOOT_BASE=lootLatest(LOOT_HIST),LOOT_BASE_DATE=lootD
 let lootHistC=null;
 // 서버(관리 화면 /admin에서 넣은 시세·설정)가 있으면 그걸 우선. 서버가 안 되면 페이지 안 기본값 그대로
 // 받은 내용 적용: 시세 · 기본 물욕템(보스·난이도마다 기록 창에 켜 둘 템) · 물욕 등급 기준. 서버에서 지운 건 페이지 기본값으로 돌아감
-let LOOT_VER=null,lootSig=null;
+let LOOT_VER=null,lootSig=null;var MARKS_SRV=null; // 관리 화면에서 정한 그래프 점선 (stats.js가 읽음)
 function lootApply(j){if(!j||typeof j!=='object')return;
   const sig=JSON.stringify([j.hist||[],j.conf||{}]);LOOT_VER=j.ver!=null?String(j.ver):LOOT_VER;if(sig===lootSig)return;lootSig=sig;
   const cf=j.conf&&typeof j.conf==='object'?j.conf:{};
   LOOT_ON_SRV=cf.lootOn&&typeof cf.lootOn==='object'&&!Array.isArray(cf.lootOn)?cf.lootOn:null;
   if(typeof sxSetTiers==='function')sxSetTiers(cf.tiers||null);
   crysApply(cf.crystal||null); // 결정석 가격표·출시일 (관리 화면)
+  MARKS_SRV=cf.marks&&typeof cf.marks==='object'&&!Array.isArray(cf.marks)?cf.marks:null; // 그래프 점선 (관리 화면)
   const H=Array.isArray(j.hist)?j.hist.filter(s=>s&&/^\d{4}\.\d\d\.\d\d$/.test(s.d)&&s.p&&typeof s.p==='object'):[];
   if(!H.length){LOOT_HIST=LOOT_HIST_RAW;LOOT_BASE=lootLatest(LOOT_HIST);LOOT_BASE_DATE=lootDateTxt(LOOT_HIST)}
   else{// 테스트 기간: 서버 시세는 날짜 구분 없이 한 벌 → 모든 날짜에 적용 (서버에 없는 템은 페이지 기본 시세의 최신 값)
@@ -2127,7 +2134,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.24.0", "d": "2026-10-15", "l": ["로그인 없이도 캐릭터를 하루 3번 찾아볼 수 있어요", "6월 18일부터 기록할 수 있어요", "익스트림 림보 · 익스트림 발드릭스를 넣었어요", "10월 22일 결정석 조정을 반영했어요"], "prev": [{"v": "0.23.2", "d": "2026-10-14", "l": ["파티 물욕을 「분배 · 블빵 · 순환 획득」으로 나눠 적어요", "예전 버전부터 쓰던 기록에서 화면이 멈추던 문제를 고쳤어요"]}, {"v": "0.23.1", "d": "2026-10-13", "l": ["물욕 관리 목록에서 파티 템의 정산 완료·정산 남음을 바로 볼 수 있어요", "새 보스를 넣거나 다른 보스로 바꿀 때도 「과거 주부터」를 쓸 수 있어요", "「과거 주부터」 시작 주를 달력에서 골라요", "히트맵의 물욕 칸이 실제 금액 비율대로 나와요", "보스 설정 검색이 제대로 돼요 · 물욕템 이름으로도 찾아요"]}]};
+const NEWS={"v": "0.24.1", "d": "2026-10-17", "l": [], "prev": [{"v": "0.24.0", "d": "2026-10-15", "l": ["로그인 없이도 캐릭터를 하루 3번 찾아볼 수 있어요", "6월 18일부터 기록할 수 있어요", "익스트림 림보 · 익스트림 발드릭스를 넣었어요", "10월 22일 결정석 조정을 반영했어요"]}, {"v": "0.23.2", "d": "2026-10-14", "l": ["파티 물욕을 「분배 · 블빵 · 순환 획득」으로 나눠 적어요", "예전 버전부터 쓰던 기록에서 화면이 멈추던 문제를 고쳤어요"]}]};
 const HAD_DATA=(()=>{try{return !!localStorage.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 let st,LOAD_LOST=false; // LOAD_LOST: 이 기기 기록을 읽지 못해 새로 시작함 → 계정 기록을 덮어쓰지 않게 동기화 상태도 지움
 try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null;LOAD_LOST=true}
@@ -3675,12 +3682,14 @@ function sxMerge(used){const tiers=used.filter(g=>g.k!=='m'),cap=SX_MAX-1-(tiers
   return [{k:'lo',name:top.lo+' 이하',c:top.c,of:low,tip:low.map(g=>`${g.name} — ${g.tip}`).join('\n')},...used.slice(n).map(g=>({...g,of:[g]}))]}
 const SX_ALL='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg>';
 const SX_LOOT={name:'물욕템',c:'repeating-linear-gradient(135deg,#E0588A 0 3px,#F6A5C4 3px 6px)'};
-// 결정석 가격이 바뀐 날 (가격표에서 자동으로) — 첫 표 시작일(7.30)은 기록 시작일일 뿐 조정이 아니라 빼고
-// 그래프 점선 = 결정석 가격이 바뀐 날. 가격표(PRICE_HIST)가 바뀐 날(주간 기준) + 기록 시작 전에 있었던 조정(SX_MARKS0)
-//  월간 보스만 따로 바뀐 날(10.01 같은)은 표시 안 함
-const SX_MARKS0=['2026.06.18'];
-function sxMarks(unit){const out=SX_MARKS0.map(d=>({d,label:'결정석 조정'}));PRICE_HIST.forEach((h,i)=>{if(!i)return;const f=h.from,d=typeof f==='object'?f.W:f;
-  if(d&&!out.some(m=>m.d===d))out.push({d,label:'결정석 조정'})});return out}
+// 그래프 점선 = 결정석 가격표가 바뀐 날(주간 기준, 표마다 하나 — 첫 표 시작일 6.18도 그때 조정) + 관리 화면에서 직접 넣은 점선
+//  관리 화면(conf.marks): 표 점선은 이름 바꾸기·숨기기, 직접 넣은 점선은 { d, t } · 월간 보스만 따로 바뀐 날(10.01 같은)은 표시 안 함
+//  아직 안 온 날(예: 패치 전에 미리 넣어 둔 10.22 표)은 그날이 되기 전엔 안 그림 · 마우스를 올리면 날짜와 이름이 보임
+function sxMarks(unit){const M=typeof MARKS_SRV!=='undefined'&&MARKS_SRV||{},A=M.auto&&typeof M.auto==='object'?M.auto:{},out=[];
+  const put=(d,t,auto)=>{if(typeof d!=='string'||!/^\d{4}\.\d\d\.\d\d$/.test(d)||out.some(m=>m.d===d))return;const o=auto?A[d]||{}:{};if(o.off)return;out.push({d,label:String(o.t||t||'').slice(0,10)||'결정석 조정'})};
+  PRICE_HIST.forEach(h=>{const f=h.from;put(typeof f==='object'?f.W:f,'결정석 조정',1)});
+  (Array.isArray(M.add)?M.add:[]).forEach(x=>x&&put(x.d,x.t,0));
+  return out.filter(m=>m.d<=REAL).sort((a,b)=>a.d<b.d?-1:1).map(m=>({...m,t:`${+m.d.slice(5,7)}월 ${+m.d.slice(8,10)}일 ${m.label}`}))}
 // 파티원 이름 모음: 같이 간 횟수 순 이름 목록 + 인원별 파티 조합
 // ── 파티 = 같이 간 사람 묶음 (자동). 기준은 보스 설정의 '같이 간 사람'(slot.mates) — 그 기간 설정을 그대로 따라감
 //    같은 사람들이면 한 파티(gk = 이름 가나다순 '·'). 파티 이름은 별명(st.pgrp[gk].name), 순번·금액 방식도 묶음마다(st.pgrp[gk].rot)
@@ -3914,7 +3923,7 @@ function sxCandle(bars,D,ha,S,u){const K=ha?sxHA(D):D,ok=K.filter(Boolean);
   const lg=`<div class="sx-lg"><span><i style="background:var(--tz-up)"></i>오름</span><span><i style="background:var(--tz-down)"></i>내림</span><span class="sx-lgt">몸통 = 그 ${U} 첫 주 → 마지막 주 · 꼬리 = 가장 많이·적게 번 주${ha?' · 앞 캔들과 평균':''}</span></div>`;
   const cols=bars.map((b,i)=>{const k=K[i],d=D[i],pick=b.pick!=null&&!b.pre&&!!k,up=k&&k.c>=k.o,top=k?Math.max(k.o,k.c):0,bot=k?Math.min(k.o,k.c):0;
     const tip=k?`${b.lab} (${d.n}주) · 합계 ${meso(d.s)||0}\n첫 주: ${meso(d.o)||0}\n마지막 주: ${meso(d.c)||0}\n가장 많이 번 주: ${meso(d.h)||0}\n가장 적게 번 주: ${meso(d.l)||0}`:b.lab;
-    return `<div class="sx-bar${b.on?' on':''}${b.pre||!k?' pre':''}${pick?' pick':''}"${pick?` role="button" tabindex="0" data-sxbar="${b.pick}" aria-pressed="${!!b.on}"`:''} title="${esc(tip+(b.mk?` · ${b.mk.label}`:''))}">${b.mk?`<span class="sx-mk"><em>${b.mk.label}</em></span>`:''}<div class="sx-col"><span class="sx-bv num">${k?S(d.s):''}</span><div class="sx-cdl${up?' up':''}">${k?`<i class="w" style="bottom:${P(k.l)};height:${P(k.h-k.l)}"></i><i class="b" style="bottom:${P(bot)};height:max(2px,${P(top-bot)})"></i>`:''}</div></div><span class="sx-bl">${b.lab}</span></div>`}).join('');
+    return `<div class="sx-bar${b.on?' on':''}${b.pre||!k?' pre':''}${pick?' pick':''}"${pick?` role="button" tabindex="0" data-sxbar="${b.pick}" aria-pressed="${!!b.on}"`:''} title="${esc(tip+(b.mk?` · ${b.mk.t||b.mk.label}`:''))}">${b.mk?`<span class="sx-mk"><em>${b.mk.label}</em></span>`:''}<div class="sx-col"><span class="sx-bv num">${k?S(d.s):''}</span><div class="sx-cdl${up?' up':''}">${k?`<i class="w" style="bottom:${P(k.l)};height:${P(k.h-k.l)}"></i><i class="b" style="bottom:${P(bot)};height:max(2px,${P(top-bot)})"></i>`:''}</div></div><span class="sx-bl">${b.lab}</span></div>`}).join('');
   return lg+`<div class="sx-bars cdl${bars.length>6?' many':''}${bars.length>8?' xs':''}">${cols}</div>`}
 // 히트맵(트리맵): 맨 위는 캐릭터 칸 + 물욕 칸. 칸을 누르면 그 안(보스·템)으로 펼쳐지고 위 경로로 되돌아감. 작은 칸은 '그 외'로 묶음
 //  물욕 상자 넓이도 실제 금액 비율 그대로 (크게 먹은 주는 물욕이 화면 대부분 — 캐릭터 상자를 누르면 펼쳐서 볼 수 있음)
@@ -4014,7 +4023,7 @@ function sxChart(bars,series,form,S){
     if(i===cut){const top=segs.reduce((k,v,j)=>v?j:k,-1),rest=segs.reduce((t,v,j)=>j===top?t:t+v,0);
       let ft=.5;if(top>=0&&rest<mx*.85){segs=segs.map((v,j)=>j===top?mx-rest:v);ft=(mx-rest)/mx}else{segs=segs.map(v=>v*mx/tot[i])} // 조각이 여러 개여도 항상 물결·×N
       {brk=`<span class="sx-brk" style="top:${(ft*45).toFixed(1)}%" aria-hidden="true"><svg viewBox="0 0 40 10" preserveAspectRatio="none"><path d="M0 3 Q5 0 10 3 T20 3 T30 3 T40 3 V7 Q35 10 30 7 T20 7 T10 7 T0 7Z"/></svg></span>`}}
-    return `<div class="sx-bar${b.on?' on':''}${b.pre?' pre':''}${b.pick!=null&&!b.pre?' pick':''}"${b.pick!=null&&!b.pre?` role="button" tabindex="0" data-sxbar="${b.pick}" aria-pressed="${!!b.on}"`:''} title="${b.lab}${b.mk?` · ${b.mk.label}`:''}
+    return `<div class="sx-bar${b.on?' on':''}${b.pre?' pre':''}${b.pick!=null&&!b.pre?' pick':''}"${b.pick!=null&&!b.pre?` role="button" tabindex="0" data-sxbar="${b.pick}" aria-pressed="${!!b.on}"`:''} title="${b.lab}${b.mk?` · ${b.mk.t||b.mk.label}`:''}
 ${series.map(g=>g.vals[i]?`${g.name}: ${meso(g.vals[i])}${form==='ratio'&&tot[i]?` (${Math.round(g.vals[i]/tot[i]*100)}%)`:''}
 `:'').join('')}합계: ${meso(tot[i])||0}">${b.mk?`<span class="sx-mk"><em>${b.mk.label}</em></span>`:''}<div class="sx-col"><span class="sx-bv num">${tot[i]?S(tot[i]):''}${i===cut&&brk?`<em class="sx-xn">×${(tot[i]/desc[1]).toFixed(1)}</em>`:''}</span>${form==='group'?(()=>{const bm=Math.max(...series.map(g=>g.vals[i]));return `<div class="sx-grp" style="height:${bm/lmx*100}%">${series.map(g=>`<i style="height:${bm?g.vals[i]/bm*100:0}%;background:${g.c}"></i>`).join('')}</div>`})():''}<div class="sx-stk${brk?' cut':''}"${form==='group'?' hidden':''} style="height:${h}%">${series.map((g,j)=>segs[j]?`<i style="flex:${segs[j]};background:${g.c}"></i>`:'').reverse().join('')}${brk}</div></div><span class="sx-bl">${b.lab}</span></div>`}).join('');
   const svg=form!=='line'?'':`<svg class="sx-plot" viewBox="0 0 ${n*10} 100" preserveAspectRatio="none" aria-hidden="true">${series.map(g=>{const pts=g.vals.map((v,i)=>bars[i].pre?null:`${i*10+5},${(100-v/lmx*100).toFixed(2)}`).filter(Boolean);
@@ -4051,7 +4060,7 @@ function statsView(){
   // 누적은 기록 시작부터라 창 앞 금액(PRE)이 필요하고, 개별은 고른 기간(PART) 구성이 필요 → 같은 방식으로 같이 셈
   const PRE={f:sxMin(),t:sxAdd(bars[0].f,-1),x:1},PART={f:r.from,t:r.to,x:1},nB=bars.length;bars.unshift(PRE);bars.push(PART);
   bars.forEach(b=>{const rr={from:b.f,to:b.t};b.cc=all.clears.filter(e=>sxIn(e.d,rr));b.ll=all.loots.filter(e=>sxIn(e.d,rr));
-    b.g=SX_G.map(g=>sum(b.cc.filter(e=>e.g===g)));b.c=sum(b.cc);b.l=sum(b.ll);b.pre=(b.t<RECORD_START||b.fut)&&!(b.c+b.l);b.mk=marks.find(m=>sxIn(m.d,rr))});
+    b.g=SX_G.map(g=>sum(b.cc.filter(e=>e.g===g)));b.c=sum(b.cc);b.l=sum(b.ll);b.pre=(b.t<RECORD_START||b.fut)&&!(b.c+b.l);b.mk=(mk=>mk.length?{...mk[0],t:mk.map(m=>m.t).join(' · ')}:undefined)(marks.filter(m=>sxIn(m.d,rr)))});
   let series;
   if(x.nol)bars.forEach(b=>{b.ll=[];b.l=0}); // 물욕 빼고 보기: 그래프에서만 뺌
   if(x.gv==='kind'){series=[{name:'결정석',c:'#4AA5D6',line:'#4AA5D6',tip:'',vals:bars.map(b=>b.c)}];if(bars.some(b=>b.l))series.push({name:SX_LOOT.name,c:SX_LOOT.c,line:'#E0588A',tip:'',vals:bars.map(b=>b.l)})}
@@ -4903,7 +4912,7 @@ function renderLayer0(){
       <div class="m-body">${manualBox(fo)}<div class="m-btns"><button class="btn out" type="button" id="ce-cancel">취소</button><button class="btn pri" type="button" id="ce-save" ${fo.lv&&fo.world?'':'disabled'}>저장</button></div></div></div></div>`;
   }
   if(m&&m.kind==='news'&&NEWS){const vs=newsVers(),dd=x=>{const d=x.d.split('-');return `${+d[1]}월 ${+d[2]}일`},ul=x=>`<ul class="nw-ul">${x.l.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
-    h+=`<div class="scrim" id="scrim"><div class="modal fm" role="dialog" aria-modal="true" aria-labelledby="nw-title" style="max-width:420px"><div class="m-head"><span id="nw-title">패치 노트<em class="fm-cf">v${esc(NEWS.v)}</em></span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
+    h+=`<div class="scrim" id="scrim"><div class="modal fm" role="dialog" aria-modal="true" aria-labelledby="nw-title" style="max-width:420px"><div class="m-head"><span id="nw-title">패치 노트<em class="fm-cf">v${esc(vs.length?vs[0].v:NEWS.v)}</em></span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
       <div class="m-body">${vs.length>1?`<p class="nw-d">못 본 업데이트 ${vs.length}개를 최신부터 보여 드려요.</p>${vs.map(x=>`<div class="note nw-v"><h3>v${esc(x.v)}<small>${dd(x)}</small></h3>${ul(x)}</div>`).join('')}`:`<p class="nw-d">${dd(vs[0])} 업데이트</p><div class="note">${ul(vs[0])}</div>`}
       <div class="m-btns"><button class="btn dark" type="button" id="m-cancel">확인</button></div></div></div></div>`;
   }
@@ -5374,12 +5383,14 @@ render();paintTimers();
 var NEWS_PEND=false;
 const newsList=()=>NEWS.l||[...(NEWS.n||[]),...(NEWS.c||[]),...(NEWS.f||[])]; // 패치 노트 한 목록
 let NEWS_SEEN0=null; // 들어올 때 마지막으로 본 버전 — 그보다 새 버전을 최신부터 이어서 (최대 3개)
-const newsVers=()=>[{v:NEWS.v,d:NEWS.d,l:newsList()},...(NEWS.prev||[])].filter((x,i)=>x.l&&x.l.length&&(i===0||(NEWS_SEEN0&&verN(x.v)>verN(NEWS_SEEN0)))).slice(0,3);
+const newsVers=()=>{const all=[{v:NEWS.v,d:NEWS.d,l:newsList()},...(NEWS.prev||[])].filter(x=>x.l&&x.l.length);
+  const out=all.filter((x,i)=>NEWS_SEEN0?verN(x.v)>verN(NEWS_SEEN0):i===0).slice(0,3); // 마지막으로 본 버전보다 새 것 (굵은 줄이 없는 버전은 건너뜀 — 0.24.1처럼 고친 것만 있어도 0.24.0 노트는 보이게)
+  return out};
 function newsSeen(){try{localStorage.setItem('mepuri-seen-ver',NEWS.v)}catch(e){}}
 const verN=v=>String(v||'').split('.').reduce((a,n)=>a*1000+(+n||0),0);
 (function(){if(typeof NEWS==='undefined'||!NEWS)return;let seen=null;try{seen=localStorage.getItem('mepuri-seen-ver')}catch(e){}NEWS_SEEN0=seen;
   if(seen?verN(seen)>=verN(NEWS.v):!HAD_DATA){if(!seen)newsSeen();return} // 처음 쓰는 사람은 조용히 넘김
-  if(newsList().length){NEWS_PEND=true;renderLayer()}else newsSeen()})();
+  if(newsVers().length){NEWS_PEND=true;renderLayer()}else newsSeen()})();
 let VER_AT=0,VER_TOLD=false;
 function verCheck(){if(!SAME_API||VER_TOLD||typeof NEWS==='undefined'||!NEWS||Date.now()-VER_AT<300000)return;VER_AT=Date.now();
   fetch('/version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.v&&verN(j.v)>verN(NEWS.v)&&!VER_TOLD){VER_TOLD=true;toastAct('새 버전이 나왔어요','새로고침',()=>location.reload(),0)}}).catch(()=>{})}

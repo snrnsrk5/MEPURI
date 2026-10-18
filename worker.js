@@ -52,6 +52,7 @@
  *                                    k='tiers'  물욕 등급 기준 { black, red, dia, gold, silver, bronze } (억 이상)
  *                                    k='lootOn' 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템…] }
  *                                    k='crystal' 결정석 가격표·출시일·안내 { tables:[{from:{D,W,M},price}], open, notice } — 사이트는 없으면 페이지 안 기본 표
+ *                                    k='marks'   그래프 점선 { auto:{날짜:{t,off}}, add:[{d,t}] } — 가격표 적용일 점선의 이름·숨김 + 직접 넣은 점선
  *                                    → GET /api/loot-prices 응답의 conf로 사이트에 전달
  *   POST /api/admin/stats            { days } 방문 통계 (최근 days일, 1~90) — 날짜별 조회수·실사용자·로그인·새 방문·체류, 가입자 수
  *
@@ -489,7 +490,7 @@ async function lootPrices(req, env, url, cors) {
     const k = String(body.k || '');
     if (!CONF_KEYS.includes(k)) throw new HttpError(400, 'CONF', '없는 설정이에요');
     if (body.v === null) { await env.DB.prepare('DELETE FROM site_conf WHERE k = ?1').bind(k).run(); await bumpVer(env.DB); return json({ ok: true, k, reset: true }, 200, { ...noStore(), ...keep }); }
-    const v = k === 'tiers' ? confTiers(body.v) : k === 'crystal' ? confCrystal(body.v) : confLootOn(body.v);
+    const v = k === 'tiers' ? confTiers(body.v) : k === 'crystal' ? confCrystal(body.v) : k === 'marks' ? confMarks(body.v) : confLootOn(body.v);
     await env.DB.prepare('INSERT INTO site_conf (k, v, updated_at) VALUES (?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET v = ?2, updated_at = ?3')
       .bind(k, JSON.stringify(v), new Date().toISOString()).run();
     await bumpVer(env.DB);
@@ -581,7 +582,7 @@ async function bumpVer(db) {
 // 사이트 설정 (관리 화면)
 //   tiers  : 물욕 등급 기준 { black, red, dia, gold, silver, bronze } 억 이상 — 위 등급일수록 커야 함
 //   lootOn : 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템이름…] } — 적은 칸만 바뀌고 나머지는 페이지 기본값
-const CONF_KEYS = ['tiers', 'lootOn', 'crystal'], TIER_KEYS = ['black', 'red', 'dia', 'gold', 'silver', 'bronze'];
+const CONF_KEYS = ['tiers', 'lootOn', 'crystal', 'marks'], TIER_KEYS = ['black', 'red', 'dia', 'gold', 'silver', 'bronze'];
 function confTiers(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw new HttpError(400, 'TIERS', '등급 기준이 이상해요');
   const out = {}; let prev = Infinity;
@@ -639,6 +640,33 @@ function confCrystal(v) {
     notice = { id: n.id, text };
   }
   return notice ? { tables, open, notice } : { tables, open };
+}
+// 그래프 점선 { auto:{'2026.09.17':{t:'이름', off:true}}, add:[{d:'2026.08.20', t:'벨로나 출시'}] } — 이름은 1~10자
+function confMarks(v) {
+  const bad = m => new HttpError(400, 'MARKS', m);
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw bad('점선 설정이 이상해요');
+  const day = d => typeof d === 'string' && d !== ALL_DAY && validDay(d);
+  const txt = (t, opt) => { if (t == null && opt) return ''; if (typeof t !== 'string') throw bad('점선 이름이 이상해요'); const x = t.replace(/\s+/g, ' ').trim(); if ((!x && !opt) || x.length > 10) throw bad('점선 이름은 1 ~ 10자로 적어 주세요'); return x; };
+  const auto = {}, add = [];
+  if (v.auto != null) {
+    if (typeof v.auto !== 'object' || Array.isArray(v.auto) || Object.keys(v.auto).length > 60) throw bad('점선 설정이 이상해요');
+    for (const [d, o] of Object.entries(v.auto)) {
+      if (!day(d) || !o || typeof o !== 'object' || Array.isArray(o)) throw bad('점선 날짜가 이상해요: ' + String(d).slice(0, 12));
+      const t = txt(o.t, true), off = o.off === true;
+      if (t || off) auto[d] = off ? (t ? { t, off } : { off }) : { t };
+    }
+  }
+  if (v.add != null) {
+    if (!Array.isArray(v.add) || v.add.length > 30) throw bad('직접 넣은 점선이 너무 많아요 (30개까지)');
+    const seen = new Set();
+    for (const o of v.add) {
+      if (!o || typeof o !== 'object' || !day(o.d)) throw bad('점선 날짜는 2026.10.22 모양으로 적어 주세요');
+      if (seen.has(o.d)) throw bad(`${o.d} 점선이 두 번 들어 있어요`); seen.add(o.d);
+      add.push({ d: o.d, t: txt(o.t, false) });
+    }
+    add.sort((a, b) => (a.d < b.d ? -1 : 1));
+  }
+  return { auto, add };
 }
 function confLootOn(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw new HttpError(400, 'LOOT_ON', '기본 물욕템 설정이 이상해요');

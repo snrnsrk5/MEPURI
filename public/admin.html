@@ -257,7 +257,9 @@ textarea.inp{width:100%;height:120px;padding:8px 10px;resize:vertical;line-heigh
 .cm-mf{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--border)}
 .btn.dg{background:var(--danger);color:#fff}.btn.dg:disabled{opacity:.4;cursor:not-allowed}
 .foot .warn{color:var(--danger);font-weight:700}
-@media (max-width:560px){.cm-op{grid-template-columns:minmax(0,1fr) 104px 52px}}
+.cm-op.mk{grid-template-columns:96px minmax(0,1fr) auto}.cm-op.mk .mk-d{font-weight:600;color:var(--text2)}.cm-op.mk .mk-l{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}.cm-op.mk .mk-l .inp{width:170px;text-align:left}
+.cm-op.mk.off .mk-d,.cm-op.mk.off .mk-l{opacity:.45}.cm-op.mk.bad .inp{border-color:var(--danger);background:var(--danger-bg)}
+@media (max-width:560px){.cm-op{grid-template-columns:minmax(0,1fr) 104px 52px}.cm-op.mk{grid-template-columns:82px minmax(0,1fr) auto}.cm-op.mk .mk-l .inp{width:100%}}
 @media (max-width:560px){.tr{grid-template-columns:40px 52px 1fr;}.tr .ex{grid-column:1/-1;padding-left:52px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.bb{height:40px;gap:6px;padding:0 6px 0 4px}.bb img,.bb .ph{width:28px;height:28px}.lo{grid-template-columns:20px 36px minmax(0,1fr) auto;gap:8px}}
 </style>
 </head>
@@ -399,7 +401,7 @@ function render(){
     S.busy=true;render();try{const r=await api('/api/admin/prices',{d:ALL_KEY,p});toast(`시세 ${r.count}개를 저장했어요 · 모든 날짜에 적용돼요`);await refresh();loadVals()}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}S.busy=false;render()};
 }
 // ── 탭 ──
-function tabsHTML(){const cP=allNames().filter(n=>(S.vals[n]??'')!==saved(n)).length,cL=CELLS.filter(lootDirty).length,cT=tierDirty()?1:0,cC=CR?crDirty().n:0;
+function tabsHTML(){const cP=allNames().filter(n=>(S.vals[n]??'')!==saved(n)).length,cL=CELLS.filter(lootDirty).length,cT=tierDirty()?1:0,cC=(CR?crDirty().n:0)+(MK&&mkDirty()?1:0);
   const tb=(k,l,n)=>`<button class="tab${S.tab===k?' on':''}" type="button" data-tab="${k}" role="tab" aria-selected="${S.tab===k}">${l}${n?`<span class="n">${n}</span>`:''}</button>`;
   return `<div class="tabs" role="tablist">${tb('price','물욕 시세',cP)}${tb('loot','기본 물욕템',cL)}${tb('tier','등급 기준',cT)}${tb('cry','결정석 가격',cC)}${tb('stat','방문 통계',0)}</div>`}
 function bindTabs(){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(S.tab===b.dataset.tab)return;S.tab=b.dataset.tab;S.arm=false;saveView();render();window.scrollTo(0,0)})}
@@ -408,7 +410,7 @@ const FX='<span class="gw" aria-hidden="true"></span><span class="gl" aria-hidde
 function icHTML(n,cls,T,v){const ic=ICONS[n]||ICONS[pkey(n)],tr=v!=null?tierAt(v,T):isBox(n)?'':tierOf(pkey(n),T);
   return ic?`<span class="ic sx-ifr${tr?' '+tr:''}${cls?' '+cls:''}"><img src="${ic}" alt="">${tr?FX:''}</span>`:`<span class="ic gm${cls?' '+cls:''}" title="아이콘 없음 (사이트에서도 보석 모양)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 21L8 9l4-6 4 6-4 12"/></svg></span>`}
 async function saveConf(k,v,msg){S.busy=true;render();try{await api('/api/admin/conf',{k,v});toast(msg);await refresh();
-  if(k==='lootOn')CELLS.forEach(c=>S.on[c.k]=new Set(srvOn(c)));else if(k==='tiers')S.tv=srvTiers();else if(k==='crystal')crLoad()}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}S.busy=false;render()}
+  if(k==='lootOn')CELLS.forEach(c=>S.on[c.k]=new Set(srvOn(c)));else if(k==='tiers')S.tv=srvTiers();else if(k==='crystal')crLoad();else if(k==='marks')mkLoad()}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}S.busy=false;render()}
 
 // ── 기본 물욕템: 보스·난이도마다 '물욕템 획득 기록' 창에 처음부터 켜 둘 템 ──
 function renderLoot(demo){const app=$('#app'),b=bossOf(S.boss)||BOSSL[0],cell=cellOf(b,S.diff),on=S.on[cell.k],cD=CELLS.filter(lootDirty).length,cC=CELLS.filter(lootSaved).length;
@@ -538,6 +540,7 @@ function renderCry(demo){if(!CR)crLoad();const app=$('#app'),i=CR.i,t=CR.T[i],Dt
     <div class="card" style="padding:8px"><div class="cm-sh"><b>출시일</b><span>이 날 전 날짜에는 그 보스(난이도)를 기록할 수 없어요 · 모든 가격표에 같이 적용</span></div>
       ${opRows||'<div class="empty">없어요</div>'}
       <div class="cm-oa"><select id="cob">${CORD.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select><select id="cod"><option value="">모든 난이도</option>${CDK.map(d=>`<option value="${d}">${DKO[d]}</option>`).join('')}</select><input class="inp num" id="cov" placeholder="2026.10.22" style="width:110px"><button class="btn out" id="coa">출시일 넣기</button></div></div>
+    ${mkHTML()}
     <div class="foot"><span class="hint">${Dt.n?`바꾼 것 <b style="color:var(--accent)">${Dt.n}개</b>${bigN?` · <span class="warn">${bigN}칸은 크게 바뀌었어요</span>`:''}`:'바뀐 것 없음'}${errN?` · <span class="warn">빨간 칸 ${errN}개를 고쳐 주세요</span>`:''}</span><span class="sp"></span>${B.srv?`<button class="btn danger${CR.arm==='rst'?' arm':''}" id="crrst">${CR.arm==='rst'?'한 번 더 누르면 페이지 표로':'저장한 표 지우기'}</button>`:''}${Dt.n?'<button class="btn out" id="crund">되돌리기</button>':''}<button class="btn pri" id="crsave" ${S.busy||!Dt.n||errN?'disabled':''}>저장${Dt.n?` (${Dt.n})`:''}</button></div>
     ${CR.m?crModal(Dt):''}`;
   bindTabs();
@@ -558,8 +561,40 @@ function renderCry(demo){if(!CR)crLoad();const app=$('#app'),i=CR.i,t=CR.T[i],Dt
   if($('#crrst'))$('#crrst').onclick=()=>{if(CR.arm!=='rst'){CR.arm='rst';renderCry(demo);setTimeout(()=>{if(CR&&CR.arm==='rst'){CR.arm=false;if(S.tab==='cry')render()}},3000);return}
     CR.arm=false;CR.m={reset:true,ok:false,note:true,text:NOTE_DEF};renderCry(demo)};
   $('#crsave').onclick=()=>{const n=crNeedNote(Dt);CR.m={ok:false,note:n,text:NOTE_DEF};renderCry(demo)};
+  bindMk(demo);
   if(CR.m)bindCrModal(demo,Dt);
 }
+
+// ── 그래프 점선 (서버 conf.marks): 수익 관리 그래프에 세로 점선으로 표시 ──
+//  가격표 적용일(일간·주간)마다 자동으로 '결정석 조정' 점선 — 이름 바꾸기·숨기기 / 다른 날(보스 출시 등)은 직접 넣기. 이름은 10자까지
+let MK=null;
+const mkNorm=m=>{const auto={},add=[];Object.entries((m&&m.auto)||{}).forEach(([d,o])=>{const t=String((o&&o.t)||'').replace(/\s+/g,' ').trim(),off=!!(o&&o.off);if(t||off)auto[d]=off?(t?{t,off}:{off}):{t}});
+  ((m&&m.add)||[]).forEach(o=>{if(o&&o.d)add.push({d:o.d,t:String(o.t||'').replace(/\s+/g,' ').trim()})});add.sort((a,b)=>a.d<b.d?-1:1);return {auto,add}};
+function mkLoad(){MK={...mkNorm(S.conf.marks),nd:'',nt:''}}
+const mkSaved=()=>JSON.stringify(mkNorm(S.conf.marks)),mkNow=()=>JSON.stringify(mkNorm(MK)),mkDirty=()=>!!MK&&mkSaved()!==mkNow();
+const mkBad=()=>MK.add.some(o=>!isDay(o.d)||!o.t||o.t.length>10)||Object.values(MK.auto).some(o=>(o.t||'').length>10);
+function mkHTML(){if(!MK)mkLoad();const today=kday(0),dates=[...new Set((CR?CR.T:CODE_T).map(t=>t.from.W).filter(isDay))].sort();
+  const fut=d=>d>today?'<em class="cm-t tS">그날부터 보여요</em>':'';
+  const autoRows=dates.map(d=>{const o=MK.auto[d]||{},on=!o.off;return [d,`<div class="cm-op mk${on?'':' off'}"><span class="mk-d num">${d}</span><span class="mk-l"><input class="inp" data-mka="${d}" value="${esc(o.t||'')}" placeholder="결정석 조정" maxlength="10" aria-label="${d} 점선 이름"><small class="hint">가격표 적용일</small>${fut(d)}</span><label class="ck"><input type="checkbox" data-mkon="${d}" ${on?'checked':''}>보이기</label></div>`]});
+  const addRows=MK.add.map((o,j)=>[o.d,`<div class="cm-op mk${!isDay(o.d)||!o.t?' bad':''}"><span class="mk-d num">${esc(o.d)}</span><span class="mk-l"><input class="inp" data-mkt="${j}" value="${esc(o.t)}" placeholder="이름 (10자까지)" maxlength="10" aria-label="${esc(o.d)} 점선 이름"><small class="hint">직접 넣음</small>${fut(o.d)}</span><button class="btn out" data-mkx="${j}">빼기</button></div>`]);
+  const d=mkDirty(),bad=mkBad();
+  return `<div class="card" style="padding:8px"><div class="cm-sh"><b>그래프 점선</b><span>수익 관리 그래프에 세로 점선으로 보여요 · 아직 안 온 날은 그날부터</span></div>
+    ${[...autoRows,...addRows].sort((x,y)=>x[0]<y[0]?-1:1).map(x=>x[1]).join('')}
+    <div class="cm-oa"><input class="inp num" id="mknd" placeholder="2026.08.20" style="width:110px" value="${esc(MK.nd)}"><input class="inp" id="mknt" placeholder="이름 (예: 벨로나 출시)" maxlength="10" style="width:170px" value="${esc(MK.nt)}"><button class="btn out" id="mkadd">점선 넣기</button>
+      <span class="sp" style="flex:1"></span>${d?'<button class="btn out" id="mkund">되돌리기</button>':''}<button class="btn pri" id="mksave" ${S.busy||!d||bad?'disabled':''}>점선 저장</button></div></div>`}
+function bindMk(demo){const keep=f=>()=>{const y=window.scrollY;f();renderCry(demo);window.scrollTo(0,y)};
+  document.querySelectorAll('[data-mka]').forEach(i=>{i.oninput=()=>{const d=i.dataset.mka,o={...(MK.auto[d]||{}),t:i.value};MK.auto[d]=o};i.onchange=keep(()=>{})});
+  document.querySelectorAll('[data-mkon]').forEach(i=>i.onchange=keep(()=>{const d=i.dataset.mkon,o={...(MK.auto[d]||{})};if(i.checked)delete o.off;else o.off=true;MK.auto[d]=o}));
+  document.querySelectorAll('[data-mkt]').forEach(i=>{i.oninput=()=>{MK.add[+i.dataset.mkt].t=i.value};i.onchange=keep(()=>{})});
+  document.querySelectorAll('[data-mkx]').forEach(b=>b.onclick=keep(()=>{MK.add.splice(+b.dataset.mkx,1)}));
+  const nd=$('#mknd'),nt=$('#mknt');nd.oninput=()=>{MK.nd=nd.value};nt.oninput=()=>{MK.nt=nt.value};
+  $('#mkadd').onclick=keep(()=>{const d=MK.nd.trim().replace(/[-/]/g,'.'),t=MK.nt.replace(/\s+/g,' ').trim();
+    if(!isDay(d)){toast('날짜는 2026.08.20 모양으로 적어 주세요');return}if(!t){toast('점선 이름을 적어 주세요');return}
+    const tabled=(CR?CR.T:CODE_T).some(x=>x.from.W===d);if(tabled){toast('가격표 적용일이라 이미 점선이 있어요. 위에서 이름을 바꿔 주세요');return}
+    if(MK.add.some(o=>o.d===d)){toast('그 날짜엔 이미 점선이 있어요');return}MK.add.push({d,t});MK.add.sort((a,b)=>a.d<b.d?-1:1);MK.nd='';MK.nt='';toast('점선을 넣었어요 (저장 전)')});
+  if($('#mkund'))$('#mkund').onclick=keep(()=>mkLoad());
+  $('#mksave').onclick=()=>{const v=mkNorm(MK),empty=!Object.keys(v.auto).length&&!v.add.length;
+    saveConf('marks',empty?null:v,'그래프 점선을 저장했어요 · 열어 둔 사이트도 1~2분 안에 바뀌어요')}}
 const NOTE_DEF='결정석 가격표에 잘못 적힌 값이 있어서 바로잡았어요. 불편을 드려 죄송해요.'; // 사이트가 아래에 '적어 두신 클리어 N개의 금액을 다시 계산했어요'를 붙임
 // 사과 안내가 필요한 경우: 이미 시작한 기간의 가격을 고침(미정 → 값 채우기는 빼고) · 시작한 표의 적용일을 바꾸거나 뺌 · 지난 날짜부터 적용되는 새 표
 function crNeedNote(Dt){const t=kday(0),B=CR.base;
