@@ -530,7 +530,123 @@ input,select{font-family:inherit;font-size:13px;color:var(--input-fg)}
 .fsec{display:flex;flex-direction:column;gap:10px;padding:12px 4px;border-bottom:1px dashed var(--dash)}
 .fsec:last-child{border-bottom:0}
 .tot-sep{border-top:1px dashed var(--dash);margin:2px -4px 4px}
+/* 컬러 프리셋 색: 바탕 모드(라이트·다크) 위에 얹는 색 — 배너·맨 위 줄까지 같이 (딥다크는 검정 그대로, 강조 색만) */
+:root[data-pal="sepia"]:not([data-mode="deep"]){--bg:#EFE7D6;--card:#FBF7EE;--frame:#E5DCC8;--seg:#E6DCC7;--soft:#F4EDDF;--border:#E2D7C0;--border2:#CDBFA3;--text:#3E3123;--text2:#5A4836;--sub:#7A6852;--muted:#A0907A;--faint:#BCAE97;--name:#3E3123;--price:#3E3123;--dash:#D9CDB4;--accent:#B8662E;--accent-hover:#9F5524;--accent-soft:#F3DFCB;--accent-bg:#FBF3EA;--modal-top:#8C7A62;--cm-head:#DDD2BB;--cm-card:#F4EDDF;--cm-on:#6B5A45;--top:#2A231B;--refresh-bg:#7A6550;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#5E4A35;--input-bd:#CDBFA3;--out-bd:#CDBFA3;--toggle-off:#CDBFA3;--scroll-thumb:#CDBFA3}
+@media (prefers-color-scheme: dark){:root[data-pal="sepia"]:not([data-theme="light"]):not([data-mode="deep"]){--bg:#1B1713;--card:#25201A;--frame:#2D2720;--seg:#312A22;--soft:#2A241D;--border:#3A3229;--border2:#54493B;--text:#EFE6D7;--text2:#D8CCB8;--sub:#B3A68F;--muted:#8C7F6B;--faint:#62584A;--name:#EFE6D7;--price:#EFE6D7;--dash:#3A3229;--accent:#E08F52;--accent-hover:#EBA168;--accent-soft:#3D2A1A;--accent-bg:#2B2017;--modal-top:#3E3428;--cm-head:#2E271F;--cm-card:#2A241D;--cm-on:#5A4A38;--top:#120E0A;--refresh-bg:#5A4A38;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#3B2F23;--input-bd:#54493B;--out-bd:#54493B;--toggle-off:#54493B;--scroll-thumb:#54493B}}
+:root[data-pal="sepia"][data-theme="dark"]:not([data-mode="deep"]){--bg:#1B1713;--card:#25201A;--frame:#2D2720;--seg:#312A22;--soft:#2A241D;--border:#3A3229;--border2:#54493B;--text:#EFE6D7;--text2:#D8CCB8;--sub:#B3A68F;--muted:#8C7F6B;--faint:#62584A;--name:#EFE6D7;--price:#EFE6D7;--dash:#3A3229;--accent:#E08F52;--accent-hover:#EBA168;--accent-soft:#3D2A1A;--accent-bg:#2B2017;--modal-top:#3E3428;--cm-head:#2E271F;--cm-card:#2A241D;--cm-on:#5A4A38;--top:#120E0A;--refresh-bg:#5A4A38;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#3B2F23;--input-bd:#54493B;--out-bd:#54493B;--toggle-off:#54493B;--scroll-thumb:#54493B}
+:root[data-pal="sepia"][data-mode="deep"]{--accent:#E08F52;--accent-hover:#EBA168;--accent-line:#E08F52}
+:root[data-pal="sakura"]:not([data-mode="deep"]){--bg:#FBF0F3;--card:#FFFFFF;--frame:#F2E1E7;--seg:#F1E0E6;--soft:#FBF2F5;--border:#F0DCE3;--border2:#DDBDC8;--text:#3F2832;--text2:#5C3E4A;--sub:#866672;--muted:#AE919B;--faint:#C9B2BA;--name:#3F2832;--price:#3F2832;--dash:#EBD3DB;--accent:#D9547F;--accent-hover:#C2436D;--accent-soft:#FADCE6;--accent-bg:#FFF5F8;--modal-top:#A0788A;--cm-head:#EBD5DD;--cm-card:#FBF2F5;--cm-on:#7A4A5E;--top:#2A1C22;--refresh-bg:#8A5670;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#6E3C54;--input-bd:#DDBDC8;--out-bd:#DDBDC8;--toggle-off:#DDBDC8;--scroll-thumb:#DDBDC8}
+@media (prefers-color-scheme: dark){:root[data-pal="sakura"]:not([data-theme="light"]):not([data-mode="deep"]){--bg:#1A1316;--card:#241A1F;--frame:#2D2126;--seg:#31242A;--soft:#2A1F24;--border:#3B2A31;--border2:#57404A;--text:#F3E6EB;--text2:#DCC6CF;--sub:#B597A3;--muted:#8E727D;--faint:#634F57;--name:#F3E6EB;--price:#F3E6EB;--dash:#3B2A31;--accent:#F07FA3;--accent-hover:#F594B3;--accent-soft:#45202E;--accent-bg:#2E1820;--modal-top:#3F2B34;--cm-head:#2F2228;--cm-card:#2A1F24;--cm-on:#6A4155;--top:#120A0E;--refresh-bg:#6A4155;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#4A2636;--input-bd:#57404A;--out-bd:#57404A;--toggle-off:#57404A;--scroll-thumb:#57404A}}
+:root[data-pal="sakura"][data-theme="dark"]:not([data-mode="deep"]){--bg:#1A1316;--card:#241A1F;--frame:#2D2126;--seg:#31242A;--soft:#2A1F24;--border:#3B2A31;--border2:#57404A;--text:#F3E6EB;--text2:#DCC6CF;--sub:#B597A3;--muted:#8E727D;--faint:#634F57;--name:#F3E6EB;--price:#F3E6EB;--dash:#3B2A31;--accent:#F07FA3;--accent-hover:#F594B3;--accent-soft:#45202E;--accent-bg:#2E1820;--modal-top:#3F2B34;--cm-head:#2F2228;--cm-card:#2A1F24;--cm-on:#6A4155;--top:#120A0E;--refresh-bg:#6A4155;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#4A2636;--input-bd:#57404A;--out-bd:#57404A;--toggle-off:#57404A;--scroll-thumb:#57404A}
+:root[data-pal="sakura"][data-mode="deep"]{--accent:#F07FA3;--accent-hover:#F594B3;--accent-line:#F07FA3}
+:root[data-pal="mint"]:not([data-mode="deep"]){--bg:#ECF5F1;--card:#FFFFFF;--frame:#DCEBE4;--seg:#DBEAE3;--soft:#F0F7F4;--border:#D9E8E1;--border2:#B5CEC3;--text:#1D3A32;--text2:#30544A;--sub:#5A786F;--muted:#88A39A;--faint:#ABC0B9;--name:#1D3A32;--price:#1D3A32;--dash:#CFE1D9;--accent:#159A74;--accent-hover:#0F8362;--accent-soft:#D2EFE5;--accent-bg:#F2FBF8;--modal-top:#5F8C7E;--cm-head:#D0E3DB;--cm-card:#F0F7F4;--cm-on:#2F5E51;--top:#13201C;--refresh-bg:#3D7062;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#255A4D;--input-bd:#B5CEC3;--out-bd:#B5CEC3;--toggle-off:#B5CEC3;--scroll-thumb:#B5CEC3}
+@media (prefers-color-scheme: dark){:root[data-pal="mint"]:not([data-theme="light"]):not([data-mode="deep"]){--bg:#111816;--card:#18221F;--frame:#1F2B27;--seg:#222F2B;--soft:#1C2724;--border:#2A3833;--border2:#40544D;--text:#E3F1EC;--text2:#C3D8D0;--sub:#97B0A7;--muted:#6F8981;--faint:#4D605A;--name:#E3F1EC;--price:#E3F1EC;--dash:#2A3833;--accent:#38C79A;--accent-hover:#52D4AB;--accent-soft:#163A2F;--accent-bg:#122620;--modal-top:#24352F;--cm-head:#1F2B27;--cm-card:#1C2724;--cm-on:#2E5A4C;--top:#0A110F;--refresh-bg:#2E5A4C;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#1B3B33;--input-bd:#40544D;--out-bd:#40544D;--toggle-off:#40544D;--scroll-thumb:#40544D}}
+:root[data-pal="mint"][data-theme="dark"]:not([data-mode="deep"]){--bg:#111816;--card:#18221F;--frame:#1F2B27;--seg:#222F2B;--soft:#1C2724;--border:#2A3833;--border2:#40544D;--text:#E3F1EC;--text2:#C3D8D0;--sub:#97B0A7;--muted:#6F8981;--faint:#4D605A;--name:#E3F1EC;--price:#E3F1EC;--dash:#2A3833;--accent:#38C79A;--accent-hover:#52D4AB;--accent-soft:#163A2F;--accent-bg:#122620;--modal-top:#24352F;--cm-head:#1F2B27;--cm-card:#1C2724;--cm-on:#2E5A4C;--top:#0A110F;--refresh-bg:#2E5A4C;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#1B3B33;--input-bd:#40544D;--out-bd:#40544D;--toggle-off:#40544D;--scroll-thumb:#40544D}
+:root[data-pal="mint"][data-mode="deep"]{--accent:#38C79A;--accent-hover:#52D4AB;--accent-line:#38C79A}
+:root[data-pal="navy"]:not([data-mode="deep"]){--bg:#EDF1F8;--card:#FFFFFF;--frame:#DDE4F0;--seg:#DCE3EF;--soft:#F1F4FA;--border:#DAE1EE;--border2:#B9C5DA;--text:#1C2A44;--text2:#2F4266;--sub:#5D6E8C;--muted:#8B9AB3;--faint:#AFBACC;--name:#1C2A44;--price:#1C2A44;--dash:#D0D9E8;--accent:#2F7CF0;--accent-hover:#1F68D6;--accent-soft:#D9E7FD;--accent-bg:#F3F7FF;--modal-top:#5E7092;--cm-head:#D3DCEB;--cm-card:#F1F4FA;--cm-on:#2E4470;--top:#141C2C;--refresh-bg:#47629A;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2B4A80;--input-bd:#B9C5DA;--out-bd:#B9C5DA;--toggle-off:#B9C5DA;--scroll-thumb:#B9C5DA}
+@media (prefers-color-scheme: dark){:root[data-pal="navy"]:not([data-theme="light"]):not([data-mode="deep"]){--bg:#0E1524;--card:#162033;--frame:#1C283E;--seg:#1F2C44;--soft:#1A2539;--border:#273550;--border2:#3C4E6E;--text:#E2EAF7;--text2:#C2D0E6;--sub:#97A8C4;--muted:#6F81A0;--faint:#4A5874;--name:#E2EAF7;--price:#E2EAF7;--dash:#273550;--accent:#5CA2FF;--accent-hover:#78B3FF;--accent-soft:#15305A;--accent-bg:#11223F;--modal-top:#22324F;--cm-head:#1C283E;--cm-card:#1A2539;--cm-on:#2D4A7A;--top:#080D18;--refresh-bg:#2D4A7A;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#1C3058;--input-bd:#3C4E6E;--out-bd:#3C4E6E;--toggle-off:#3C4E6E;--scroll-thumb:#3C4E6E}}
+:root[data-pal="navy"][data-theme="dark"]:not([data-mode="deep"]){--bg:#0E1524;--card:#162033;--frame:#1C283E;--seg:#1F2C44;--soft:#1A2539;--border:#273550;--border2:#3C4E6E;--text:#E2EAF7;--text2:#C2D0E6;--sub:#97A8C4;--muted:#6F81A0;--faint:#4A5874;--name:#E2EAF7;--price:#E2EAF7;--dash:#273550;--accent:#5CA2FF;--accent-hover:#78B3FF;--accent-soft:#15305A;--accent-bg:#11223F;--modal-top:#22324F;--cm-head:#1C283E;--cm-card:#1A2539;--cm-on:#2D4A7A;--top:#080D18;--refresh-bg:#2D4A7A;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#1C3058;--input-bd:#3C4E6E;--out-bd:#3C4E6E;--toggle-off:#3C4E6E;--scroll-thumb:#3C4E6E}
+:root[data-pal="navy"][data-mode="deep"]{--accent:#5CA2FF;--accent-hover:#78B3FF;--accent-line:#5CA2FF}
+:root[data-pal="purple"]:not([data-mode="deep"]){--bg:#F2EFF9;--card:#FFFFFF;--frame:#E5E0F2;--seg:#E4DFF1;--soft:#F5F2FB;--border:#E2DCF0;--border2:#C5BCE0;--text:#2A2340;--text2:#433A62;--sub:#6E668C;--muted:#9A93B5;--faint:#BBB5D0;--name:#2A2340;--price:#2A2340;--dash:#D8D1EA;--accent:#7C5CE0;--accent-hover:#6A4AD0;--accent-soft:#E7DFFC;--accent-bg:#F7F4FF;--modal-top:#7468A0;--cm-head:#DCD5EE;--cm-card:#F5F2FB;--cm-on:#4A3E78;--top:#1C1828;--refresh-bg:#6656A0;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#4C3D7C;--input-bd:#C5BCE0;--out-bd:#C5BCE0;--toggle-off:#C5BCE0;--scroll-thumb:#C5BCE0}
+@media (prefers-color-scheme: dark){:root[data-pal="purple"]:not([data-theme="light"]):not([data-mode="deep"]){--bg:#15121F;--card:#1E1A2C;--frame:#252036;--seg:#29233B;--soft:#221D31;--border:#322B47;--border2:#4A4166;--text:#ECE8F7;--text2:#CEC7E6;--sub:#A69EC4;--muted:#7E769E;--faint:#575073;--name:#ECE8F7;--price:#ECE8F7;--dash:#322B47;--accent:#A58BFF;--accent-hover:#B7A1FF;--accent-soft:#2E2350;--accent-bg:#221A3A;--modal-top:#2E2747;--cm-head:#252036;--cm-card:#221D31;--cm-on:#4A3E78;--top:#0D0B15;--refresh-bg:#4A3E78;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2E2550;--input-bd:#4A4166;--out-bd:#4A4166;--toggle-off:#4A4166;--scroll-thumb:#4A4166}}
+:root[data-pal="purple"][data-theme="dark"]:not([data-mode="deep"]){--bg:#15121F;--card:#1E1A2C;--frame:#252036;--seg:#29233B;--soft:#221D31;--border:#322B47;--border2:#4A4166;--text:#ECE8F7;--text2:#CEC7E6;--sub:#A69EC4;--muted:#7E769E;--faint:#575073;--name:#ECE8F7;--price:#ECE8F7;--dash:#322B47;--accent:#A58BFF;--accent-hover:#B7A1FF;--accent-soft:#2E2350;--accent-bg:#221A3A;--modal-top:#2E2747;--cm-head:#252036;--cm-card:#221D31;--cm-on:#4A3E78;--top:#0D0B15;--refresh-bg:#4A3E78;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2E2550;--input-bd:#4A4166;--out-bd:#4A4166;--toggle-off:#4A4166;--scroll-thumb:#4A4166}
+:root[data-pal="purple"][data-mode="deep"]{--accent:#A58BFF;--accent-hover:#B7A1FF;--accent-line:#A58BFF}
+/* 딥다크 묶음: 고대비 (검정 + 흰 글씨 + 노랑) */
+:root[data-pal="hc"][data-mode="deep"]{--text:#FFFFFF;--text2:#FFFFFF;--name:#FFFFFF;--price:#FFFFFF;--sub:#E6E6E6;--muted:#C8C8C8;--faint:#9A9A9A;--subgray:#D0D0D0;--sort:#E6E6E6;--border:#7A7A7A;--border2:#A0A0A0;--card-bd:#7A7A7A;--nav-bd:#7A7A7A;--frame-bd:#7A7A7A;--top-bd:#7A7A7A;--banner-bd:#7A7A7A;--dash:#6A6A6A;--input-bd:#A0A0A0;--out-bd:#A0A0A0;--accent:#FFD400;--accent-hover:#FFE04D;--accent-soft:#3A3000;--accent-bg:#1A1600;--accent-line:#FFD400;--toggle-off:#6A6A6A}
+:root[data-pal="hc"][data-mode="deep"] .btn.pri,:root[data-pal="hc"][data-mode="deep"] .sec-all{color:#000}
+/* 실험실: 단풍 */
+:root[data-pal="maple"]:not([data-mode="deep"]){--bg:#FFF3E6;--card:#FFFBF6;--frame:#F5E1CC;--seg:#F3DEC8;--soft:#FFF6EC;--border:#F0D9C0;--border2:#DDB993;--text:#4A2414;--text2:#6A3820;--sub:#8A5A40;--muted:#B08870;--faint:#CBAE98;--name:#4A2414;--price:#4A2414;--dash:#EBCFB2;--accent:#E2552B;--accent-hover:#C9431C;--accent-soft:#FDE0D2;--accent-bg:#FFF4EE;--modal-top:#B5532E;--cm-head:#F0D9C0;--cm-card:#FFF6EC;--cm-on:#9E3A1A;--top:#3A1508;--refresh-bg:#B5532E;--banner:linear-gradient(90deg,#7E2410 0%,#C2441C 45%,#E8892E 80%,#F2B04A 100%);--input-bd:#DDB993;--out-bd:#DDB993;--toggle-off:#DDB993;--scroll-thumb:#DDB993}
+/* 실험실: 레트로 (옛날 윈도 창) */
+:root[data-pal="retro"]:not([data-mode="deep"]){--bg:#008080;--card:#E6E6E6;--frame:#C0C0C0;--seg:#C0C0C0;--soft:#EFEFEF;--border:#808080;--border2:#404040;--card-bd:#808080;--frame-bd:#808080;--text:#000000;--text2:#000000;--sub:#202020;--muted:#404040;--faint:#606060;--name:#000000;--price:#000000;--subgray:#303030;--sort:#000000;--dash:#808080;--accent:#000080;--accent-hover:#1010A0;--accent-soft:#C8C8F0;--accent-bg:#E0E0F8;--modal-top:#000080;--cm-head:#C0C0C0;--cm-card:#E6E6E6;--cm-on:#000080;--top:#000080;--refresh-bg:#000080;--banner:linear-gradient(90deg,#000080,#1084D0);--input-bd:#404040;--out-bd:#404040;--toggle-off:#808080;--scroll-thumb:#808080;--dot-off:#404040;--dot-on:#000000}
+:root[data-pal="retro"]:not([data-mode="deep"]) :is(.btn,.seg,.seg button,.bcard,.strow,.panel,.inner,.modal,.m-head,.datebar,.clist,.pill,.cnt,.fr,.fr img,.sec.fold,.stsec,.st-th,.st-thp,.ftab,.ftabs,.prow,.note,.menu,.pop,.inp,.sel,.cal,.cm-card,.cm-body,.st-main,.st-nav button,.sec-all,.mini-btn,.ibtn,.vo-menu,.toast,.span2,.span2 button,.crow,.tmp,.st-rot,.pr-nudge,.datebar button,.cal-g button){border-radius:0!important}
+:root[data-pal="retro"]:not([data-mode="deep"]) :is(.btn,.ibtn,.mini-btn,.seg button.on,.sec-all,.st-rot){box-shadow:inset -1px -1px #404040,inset 1px 1px #FFFFFF,inset -2px -2px #808080!important}
+:root[data-pal="retro"]:not([data-mode="deep"]) body{font-family:"Galmuri11","DungGeunMo","Courier New","Noto Sans KR",monospace}
+/* 실험실: 네온 */
+:root[data-pal="neon"][data-mode="deep"]{--bg:#000000;--card:#07020C;--frame:#0B0412;--seg:#140820;--soft:#100618;--border:#3A0F4D;--border2:#6A1F8C;--card-bd:#3A0F4D;--nav-bd:#3A0F4D;--frame-bd:#3A0F4D;--top-bd:#3A0F4D;--banner-bd:#3A0F4D;--text:#F2FEFF;--text2:#CFFAFF;--name:#F2FEFF;--price:#F2FEFF;--sub:#8FE8F2;--muted:#6FA8B8;--faint:#4A6A78;--dash:#3A0F4D;--accent:#FF2BD6;--accent-hover:#FF5CE1;--accent-soft:#3A0632;--accent-bg:#1A0216;--accent-line:#FF2BD6;--top:#050008;--banner:linear-gradient(90deg,#14001F 0%,#3A0060 50%,#002B3D 100%);--modal-top:#1A0A2A;--cm-head:#140820;--cm-card:#0B0412;--cm-on:#3A0060;--toggle-off:#3A0F4D}
+:root[data-pal="neon"][data-mode="deep"] :is(.tab.on,.pret,.crow.on .nm,.dot.on,.ftab.on,.st-nav button.on){text-shadow:0 0 6px var(--accent),0 0 14px rgba(255,43,214,.5)}
+:root[data-pal="neon"][data-mode="deep"] :is(.btn.pri,.sec-all,.tg.on,.st-th.on){box-shadow:0 0 10px var(--accent),0 0 22px rgba(255,43,214,.35)}
+:root[data-pal="neon"][data-mode="deep"] .logo{color:#00F0FF;text-shadow:0 0 8px #00F0FF}
+/* 실험실: 엑셀 (표 칸 줄) */
+:root[data-pal="excel"]:not([data-mode="deep"]){--bg:#FFFFFF;--card:#FFFFFF;--frame:#F3F3F3;--seg:#E9E9E9;--soft:#F5F5F5;--border:#D4D4D4;--border2:#B8B8B8;--card-bd:#D4D4D4;--frame-bd:#D4D4D4;--text:#222222;--text2:#333333;--sub:#555555;--muted:#777777;--faint:#9A9A9A;--name:#222222;--price:#222222;--dash:#D4D4D4;--accent:#217346;--accent-hover:#1A5C38;--accent-soft:#DDEFE4;--accent-bg:#F1F8F4;--modal-top:#217346;--cm-head:#E9E9E9;--cm-card:#F5F5F5;--cm-on:#217346;--top:#217346;--refresh-bg:#185C37;--banner:linear-gradient(#185C37,#217346);--input-bd:#B8B8B8;--out-bd:#B8B8B8;--toggle-off:#B8B8B8}
+:root[data-pal="excel"]:not([data-mode="deep"]) body{background-color:#FFFFFF;background-image:linear-gradient(#E3E3E3 1px,transparent 1px),linear-gradient(90deg,#E3E3E3 1px,transparent 1px);background-size:72px 22px;font-family:"Malgun Gothic","맑은 고딕","Segoe UI","Noto Sans KR",sans-serif}
+:root[data-pal="excel"]:not([data-mode="deep"]) :is(.btn,.seg,.seg button,.bcard,.strow,.panel,.inner,.modal,.datebar,.clist,.pill,.cnt,.fr,.sec.fold,.stsec,.prow,.note,.menu,.pop,.inp,.sel,.cm-card,.st-main,.sec-all,.ibtn,.mini-btn,.st-slot,.st-tb,.mw){border-radius:0!important}
+/* 실험실: 터미널 (초록 글자) */
+:root[data-pal="terminal"][data-mode="deep"]{--bg:#000000;--card:#000000;--frame:#030803;--seg:#0A160C;--soft:#061006;--border:#1F5F2A;--border2:#2F8F3F;--card-bd:#1F5F2A;--nav-bd:#1F5F2A;--frame-bd:#1F5F2A;--top-bd:#1F5F2A;--banner-bd:#1F5F2A;--text:#33FF66;--text2:#2BE05A;--name:#33FF66;--price:#33FF66;--sub:#25C24F;--muted:#1E9A40;--faint:#146A2C;--subgray:#25C24F;--sort:#33FF66;--dot-off:#1E9A40;--dot-on:#33FF66;--dash:#1F5F2A;--accent:#33FF66;--accent-hover:#7DFF9E;--accent-soft:#0B2A12;--accent-bg:#061A0B;--accent-line:#33FF66;--top:#000000;--banner:#000000;--modal-top:#031006;--cm-head:#030803;--cm-card:#061006;--cm-on:#0B3A16;--toggle-off:#1F5F2A;--input-fg:#33FF66}
+:root[data-pal="terminal"][data-mode="deep"] body{font-family:"D2Coding","Consolas","Courier New",monospace}
+:root[data-pal="terminal"][data-mode="deep"] :is(.fr img,.ava,.b-ava img,.cm-pic img,.mw){filter:grayscale(1) sepia(1) hue-rotate(70deg) saturate(4) brightness(.85)}
+:root[data-pal="terminal"][data-mode="deep"] :is(.btn.pri,.sec-all,.tab.on){color:#000!important}:root[data-pal="terminal"][data-mode="deep"] .tab.on{color:var(--accent)!important}
+:root[data-pal="terminal"][data-mode="deep"] .logo::after{content:"_";animation:mpBlink 1s steps(1) infinite}
+@keyframes mpBlink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){:root[data-pal="terminal"] .logo::after{animation:none}}
+/* 실험실: 게임보이 (초록 4색) */
+:root[data-pal="gameboy"]:not([data-mode="deep"]){--bg:#9BBC0F;--card:#8BAC0F;--frame:#8BAC0F;--seg:#7FA00F;--soft:#A3C41A;--border:#306230;--border2:#306230;--card-bd:#306230;--frame-bd:#306230;--nav-bd:#306230;--text:#0F380F;--text2:#0F380F;--name:#0F380F;--price:#0F380F;--sub:#306230;--muted:#306230;--faint:#4E7A1E;--subgray:#306230;--sort:#0F380F;--dot-off:#306230;--dot-on:#0F380F;--dash:#306230;--accent:#0F380F;--accent-hover:#306230;--accent-soft:#7FA00F;--accent-bg:#A3C41A;--top:#0F380F;--logo:#9BBC0F;--banner:#306230;--modal-top:#306230;--cm-head:#8BAC0F;--cm-card:#9BBC0F;--cm-on:#306230;--refresh-bg:#0F380F;--toggle-off:#306230;--input-bd:#306230;--out-bd:#306230;--scroll-thumb:#306230}
+:root[data-pal="gameboy"]:not([data-mode="deep"]) :is(.fr img,.ava,.b-ava img,.cm-pic img){filter:grayscale(1) sepia(1) hue-rotate(40deg) saturate(2.4) brightness(.72) contrast(1.3)}
+:root[data-pal="gameboy"]:not([data-mode="deep"]) :is(.btn,.seg,.seg button,.bcard,.strow,.panel,.inner,.modal,.datebar,.clist,.pill,.cnt,.fr,.sec.fold,.stsec,.prow,.note,.menu,.pop,.cm-card,.st-main,.sec-all,.ibtn,.st-slot,.st-tb,.mw,.dk){border-radius:0!important}
+:root[data-pal="gameboy"]:not([data-mode="deep"]) :is(.dk,.flag,.mini){filter:grayscale(1) contrast(1.4)}
+:root[data-pal="gameboy"]:not([data-mode="deep"]) body{font-family:"Galmuri11","DungGeunMo","Courier New","Noto Sans KR",monospace}
+/* 실험실: 노을 (다크) */
+:root[data-pal="sunset"]{--accent:#E8603D}
+:root[data-pal="sunset"][data-theme="dark"]:not([data-mode="deep"]){--bg:#1E1426;--card:#2A1B33;--frame:#33203D;--seg:#3A2545;--soft:#2F1E38;--border:#47304F;--border2:#6A4A74;--card-bd:rgba(255,255,255,.06);--text:#FFEFE6;--text2:#F5D5C8;--name:#FFEFE6;--price:#FFEFE6;--sub:#D9A8A0;--muted:#A87D86;--faint:#6E5060;--dash:#47304F;--accent:#FF7A59;--accent-hover:#FF9478;--accent-soft:#4A2230;--accent-bg:#33182A;--top:#12091A;--banner:linear-gradient(90deg,#3B1C5A 0%,#B33A6B 45%,#FF7A59 78%,#FFC46B 100%);--modal-top:#4A2A5A;--cm-head:#33203D;--cm-card:#2F1E38;--cm-on:#6A3A6A;--refresh-bg:#6A3A6A;--toggle-off:#6A4A74;--input-bd:#6A4A74;--out-bd:#6A4A74}
+/* 실험실: 신문 (흑백 + 바탕체) */
+:root[data-pal="news"]:not([data-mode="deep"]){--bg:#EFEDE6;--card:#F8F6F0;--frame:#E2DFD5;--seg:#E2DFD5;--soft:#F2F0E9;--border:#CFCBBE;--border2:#A9A496;--card-bd:#CFCBBE;--text:#111111;--text2:#222222;--name:#111111;--price:#111111;--sub:#444444;--muted:#6B675C;--faint:#8F8A7D;--dash:#A9A496;--accent:#111111;--accent-hover:#333333;--accent-soft:#DDD9CC;--accent-bg:#F0EEE6;--top:#111111;--logo:#F8F6F0;--banner:#1A1A1A;--modal-top:#222222;--cm-head:#E2DFD5;--cm-card:#F2F0E9;--cm-on:#333333;--refresh-bg:#333333;--toggle-off:#A9A496;--input-bd:#A9A496;--out-bd:#A9A496}
+:root[data-pal="news"]:not([data-mode="deep"]) body{font-family:"Noto Serif KR","Batang","바탕","Times New Roman",serif}
+:root[data-pal="news"]:not([data-mode="deep"]) :is(.fr img,.ava,.b-ava img,.cm-pic img,.dk,.coin,.flag,.mini){filter:grayscale(1) contrast(1.1)}
+:root[data-pal="news"]:not([data-mode="deep"]) :is(.bcard,.strow,.clist,.datebar,.panel,.inner,.modal,.prow,.st-slot,.mw){border-radius:0!important}
 .tot-mini{display:flex;flex-direction:column;gap:8px}
+.modal.st-m{width:1048px;max-width:min(1048px,calc(100vw - 32px));display:flex;flex-direction:column;height:min(540px,calc(100dvh - 48px))}
+.st-in{flex:1;min-height:0;display:flex;background:var(--frame)}
+.st-nav{width:180px;flex-shrink:0;padding:14px 0 14px 14px;display:flex;flex-direction:column;gap:4px}
+.st-nav button{display:flex;align-items:center;height:48px;padding:0 18px;border-radius:8px 0 0 8px;font-size:14px;font-weight:700;color:var(--muted);text-align:left}
+.st-nav button:hover{color:var(--sub)}.st-nav button.on{background:var(--card);color:var(--text2);box-shadow:inset 2px 0 0 var(--accent-line,transparent)}
+.st-nav .sp{flex:1}.st-nav small{padding:0 12px 4px;font-size:11px;color:var(--faint)}
+.st-main{flex:1;min-width:0;margin:14px 14px 14px 0;border-radius:0 8px 8px 8px;background:var(--card);padding:10px 28px;overflow:auto}
+.st-main .fsec:last-child{border-bottom:0}.st-main .flbl{width:auto;flex:1;min-width:0}.st-main .frow>.btn,.st-main .frow>.linkish,.st-main .frow>.st-sw,.st-main .frow>.st-bt,.st-main .frow>.st-sel{margin-left:auto}
+.st-main .btn{height:30px;padding:0 12px;font-size:13px}.st-bt{display:flex;gap:6px}.st-sm{font-size:12px;font-weight:400;color:var(--muted)}
+.st-sel{height:30px;padding:0 10px;border-radius:6px;border:1px solid var(--border);font-size:13px;color:var(--text)}
+.st-sw{display:flex;gap:8px}.st-sw button{width:18px;height:18px;border-radius:50%}.st-sw button.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px currentColor}
+.st-now{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"pv info" "pv slots";align-items:end;column-gap:20px;row-gap:10px;padding:6px 0}.st-now>.mw{grid-area:pv;align-self:center}.st-nowi{grid-area:info}.st-nows{grid-area:slots;display:flex;flex-direction:column;gap:6px;align-self:start}
+.st-nowi{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}.st-nowi>b{font-size:20px;font-weight:800;color:var(--text);line-height:1.2}
+.mw{position:relative;display:flex;flex-direction:column;width:84px;height:58px;border-radius:7px;overflow:hidden;box-shadow:0 0 0 1px rgba(128,128,128,.28),0 2px 6px rgba(0,0,0,.12);flex-shrink:0}
+.mw .mt{display:flex;align-items:center;justify-content:flex-end;height:7px;padding:0 4px}.mw .mt i{width:9px;height:2px;border-radius:1px}
+.mw .mb{height:12px}.mw .mc{flex:1;display:flex;gap:4px;padding:5px}.mw .mc i{flex:1;display:flex;flex-direction:column;gap:3px;padding:4px;border-radius:3px}.mw .mc b{display:block;height:3px;border-radius:2px}
+.mw.big{width:200px;height:124px;border-radius:10px}.mw.big .mt{height:14px;padding:0 8px}.mw.big .mt i{width:20px;height:4px}.mw.big .mb{height:28px}.mw.big .mc{gap:8px;padding:10px}.mw.big .mc i{gap:6px;padding:8px;border-radius:6px}.mw.big .mc b{height:6px;border-radius:3px}
+.st-gseg{display:inline-flex;height:28px;margin-left:auto}.st-gseg button{padding:0 10px;font-size:12px}
+.st-slots{display:flex;gap:6px;flex-wrap:wrap}
+.st-slot{position:relative;display:flex;align-items:center;gap:7px;height:36px;padding:0 28px 0 5px;border-radius:8px;border:1px solid var(--border);background:var(--card);font-size:12px;font-weight:600;color:var(--text2)}
+.st-slot .mw{width:34px;height:24px;border-radius:4px}.st-slot .mw .mt{height:3px;padding:0 2px}.st-slot .mw .mt i{display:none}.st-slot .mw .mb{height:5px}.st-slot .mw .mc{padding:2px;gap:2px}.st-slot .mw .mc i{padding:2px;gap:2px;border-radius:2px}.st-slot .mw .mc b{height:2px}
+.st-slot.on{border-color:var(--accent)}
+.st-slot button{position:absolute;right:5px;top:50%;margin-top:-9px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;color:var(--muted)}.st-slot button:hover{background:var(--soft);color:var(--danger-fg)}
+.st-slot.empty{padding-right:10px;border-style:dashed;color:var(--faint);font-weight:500}.st-slot.empty i{width:34px;height:24px;border-radius:4px;border:1px dashed var(--border2)}
+.st-tile{position:relative;flex:0 0 auto;scroll-snap-align:start}
+.st-tb{display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border-radius:10px}.st-tb:hover{background:var(--soft)}
+.st-tile .st-ck{position:absolute;top:1px;right:1px;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border2);background:var(--card);color:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.15)}.st-tile .st-ck:hover{color:var(--accent);border-color:var(--accent)}.st-tile .st-ck.on{border-color:var(--accent);background:var(--accent);color:#fff}
+.st-sl+.st-hint{display:block;margin-top:-2px}
+.st-sl{position:relative;display:flex;align-items:center}
+.st-row{flex:1;min-width:0;display:flex;align-items:flex-start;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding:0 24px;scrollbar-width:none;padding:6px 24px 4px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 28px,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 28px,#000 calc(100% - 28px),transparent 100%);cursor:grab}.st-row.drag{cursor:grabbing;scroll-snap-type:none}.st-row.drag .st-tile{pointer-events:none}
+.st-sl.at-s .st-row{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent 100%);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent 100%)}.st-sl.at-e .st-row{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 28px);mask-image:linear-gradient(90deg,transparent 0,#000 28px)}.st-sl.at-s.at-e .st-row{-webkit-mask-image:none;mask-image:none}.st-row::-webkit-scrollbar{display:none}
+.st-tile{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border-radius:10px;scroll-snap-align:start}.st-tile:hover{background:var(--soft)}
+.st-tile.on .mw{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent),0 2px 6px rgba(0,0,0,.12)}
+.st-tile .nm{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--sub);white-space:nowrap}.st-tile.on .nm{color:var(--text);font-weight:700}.st-tile .rd{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.st-ar{position:absolute;top:42px;z-index:2;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);background:var(--card);color:var(--sub);font-size:17px;line-height:1;box-shadow:var(--pop-shadow)}.st-ar.l{left:-4px}.st-ar.r{right:-4px}.st-ar:hover{color:var(--text)}
+.st-sl.at-s .st-ar.l,.st-sl.at-e .st-ar.r{opacity:0;pointer-events:none}
+.st-ck{display:grid;place-items:center;width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border2);background:var(--card);color:#fff}.st-ck.on{border-color:var(--accent);background:var(--accent)}
+.st-hint{font-size:12px;font-weight:400;color:var(--muted)}.st-now .st-gl{font-size:12px;font-weight:600;color:var(--muted)}
+
+.st-z button{gap:4px}.st-z .num{font-weight:500;opacity:.6}
+.st-th .pv{display:block;height:60px;border-radius:5px;padding:4px}.st-th .tr{display:flex;gap:4px;height:100%}.st-th .tc{flex:1;border-radius:4px;padding:7px;display:flex;flex-direction:column;gap:5px}.st-th .tc i{display:block;height:4px;border-radius:2px}
+.st-th .nm{font-size:13px;font-weight:600;line-height:16px;color:var(--text);padding:0 2px 1px}
+@media (max-width:640px){.st-now{grid-template-areas:"pv info" "slots slots";column-gap:14px}.st-nowi{align-self:center}.st-slots{flex-wrap:nowrap}.st-slot{flex:1;min-width:0;gap:4px;padding:0 20px 0 4px;font-size:11px}.st-slot>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-slot .mw{width:26px;height:19px}.st-slot button{right:2px}.st-slot.empty i{width:26px;height:19px}.st-ar{display:none}.mw.big{width:132px;height:84px}.mw.big .mb{height:18px}.mw.big .mt{height:9px}.mw.big .mc{padding:6px;gap:5px}.mw.big .mc i{padding:5px;gap:4px}.mw.big .mc b{height:4px}.st-now{gap:14px}.st-gseg{width:100%;margin:6px 0 0}.st-gseg button{flex:1;padding:0 4px;font-size:11px}.st-hint{display:block!important;width:100%}.st-main .fhead{flex-wrap:wrap}.st-z .num{display:none}.st-main .frow{flex-wrap:wrap;row-gap:6px}.modal.st-m{width:100%;max-width:none;height:min(640px,calc(100dvh - 32px))}.st-in{min-height:0}.st-main{padding:8px 16px}.st-in{flex-direction:column}.st-nav{width:auto;flex-direction:row;padding:10px 10px 0;gap:0}.st-nav button{flex:1;justify-content:center;height:40px;padding:0 4px;border-radius:8px 8px 0 0;font-size:13px}.st-nav .sp,.st-nav small{display:none}.st-main{margin:0 10px 10px;border-radius:0 0 8px 8px}}
+
+.pmini{display:grid;grid-template-columns:repeat(11,minmax(0,21px));gap:2px;margin-top:5px}
+.pmini .pm,.fr.picon{position:relative;display:block;overflow:hidden;border-radius:5px;background:#2a2d33}
+.pmini .pm{width:100%;aspect-ratio:1;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.25)}.pmini .pm img{display:block;width:100%;height:100%;object-fit:cover}
+.pmini .pm b,.fr.picon b{position:absolute;left:0;right:0;bottom:0;padding-right:3px;text-align:right;color:#fff;font-weight:800;letter-spacing:.04em;text-shadow:0 1px 1px rgba(0,0,0,.6);background:linear-gradient(90deg,transparent 0,var(--rc) 58%)}
+.pmini .pm b{height:8px;font-size:7px;line-height:8px;padding-right:2px;letter-spacing:0}
+.fr.picon b{height:14px;font-size:8.5px;line-height:14px;padding-right:4px}
+.pmini .pm u,.fr.picon u{position:absolute;top:1px;right:1px;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.72);color:#fff;font-size:8px;font-weight:700;line-height:11px;text-decoration:none}
+.rb-easy{--rc:#8b8e94}.rb-normal{--rc:#0b8dad}.rb-normal b{color:#dcffff!important}.rb-hard{--rc:#d42f6c}.rb-chaos{--rc:#141414}.rb-extreme{--rc:#0d0303}.rb-extreme b{color:#ff7468!important}
+.rb-chaos b{color:#f3d3b4!important}.pmini .pm u{top:0;right:0;padding:0 2px;border-radius:0 0 0 2px;font-size:7px;line-height:9px}.fr.picon.rb-extreme b{font-size:7.5px;letter-spacing:0;padding-right:3px}
+.prow:has(.pmini){align-items:flex-start}.prow:has(.pmini)>.fr{margin-top:2px}.prow:has(.pmini)>svg{align-self:center}
 .pr-nudge{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:12px 12px 12px 14px;border-radius:8px;background:var(--accent-soft);border:1px solid var(--accent)}
 .pr-nudge .pn-ic{display:inline-flex;color:var(--accent);flex-shrink:0}.pr-nudge .pn-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pr-nudge .pn-t b{font-size:14px;color:var(--text)}.pr-nudge .pn-t span{font-size:12px;color:var(--sub)}
 .pr-nudge .pn-go{flex-shrink:0;height:32px;padding:0 14px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:700}.pr-nudge .pn-x{flex-shrink:0;display:inline-flex;padding:6px;border-radius:6px;color:var(--muted)}.pr-nudge .pn-x:hover{color:var(--text)}
@@ -1746,7 +1862,7 @@ button.sx-tml.more{cursor:pointer}button.sx-tml.more:hover{box-shadow:inset 0 0 
 <nav class="tabs"><div class="wrap">
   <div class="tab-row" id="tab-row" role="tablist"></div>
   <div class="nav-r">
-    <button class="nav-link" type="button" id="nav-add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 11h4M19 9v4"/></svg><span class="tx">캐릭터 추가</span></button>
+    <button class="nav-link" type="button" id="nav-add" aria-haspopup="dialog"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="tx">설정</span></button>
   </div>
 </div></nav>
 <main class="wrap" id="view"><p class="boot">메푸리 불러오는 중…</p><noscript><p class="boot">메푸리는 자바스크립트를 켜야 쓸 수 있어요.</p><style>.boot:first-child{display:none}</style></noscript></main>
@@ -2023,6 +2139,7 @@ function lootApply(j){if(!j||typeof j!=='object')return;
   if(typeof sxSetTiers==='function')sxSetTiers(cf.tiers||null);
   crysApply(cf.crystal||null); // 결정석 가격표·출시일 (관리 화면)
   MARKS_SRV=cf.marks&&typeof cf.marks==='object'&&!Array.isArray(cf.marks)?cf.marks:null; // 그래프 점선 (관리 화면)
+  try{presetsApply(cf.presets)}catch(e){noteErr&&noteErr(e)} // 추천 프리셋 (관리 화면)
   const H=Array.isArray(j.hist)?j.hist.filter(s=>s&&/^\d{4}\.\d\d\.\d\d$/.test(s.d)&&s.p&&typeof s.p==='object'):[];
   if(!H.length){LOOT_HIST=LOOT_HIST_RAW;LOOT_BASE=lootLatest(LOOT_HIST);LOOT_BASE_DATE=lootDateTxt(LOOT_HIST)}
   else{// 테스트 기간: 서버 시세는 날짜 구분 없이 한 벌 → 모든 날짜에 적용 (서버에 없는 템은 페이지 기본 시세의 최신 값)
@@ -2146,7 +2263,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.24.2", "d": "2026-10-19", "l": ["이번 주에 얼마 버는지 한눈에 봐요", "캐릭터 순서를 바꿀 수 있어요"], "prev": [{"v": "0.24.0", "d": "2026-10-15", "l": ["로그인 없이도 캐릭터를 하루 3번 찾아볼 수 있어요", "6월 18일부터 기록할 수 있어요", "익스트림 림보 · 익스트림 발드릭스를 넣었어요", "10월 22일 결정석 조정을 반영했어요"]}]};
+const NEWS={"v": "0.24.3", "d": "2026-10-19", "l": ["추천 프리셋을 한눈에 비교해요"], "prev": [{"v": "0.24.2", "d": "2026-10-19", "l": ["이번 주에 얼마 버는지 한눈에 봐요", "캐릭터 순서를 바꿀 수 있어요"]}]};
 const HAD_DATA=(()=>{try{return !!localStorage.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 let st,LOAD_LOST=false; // LOAD_LOST: 이 기기 기록을 읽지 못해 새로 시작함 → 계정 기록을 덮어쓰지 않게 동기화 상태도 지움
 try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null;LOAD_LOST=true}
@@ -2384,6 +2501,14 @@ const REC_PRESETS=(()=>{const DL={e:'easy',n:'normal',h:'hard',c:'chaos',x:'extr
     ['노유 2인','하림 하흉 노유 하벨 2인 / 하발 3인 / 익세 하적 하카 카칼 익스우 진듄 1인','limbo:h*2 radiant:h*2 jupiter:n*2 belona:h*2 baldrix:h*3 seren:x adversary:h kaling:h kalos:c lotus:x hilla:h darknell:h'],
     ['노유 솔플','하림 하흉 하벨 2인 / 하발 3인 / 익세 카칼 하카 하적 노유 익스우 진듄 1인','limbo:h*2 radiant:h*2 belona:h*2 baldrix:h*3 seren:x kalos:c kaling:h adversary:h jupiter:n lotus:x hilla:h darknell:h']];
   return L.map(([name,desc,str],i)=>({id:'r'+(i+1),name,desc,type:'W',rec:true,slots:sl(str)}))})();
+const REC0=REC_PRESETS.slice(); // 코드에 있는 기본 추천 프리셋 (관리 화면에서 고친 목록이 없으면 이걸로)
+// 관리 화면에서 고친 추천 프리셋: {list:[{id,name,desc,slots:'보스:e|n|h|c|x[*인원] …',icon?,hide?}]} — 모르는 보스·난이도는 건너뜀
+function presetsApply(v){const DL={e:'easy',n:'normal',h:'hard',c:'chaos',x:'extreme'};let out=REC0;
+  if(v&&typeof v==='object'&&Array.isArray(v.list)&&v.list.length){
+    const L=v.list.filter(p=>p&&!p.hide&&typeof p.slots==='string').map(p=>({id:String(p.id),name:String(p.name||''),desc:String(p.desc||''),type:'W',rec:true,icon:p.icon||null,
+      slots:p.slots.trim().split(/\s+/).map(t=>{const[m,pt]=t.split('*'),[b,d]=m.split(':');return {boss:b,diff:DL[d],party:Math.min(6,Math.max(1,+pt||1)),cshare:null,lmode:'sell',lshare:null,memo:''}}).filter(x=>BY[x.boss]&&x.diff&&BY[x.boss].diffs[x.diff])})).filter(p=>p.name&&p.slots.length);
+    if(L.length)out=L}
+  REC_PRESETS.length=0;REC_PRESETS.push(...out)}
 const presetById=id=>REC_PRESETS.find(p=>p.id===id)||st.presets.find(p=>p.id===id);
 // 프리셋 한 주 결정석 (내 몫, 정분배 기준)
 const presetMeso=p=>p.slots.reduce((a,s)=>a+(priceAt(s.boss,s.diff)||0)/(s.party||1),0);
@@ -2506,22 +2631,38 @@ const tmpTag=s=>{const t=tOf(s);if(!s._tmp&&!s._only)return '';if(pastP(t))retur
   return `<span class="tmp${s._from?' from':''}">${s._from?FROMW[t]:PERIOD[t]}</span>${was?`<span class="was">${was}</span>`:''}`};
 
 /* ---------- theme ---------- */
+// 컬러 프리셋(라이트·다크·딥다크 위에 얹는 색) + 화면 크기 — 기기마다 따로 (VIEWF)
+// 테마 프리셋: 라이트·다크·딥다크도 프리셋 중 하나. 세피아 등은 바탕 모드 + 색(pal)으로 만든 프리셋
+const THEMES=[['light','라이트','light',''],['sepia','세피아','light','sepia'],['sakura','벚꽃','light','sakura'],['mint','민트','light','mint'],['sky','하늘','light','navy'],['lavender','라벤더','light','purple'],
+  ['dark','다크','dark',''],['navy','남색','dark','navy'],['cocoa','코코아','dark','sepia'],['wine','와인','dark','sakura'],['forest','숲','dark','mint'],['violet','보라','dark','purple'],
+  ['deep','딥다크','deep',''],['deep-mint','딥 민트','deep','mint'],['deep-blue','딥 블루','deep','navy'],['deep-pink','딥 핑크','deep','sakura'],['deep-violet','딥 보라','deep','purple'],['hc','고대비','deep','hc'],
+  ['maple','단풍','light','maple'],['retro','레트로','light','retro'],['neon','네온','deep','neon'],['excel','엑셀','light','excel'],['terminal','터미널','deep','terminal'],['gameboy','게임보이','light','gameboy'],['sunset','노을','dark','sunset'],['news','신문','light','news']];
+const THG=[['light','라이트'],['dark','다크'],['deep','딥다크 · 고대비'],['fun','실험실']],THFUN=['maple','retro','neon','excel','terminal','gameboy','sunset','news']; // 테마 묶음 (실험실은 장난삼아 만든 것)
+const THB=Object.fromEntries(THEMES.map(x=>[x[0],x]));
+const themeKey=()=>{const m=curTheme();if(st.pal){const t=THEMES.find(x=>x[3]===st.pal&&x[2]===m);if(t)return t[0]}return m}; // 지금 보이는 테마 프리셋
+const setThemeKey=k=>{const t=THB[k];if(!t)return;st.theme=t[2];st.pal=t[3]||undefined};
+const themeRot=()=>{const r=(st.rot||['light','dark','deep']).filter(k=>THB[k]).slice(0,3);return r.length?r:['light','dark','deep']}; // 오른쪽 위 버튼이 돌아가는 테마들
+const UIZ=[[90,'작게'],[100,'보통'],[110,'크게'],[120,'더 크게']];
+function applyLook(){const r=document.documentElement,pl=st.pal||'';if(pl)r.dataset.pal=pl;else delete r.dataset.pal;
+  const z=+st.uiz||100;document.body&&(document.body.style.zoom=z===100?'':String(z/100))}
 function sysDark(){return matchMedia('(prefers-color-scheme: dark)').matches}
 function curTheme(){return st.theme||(sysDark()?'dark':'light')}
-function applyTheme(){const r=document.documentElement,t=st.theme;
+function applyTheme(){const r=document.documentElement,t=st.theme;applyLook();
   if(!t){delete r.dataset.theme;delete r.dataset.mode;return}
   r.dataset.theme=t==='light'?'light':'dark';if(t==='deep')r.dataset.mode='deep';else delete r.dataset.mode}
-const TLBL={light:[I.sun,'라이트'],dark:[I.moon,'다크'],deep:[I.moonFill,'딥다크']};
-function paintThemeBtn(){const t=curTheme();const b=document.getElementById('theme-btn');b.innerHTML=TLBL[t][0]+TLBL[t][1];b.setAttribute('aria-label','테마: '+TLBL[t][1]+' (눌러서 바꾸기)')}
+const TLBL={light:[I.sun,'라이트'],dark:[I.moon,'다크'],deep:[I.moonFill,'딥다크']};const thLbl=k=>{const t=THB[k]||THB.light;return [TLBL[t[2]][0],t[1]]};
+function paintThemeBtn(){const l=thLbl(themeKey());const b=document.getElementById('theme-btn');b.innerHTML=l[0]+l[1];b.setAttribute('aria-label','테마: '+l[1]+' (눌러서 바꾸기)')}
 applyTheme();
 /* 테마 전환: 화면 전체가 부드럽게 섞이며 바뀜 (지원 안 되면 색만 천천히) */
-document.getElementById('theme-btn').onclick=()=>{const order=['light','dark','deep'];
-  const go=()=>{st.theme=order[(order.indexOf(curTheme())+1)%3];applyTheme();save();paintThemeBtn()};
+document.getElementById('theme-btn').onclick=()=>{const order=themeRot(); // 설정에서 고른 테마끼리 돌아감
+  const go=()=>{setThemeKey(order[(order.indexOf(themeKey())+1)%order.length]);applyTheme();save();paintThemeBtn();if(ui.modal&&ui.modal.kind==='set')renderLayer()};
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){go();return}
   if(document.startViewTransition){document.startViewTransition(go);return}
   const r=document.documentElement;r.classList.add('theme-fade');go();clearTimeout(r._tf);r._tf=setTimeout(()=>r.classList.remove('theme-fade'),400)};
 document.getElementById('help-btn').onclick=()=>{ui.modal={kind:'dev'};renderLayer();setTimeout(()=>{const i=document.getElementById('a-in');i&&i.focus()},0)};
-document.getElementById('nav-add').onclick=e=>{e.stopPropagation();openAdd()};
+const SET_ON=false; // 설정 창(테마 프리셋·화면 크기) — 깃 빌드는 아직 끔(false): 탭 줄 오른쪽은 예전처럼 「캐릭터 추가」
+if(!SET_ON){const na=document.getElementById('nav-add');na.removeAttribute('aria-haspopup');na.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17 11h4M19 9v4"/></svg><span class="tx">캐릭터 추가</span>';delete st.pal;delete st.uiz;delete st.rot}
+document.getElementById('nav-add').onclick=e=>{e.stopPropagation();SET_ON?openSet():openAdd()}; // 탭 줄 오른쪽 「설정」 (캐릭터 추가는 설정 › 일반, 이름 메뉴, 캐릭터 목록에서)
 
 /* ---------- banner + tabs ---------- */
 const BN_GLOW='<svg class="bn-glow" viewBox="0 0 778 80" fill="none" aria-hidden="true"><g filter="url(#bnf0)"><path d="M778 117.5C778 182.393 603.839 235 389 235C174.161 235 0 182.393 0 117.5C0 52.6065 174.161 0 389 0C603.839 0 778 52.6065 778 117.5Z" fill="#7F54BA" fill-opacity="0.2"/></g><defs><filter id="bnf0" x="-80" y="-80" width="938" height="395" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="40"/></filter></defs></svg>';
@@ -3276,16 +3417,18 @@ const myPresets=()=>st.presets.filter(p=>p.type==='W');
 // 지금 탭에서 고른 프리셋 (없으면 null)
 function selPreset(){const p=presetById(st.psel);if(!p||p.type!=='W')return null;return ((st.ptab||'rec')==='rec')===!!p.rec?p:null}
 // 프리셋 아이콘: 보스 칸 안을 4칸으로 (내 몫이 큰 보스 순)
-function presetIcon(pr){const k=pr.slots.map(s=>({s,v:(priceAt(s.boss,s.diff)||0)/(s.party||1)})).sort((a,b)=>b.v-a.v).slice(0,4).map(x=>x.s);
-  if(k.length<2)return `<span class="fr bW s40">${k[0]?`<img src="${BY[k[0].boss].img}" alt="">`:''}</span>`;
-  return `<span class="fr bW s40"><span class="pmz">${[0,1,2,3].map(i=>k[i]?`<img src="${BY[k[i].boss].img}" alt="">`:'<i></i>').join('')}</span></span>`}
+const RBS={easy:'E',normal:'N',hard:'H',chaos:'C',extreme:'EX'},RBL={easy:'EASY',normal:'NORMAL',hard:'HARD',chaos:'CHAOS',extreme:'EXTREME'}; // 게임 보스 아이콘처럼 아래 띠에 난이도
+const pMini=pr=>{const k=presetOrder(pr).slice(1).map(s=>({s}));return `<span class="pmini">${k.map(x=>`<span class="pm rb-${x.s.diff}" title="${esc(BY[x.s.boss].name)} ${DKO[x.s.diff]}${x.s.party>1?` ${x.s.party}인`:''}"><img src="${BY[x.s.boss].img}" alt=""><b>${RBS[x.s.diff]||''}</b>${x.s.party>1?`<u class="num">${x.s.party}</u>`:''}</span>`).join('')}</span>`}; // 나머지 보스 작은 그림 (센 순)
+const presetOrder=pr=>{const k=pr.slots.map(s=>({s,v:(priceAt(s.boss,s.diff)||0)/(s.party||1)})).sort((a,b)=>b.v-a.v).map(x=>x.s),f=pr.icon&&k.find(s=>s.boss===pr.icon);return f?[f,...k.filter(s=>s!==f)]:k}; // 대표 그림(관리 화면에서 정함) 먼저, 나머지는 비싼(센) 보스부터
+function presetIcon(pr){const k=presetOrder(pr);if(!k[0])return '<span class="fr bW s40"></span>';
+  return `<span class="fr bW s40 picon rb-${k[0].diff}"><img src="${BY[k[0].boss].img}" alt=""><b>${RBL[k[0].diff]||''}</b>${k[0].party>1?`<u class="num">${k[0].party}인</u>`:''}</span>`} // 대표 보스 하나 크게 (나머지는 글자 아래 작게 — pMini)
 function presetPanel(){
   const rec=(st.ptab||'rec')==='rec',sel=selPreset(),mine=myPresets(),q=(st.q||'').trim(),hit=p=>!q||nq(p.name).includes(nq(q))||nq(p.desc).includes(nq(q))||p.slots.some(s=>BY[s.boss]&&bossHit(BY[s.boss],q));
   const none=`<span style="font-size:12px;color:var(--muted);padding:8px 4px">'${esc(q)}'에 맞는 프리셋이 없어요</span>`;
   const tabs=`<div class="seg" role="tablist" aria-label="프리셋 종류" style="margin:2px 4px 4px">${[['rec','추천'],['my','커스텀']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${(k==='rec')===rec}" class="${(k==='rec')===rec?'on':''}" data-ptab="${k}">${l}${k==='my'?` <span class="num" style="color:var(--muted);font-weight:500">${mine.length}</span>`:''}</button>`).join('')}</div>`;
   const pOnce=ui.pspan==='once';
   const applyBtn=sel?`<div class="fbtns" style="flex-wrap:wrap"><div class="frow pspan${!VIEW_OFF&&sel.type==='W'?' p3':''}"><span class="flbl">적용 기간</span><div class="seg seg-in" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${!pOnce&&ui.pspan!=='past'}" class="${pOnce||ui.pspan==='past'?'':'on'}" data-pspan="from">${FROMW.W}</button><button type="button" role="radio" aria-checked="${pOnce}" class="${pOnce?'on once':''}" data-pspan="once">${PERIOD.W}</button>${!VIEW_OFF&&sel.type==='W'?`<button type="button" role="radio" aria-checked="${ui.pspan==='past'}" class="${ui.pspan==='past'?'on':''}" data-pspan="past">과거 주부터</button>`:''}</div></div>${ui.pspan==='past'&&sel.type==='W'?pastWeekSel('고른 주부터 이번 주·앞으로까지 이 목록으로 맞춰요. 그 사이에 따로 바꾼 주는 덮어써요. 그 사이 깬 보스가 빠지거나 바뀌면 적용 전에 보스마다 골라요.',sel.slots.map(x=>x.boss+'|'+x.diff)):''}<button class="btn dark lg" type="button" id="p-apply">${esc(st.form.targets.length>1?`${st.form.targets.length}명에게`:nm(cur())+'에')} 적용</button></div>`:'';
-  const prow=(p,sub)=>`<button class="prow${sel&&p.id===sel.id?' on':''}" type="button" data-psel="${p.id}">${presetIcon(p)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span class="t"><span style="flex:1;min-width:0">${esc(p.name)}</span><span class="num" style="flex-shrink:0;white-space:nowrap;font-size:12px;font-weight:600;color:var(--sub)">${meso(presetMeso(p))}</span></span><span class="d">${sub}</span></span>${I.chev}</button>`;
+  const prow=(p,sub)=>`<button class="prow${sel&&p.id===sel.id?' on':''}" type="button" data-psel="${p.id}">${presetIcon(p)}<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span class="t"><span style="flex:1;min-width:0">${esc(p.name)}</span><span class="num" style="flex-shrink:0;white-space:nowrap;font-size:12px;font-weight:600;color:var(--sub)">${meso(presetMeso(p))}</span></span><span class="d">${sub}</span>${pMini(p)}</span>${I.chev}</button>`;
   if(rec)return `<div class="fbody" data-scroll="fb-preset-rec" style="gap:6px">${tabs}
     <span style="font-size:12px;color:var(--muted);padding:0 4px 4px">주간 12칸을 꽉 채운 구간별 조합이에요. 누르면 오른쪽에서 12칸을 미리 볼 수 있어요.</span>
     ${REC_PRESETS.filter(hit).length?'':none}${REC_PRESETS.filter(hit).map(p=>prow(p,esc(p.desc))).join('')}
@@ -4730,6 +4873,7 @@ async function staleRefresh(){if(!apiOn()||loginNeed()||STALE_N>=10)return;const
 
 /* ---------- add character modal ---------- */
 function openChars(){ui.menu=false;ui.modal={kind:'chars',page:Math.floor(Math.max(0,st.chars.findIndex(c=>c.id===st.sel))/CM_PER()),world:'',edit:false};renderLayer()}
+function openSet(t){ui.thg=null;ui.thsc=0;ui.modal={kind:'set',tab:t||(ui.setTab||'gen')};renderLayer()}
 function openAdd(){ui.modal={kind:'add',q:'',found:null};renderLayer();setTimeout(()=>{const i=document.getElementById('m-q');i&&i.focus()},0)}
 /* ---------- 구글 로그인 + 계정에 기록 저장 ----------
    사이트(Worker)에서만 동작. 기록 전체를 계정에 한 덩어리로 저장하고, rev(저장 번호)로 다른 기기와 겹치는지 확인 */
@@ -4762,7 +4906,7 @@ async function capi(method,path,body,keepalive){
   const r=await fetch(path,{method,credentials:'same-origin',cache:'no-store',keepalive:!!keepalive,headers:{'x-mepuri':'1',...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
   let j=null;try{j=await r.json()}catch(e){}return {s:r.status,j}}
 // 올릴 기록: 테마(기기마다 다름)와 캐릭터 그림(외형 주소로 다시 만들 수 있음)은 빼서 가볍게
-const VIEWF=['theme','tab','sel','filter','stab','q','psel','sfilter','ptab','fold','form','sort','hide','sx','rw']; // 기기마다 따로 두는 화면 상태
+const VIEWF=['theme','pal','uiz','rot','tab','sel','filter','stab','q','psel','sfilter','ptab','fold','form','sort','hide','sx','rw']; // 기기마다 따로 두는 화면 상태
 const hashS=str=>{let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)};
 const stateHash=o=>{if(o&&o._fmt!==undefined){o={...o};delete o._fmt}return hashS(JSON.stringify(o))};
 // 기록 모양 버전: 모양이 바뀌는 업데이트마다 +1. 계정 기록이 이 숫자보다 크면(새 버전 탭이 저장) 옛 탭은 덮어쓰지 않고 새로고침 안내 (V12)
@@ -4988,6 +5132,37 @@ function renderLayer0(){
       <p class="nw-d" style="margin:0">적어 두신 클리어 <b>${m.n}개</b>의 금액을 고친 가격으로 다시 계산했어요.</p>
       <div class="m-btns"><button class="btn dark" type="button" id="m-cancel">확인</button></div></div></div></div>`;
   }
+  if(m&&m.kind==='set'){const tab=m.tab||'gen',tc=curTheme(),fol=!st.theme;
+    const TABS=[['gen','일반'],['theme','테마'],['help','문의 · 후원']];
+    const PV={'':{L:['#F1F4F6','#FFFFFF','#F68600','#1E3043','#2C364D'],D:['#14161B','#1E2128','#FF8A33','#ECEEF2','#2C364D']},sepia:{L:['#EFE7D6','#FBF7EE','#B8662E','#3E3123','#5E4A35'],D:['#1B1713','#25201A','#E08F52','#EFE6D7','#3B2F23']},sakura:{L:['#FBF0F3','#FFFFFF','#D9547F','#3F2832','#6E3C54'],D:['#1A1316','#241A1F','#F07FA3','#F3E6EB','#4A2636']},mint:{L:['#ECF5F1','#FFFFFF','#159A74','#1D3A32','#255A4D'],D:['#111816','#18221F','#38C79A','#E3F1EC','#1B3B33']},navy:{L:['#EDF1F8','#FFFFFF','#2F7CF0','#1C2A44','#2B4A80'],D:['#0E1524','#162033','#5CA2FF','#E2EAF7','#1C3058']},purple:{L:['#F2EFF9','#FFFFFF','#7C5CE0','#2A2340','#4C3D7C'],D:['#15121F','#1E1A2C','#A58BFF','#ECE8F7','#2E2550']}};
+    const PVX={hc:['#000000','#000000','#FFD400','#FFFFFF','#000000'],neon:['#000000','#07020C','#FF2BD6','#E8FFFF','#3A0060'],retro:['#008080','#E6E6E6','#000080','#000000','#1084D0'],maple:['#FFF3E6','#FFFBF6','#E2552B','#4A2414','#C2441C'],excel:['#FFFFFF','#F7F7F7','#217346','#222222','#217346'],terminal:['#000000','#000000','#33FF66','#33FF66','#000000'],gameboy:['#9BBC0F','#8BAC0F','#0F380F','#0F380F','#306230'],sunset:['#1E1426','#2A1B33','#FF7A59','#FFEFE6','#B33A6B'],news:['#EFEDE6','#F8F6F0','#111111','#111111','#1A1A1A']};
+    const TOPC={'':['#1F232E','#0C0D11'],'sepia':['#2A231B','#120E0A'],'sakura':['#2A1C22','#120A0E'],'mint':['#13201C','#0A110F'],'navy':['#141C2C','#080D18'],'purple':['#1C1828','#0D0B15']},TOPX={hc:'#000000',neon:'#050008',retro:'#000080',maple:'#3A1508',excel:'#217346',terminal:'#000000',gameboy:'#0F380F',sunset:'#12091A',news:'#111111'};
+    const thCol=k=>{const [,,md,pl]=THB[k];const c=PVX[k]||(md==='deep'?['#000000','#0A0B0D',(PV[pl]||PV['']).D[2],'#E7E9EA','#000000']:PV[pl][md==='light'?'L':'D']);return [...c,TOPX[k]||(md==='deep'?'#000000':(TOPC[pl]||TOPC[''])[md==='light'?0:1])]}; // [바탕, 카드, 강조, 글자, 배너, 맨 위 줄]
+    const mini=(c,big)=>`<span class="mw${big?' big':''}" style="background:${c[0]}"><span class="mt" style="background:${c[5]}"><i style="background:${c[2]}"></i></span><span class="mb" style="background:${c[4]}"></span><span class="mc"><i style="background:${c[1]}"><b style="background:${c[3]};opacity:.55"></b><b style="background:${c[2]};width:60%"></b></i><i style="background:${c[1]}"><b style="background:${c[3]};opacity:.3"></b><b style="background:${c[2]};width:40%"></b></i></span></span>`;
+    const card=(c,on,k,n,rt)=>`<div class="st-ic${on?' on':''}"><button type="button" class="st-icb" data-sth="${k}" aria-pressed="${on}" aria-label="${n} 테마"><span class="sw" style="background:linear-gradient(135deg,${c[0]} 0 50%,${c[4]} 50% 100%)"><i style="background:${c[2]};box-shadow:0 0 0 2px ${c[1]}"></i></span><span class="nm">${n}</span></button><button type="button" class="st-ck${rt?' on':''}" data-srot="${k}" role="checkbox" aria-checked="${rt}" aria-label="${n}을 오른쪽 위 버튼에 넣기" title="오른쪽 위 버튼에 넣기">${rt?I.check(8,'currentColor'):''}</button></div>`;
+    const pal=st.pal||'',dk2=tc!=='light',pc=k=>{const v=PV[k][dk2?'D':'L'];return tc==='deep'?['#000000','#0A0B0D',v[2],'#E7E9EA']:v};
+    const rowB=(l,btn,extra)=>`<div class="frow"><span class="flbl">${l}</span>${extra||''}${btn}</div>`;
+    const body=tab==='gen'?`<div class="fsec"><div class="fhead">캐릭터<span style="font-size:12px;color:var(--muted)">${st.chars.length}명</span></div>
+        ${rowB('캐릭터 목록',`<span class="st-bt"><button class="btn out" type="button" id="st-add">추가</button><button class="btn out" type="button" id="st-chars">캐릭터 관리</button></span>`)}</div>
+      ${cloud&&cloud.cfg&&cloud.cfg.auth?`<div class="fsec"><div class="fhead">계정</div>${cloud.user?rowB(esc(cloud.user.name||cloud.user.email||'구글 계정')+' <small class="st-sm">연결됨</small>',`<button class="btn out" type="button" id="st-out">로그아웃</button>`):rowB('로그인하면 다른 기기에서도 같은 기록',`<button class="btn out" type="button" id="st-in">구글로 로그인</button>`)}</div>`:''}
+      <div class="fsec"><div class="fhead">데이터</div>${rowB('기록 모두 지우기',`<button class="linkish danger-link" type="button" id="st-reset">초기화</button>`)}</div>`
+     :tab==='theme'?(()=>{const ck=fol?null:themeKey(),cur=THB[ck]||THB[curTheme()],rot=themeRot(),gOf=t=>THFUN.includes(t[0])?'fun':t[2],gNow=ui.thg||gOf(cur),list=THEMES.filter(t=>gOf(t)===gNow);
+        return `<div class="fsec"><div class="st-now">${mini(thCol(cur[0]),1)}<div class="st-nowi"><span class="st-gl">${fol?'기기 설정 따라가는 중':'지금 테마'}</span><b>${cur[1]}</b><span class="st-sm">${(THG.find(g=>g[0]===gOf(cur))||[])[1]||''}</span></div>
+          <div class="st-nows"><span class="st-gl">오른쪽 위 버튼 <span class="num">${rot.length}/3</span></span>
+          <span class="st-slots">${[0,1,2].map(n=>{const k=rot[n];return k?`<span class="st-slot${k===ck?' on':''}">${mini(thCol(k))}<span>${THB[k][1]}</span><button type="button" data-srot="${k}" aria-label="${THB[k][1]} 빼기" title="빼기">${I.x(10)}</button></span>`:`<span class="st-slot empty"><i></i><span>비어 있음</span></span>`}).join('')}</span></div></div></div>
+      <div class="fsec"><div class="fhead">테마 프리셋<span class="seg st-gseg" role="tablist">${THG.map(([g,gl])=>`<button type="button" role="tab" aria-selected="${g===gNow}" class="${g===gNow?'on':''}" data-thg="${g}">${gl.split(' · ')[0]}</button>`).join('')}</span></div>
+        <div class="st-sl"><button type="button" class="st-ar l" data-thsc="-1" aria-label="앞으로">‹</button><div class="st-row" data-throw>${list.map(([k,nm])=>{const on=!fol&&ck===k,r=rot.includes(k);
+          return `<div class="st-tile${on?' on':''}"><button type="button" class="st-tb" data-sth="${k}" aria-pressed="${on}" title="${nm}">${mini(thCol(k))}<span class="nm">${nm}</span></button><button type="button" class="st-ck${r?' on':''}" data-srot="${k}" role="checkbox" aria-checked="${r}" aria-label="${nm} 오른쪽 위 버튼에 ${r?'빼기':'넣기'}" title="오른쪽 위 버튼에 ${r?'빼기':'넣기'}">${r?I.check(9,'currentColor'):I.plus(9)}</button></div>`}).join('')}</div><button type="button" class="st-ar r" data-thsc="1" aria-label="뒤로">›</button></div>
+        <span class="st-hint">그림을 누르면 바로 바뀌고, 모서리 ＋ 를 누르면 오른쪽 위 버튼에 들어가요</span>
+        <div class="frow"><span class="flbl">테마 설정 초기화</span><button class="linkish" type="button" id="st-threset" style="margin-left:auto">처음대로</button></div>
+        ${rowB('기기 설정 따라가기 (라이트 · 다크)',`<button type="button" id="st-fol" aria-pressed="${fol}" style="margin-left:auto;display:grid;place-items:center;height:28px"><span class="tg${fol?' on':''}"></span></button>`)}</div>
+      <div class="fsec"><div class="fhead">화면 크기</div><div class="seg st-z" role="radiogroup" aria-label="화면 크기">${UIZ.map(([z,n])=>`<button type="button" role="radio" aria-checked="${(+st.uiz||100)===z}" class="${(+st.uiz||100)===z?'on':''}" data-suiz="${z}">${n}<span class="num">${z}%</span></button>`).join('')}</div></div>`})()
+     :`<div class="fsec"><div class="fhead">문의</div>${rowB('버그 · 건의',`<button class="btn out" type="button" data-soon>보내기</button>`)}${rowB('결정석 가격 제보',`<button class="btn out" type="button" data-soon>제보</button>`)}${rowB('디스코드',`<button class="btn out" type="button" data-soon>들어가기</button>`)}</div>
+      <div class="fsec"><div class="fhead">후원</div>${rowB('메푸리 응원하기',`<button class="btn pri" type="button" data-soon>후원하기</button>`)}</div>`;
+    h+=`<div class="scrim" id="scrim"><div class="modal st-m" role="dialog" aria-modal="true" aria-labelledby="st-title"><div class="m-head"><span id="st-title">설정</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
+      <div class="st-in"><div class="st-nav" role="tablist" aria-orientation="vertical">${TABS.map(([k,l])=>`<button type="button" role="tab" aria-selected="${tab===k}" class="${tab===k?'on':''}" data-stab2="${k}">${l}</button>`).join('')}<span class="sp"></span>${typeof NEWS!=="undefined"&&NEWS?`<small>메푸리 v${NEWS.v}</small>`:""}</div>
+      <div class="st-main" role="tabpanel">${body}</div></div></div></div>`;
+  }
   if(m&&m.kind==='reset'){
     h+=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="r-title"><div class="m-head"><span id="r-title">${EMPTY_START?'처음 상태로 초기화':'예시 데이터로 초기화'}</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
       <div class="m-body"><p style="margin:0;font-size:13px;line-height:20px;color:var(--sub)">${EMPTY_START?'추가한 캐릭터, 보스 목록, 클리어·물욕 기록이 모두 지워져요.':'추가한 캐릭터, 보스 목록, 클리어·물욕 기록이 모두 처음 예시 상태로 돌아가요.'}</p>
@@ -5169,6 +5344,31 @@ function renderLayer0(){
   const fl1=L.querySelector('.fm .m-body');if(fl1&&fy)fl1.scrollTop=fy;
   const close=()=>{const k=ui.modal&&ui.modal.kind;if(k==='news')newsSeen();ui.cchs=null;ui.mnw=ui.mnj=false;ui.modal=k==='cedit'&&ui.modal.back||null;renderLayer();if(k==='ask'||k==='mvq')render()}; // 물어보다 취소하면 입력칸 값도 되돌림
   const x=document.getElementById('m-x');if(x)x.onclick=close;
+  if(ui.modal&&ui.modal.kind==='set'){ // 설정 창
+    L.querySelectorAll('[data-stab2]').forEach(b=>b.onclick=()=>{ui.modal.tab=ui.setTab=b.dataset.stab2;renderLayer()});
+    L.querySelectorAll('[data-soon]').forEach(b=>b.onclick=()=>toast('준비 중이에요'));
+    L.querySelectorAll('[data-sth]').forEach(b=>b.onclick=()=>{setThemeKey(b.dataset.sth);applyTheme();save();paintThemeBtn();render();renderLayer()});
+    L.querySelectorAll('[data-thg]').forEach(b=>b.onclick=()=>{ui.thg=b.dataset.thg;ui.thsc=0;renderLayer()}); // 묶음 탭: 그 묶음만 보여 줌
+    L.querySelectorAll('.st-sl').forEach(sl=>{const row=sl.querySelector('[data-throw]');row.scrollLeft=ui.thsc||0;
+      const upd=()=>{ui.thsc=row.scrollLeft;sl.classList.toggle('at-s',row.scrollLeft<4);sl.classList.toggle('at-e',row.scrollLeft+row.clientWidth>=row.scrollWidth-4)};
+      row.onscroll=upd;upd();sl.querySelectorAll('[data-thsc]').forEach(b=>b.onclick=()=>row.scrollBy({left:+b.dataset.thsc*row.clientWidth*.75,behavior:'smooth'}));
+      row.onwheel=e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&row.scrollWidth>row.clientWidth){const before=row.scrollLeft;row.scrollLeft+=e.deltaY;if(row.scrollLeft!==before)e.preventDefault()}};
+      let dg=null;row.onpointerdown=e=>{if(e.pointerType!=='mouse'||e.button||e.target.closest('[data-srot]'))return;dg={x:e.clientX,l:row.scrollLeft,m:false}};
+      row.onpointermove=e=>{if(!dg)return;const dx=e.clientX-dg.x;if(!dg.m&&Math.abs(dx)>5){dg.m=true;row.classList.add('drag');try{row.setPointerCapture(e.pointerId)}catch(_){}}if(dg.m)row.scrollLeft=dg.l-dx};
+      row.onpointerup=row.onpointercancel=()=>{if(dg&&dg.m){row._dragAt=Date.now();row.classList.remove('drag')}dg=null};
+      row.addEventListener('click',e=>{if(Date.now()-(row._dragAt||0)<250){e.stopPropagation();e.preventDefault()}},true);
+      if(!ui.thsc){const on=row.querySelector('.st-tile.on');if(on&&on.offsetLeft+on.offsetWidth>row.clientWidth)row.scrollLeft=on.offsetLeft-row.clientWidth/2+on.offsetWidth/2}});
+    L.querySelectorAll('[data-srot]').forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.srot,r=themeRot().slice(),i=r.indexOf(k);
+      if(i>=0){if(r.length<=1){toast('하나는 남겨 둬야 해요');return}r.splice(i,1)}else{if(r.length>=3){toast('오른쪽 위 버튼에는 3개까지 넣을 수 있어요. 하나를 빼고 넣어 주세요');return}r.push(k)}
+      st.rot=THEMES.map(x=>x[0]).filter(x=>r.includes(x));if(st.rot.join()==='light,dark,deep')delete st.rot;save();renderLayer()});
+    L.querySelectorAll('[data-suiz]').forEach(b=>b.onclick=()=>{const z=+b.dataset.suiz;st.uiz=z===100?undefined:z;applyTheme();save();render();renderLayer()});
+    const tr=document.getElementById('st-threset');if(tr)tr.onclick=()=>{delete st.theme;delete st.pal;delete st.rot;delete st.uiz;applyTheme();save();paintThemeBtn();render();renderLayer();toast('테마를 처음대로 돌렸어요')};
+    const fo=document.getElementById('st-fol');if(fo)fo.onclick=()=>{if(st.theme){st.theme=null;st.pal=undefined}else st.theme=curTheme();applyTheme();save();paintThemeBtn();render();renderLayer()};
+    const sa=document.getElementById('st-add');if(sa)sa.onclick=()=>openAdd();
+    const sc=document.getElementById('st-chars');if(sc)sc.onclick=()=>{openChars();ui.modal.edit=true;renderLayer()};
+    const so=document.getElementById('st-out');if(so)so.onclick=()=>{ui.modal=null;renderLayer();logout()};
+    const si=document.getElementById('st-in');if(si)si.onclick=()=>openLogin();
+    const sr=document.getElementById('st-reset');if(sr)sr.onclick=()=>{ui.modal={kind:'reset'};renderLayer()}}
   const cc=document.getElementById('m-cancel');if(cc)cc.onclick=close;
   [['r-in','r-ok',RESET_PHRASE],['del-in','del-ok',DEL_PHRASE]].forEach(([inId,okId,ph])=>{const inp=document.getElementById(inId),ok=document.getElementById(okId);if(!inp||!ok)return;
     inp.oninput=()=>{const good=typeOk(inp.value,ph);ok.disabled=!good;inp.classList.toggle('good',good)};

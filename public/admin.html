@@ -261,6 +261,24 @@ textarea.inp{width:100%;height:120px;padding:8px 10px;resize:vertical;line-heigh
 .cm-op.mk.off .mk-d,.cm-op.mk.off .mk-l{opacity:.45}.cm-op.mk.bad .inp{border-color:var(--danger);background:var(--danger-bg)}
 @media (max-width:560px){.cm-op{grid-template-columns:minmax(0,1fr) 104px 52px}.cm-op.mk{grid-template-columns:82px minmax(0,1fr) auto}.cm-op.mk .mk-l .inp{width:100%}}
 @media (max-width:560px){.tr{grid-template-columns:40px 52px 1fr;}.tr .ex{grid-column:1/-1;padding-left:52px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.bb{height:40px;gap:6px;padding:0 6px 0 4px}.bb img,.bb .ph{width:28px;height:28px}.lo{grid-template-columns:20px 36px minmax(0,1fr) auto;gap:8px}}
+
+.pr-row{border-bottom:1px solid var(--border)}.pr-row:last-of-type{border-bottom:0}.pr-row.hid .pr-tg{opacity:.55}.pr-row.open{background:var(--soft);border-radius:8px}
+.pr-hd{display:flex;align-items:center;gap:6px;padding:6px 4px}
+.pr-mv{display:flex;flex-direction:column;gap:2px}.pr-mv button{width:22px;height:16px;font-size:9px;color:var(--muted);border-radius:4px}.pr-mv button:hover:not(:disabled){background:var(--seg);color:var(--text)}.pr-mv button:disabled{opacity:.25}
+.pr-tg{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:4px 6px;border-radius:8px;text-align:left}.pr-tg:hover{background:var(--soft)}
+.pr-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pr-tx b{display:flex;align-items:center;gap:6px;font-size:14px}.pr-tx small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-mini{display:flex;gap:2px;flex-wrap:wrap}.pr-me{font-size:12px;font-weight:700;color:var(--sub);white-space:nowrap}.pr-car{color:var(--muted)}
+.tag.e{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-bd)}
+.pr-ic{position:relative;display:block;flex-shrink:0;width:20px;height:20px;border-radius:2px;overflow:hidden;background:var(--seg)}.pr-ic img{display:block;width:100%;height:100%;object-fit:cover}
+.pr-ic b{position:absolute;left:0;right:0;bottom:0;height:8px;padding-right:2px;text-align:right;color:#fff;font-size:7px;font-weight:800;line-height:8px;background:linear-gradient(90deg,transparent 0,var(--rc,#666) 58%)}
+.pr-ic u{position:absolute;top:0;right:0;padding:0 2px;border-radius:0 0 0 2px;background:rgba(0,0,0,.72);color:#fff;font-size:7px;font-weight:700;line-height:9px;text-decoration:none}
+.pr-ic.big{width:46px;height:46px;border-radius:6px}.pr-ic.big b{height:14px;font-size:8.5px;line-height:14px;padding-right:4px;letter-spacing:.04em}.pr-ic.big u{top:1px;right:1px;padding:0 3px;border-radius:3px;font-size:8px;line-height:11px}
+.rb-easy{--rc:#8b8e94}.rb-normal{--rc:#0b8dad}.rb-hard{--rc:#d42f6c}.rb-chaos{--rc:#141414}.rb-extreme{--rc:#0d0303}.rb-chaos b{color:#f3d3b4}.rb-extreme b{color:#ff7468}
+.pr-ed{display:flex;flex-direction:column;gap:10px;padding:6px 10px 14px 34px}
+.pr-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pr-f .lbl{min-width:72px}
+.pr-reps{flex:1;display:flex;flex-wrap:wrap;gap:6px}.pr-rep{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px 0 6px;border-radius:6px;border:1px solid var(--input-bd);background:var(--card);font-size:12px;color:var(--sub)}.pr-rep.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:700}
+.pr-sl{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}.pr-srow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.pr-srow select{height:30px}.pr-srow select:first-of-type{min-width:150px}.pr-m{min-width:84px;font-size:12px;color:var(--sub);text-align:right}.pr-srow .btn{height:30px;padding:0 10px}
+.ck{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -368,6 +386,7 @@ function render(){
   if(S.tab==='loot')return renderLoot(demo);
   if(S.tab==='tier')return renderTiers(demo);
   if(S.tab==='cry')return renderCry(demo);
+  if(S.tab==='pre')return renderPre(demo);
   if(S.tab==='stat')return renderStat(demo);
   const all=allNames(),cNop=all.filter(noPrice).length,cNoi=all.filter(noIcon).length,cChg=all.filter(n=>(S.vals[n]??'')!==saved(n)).length,srvOn=Object.keys(S.srv).length>0;
   if(S.reorder||!S.order){S.order=shownNames();S.reorder=false} // 값을 고칠 때는 줄이 움직이지 않게 순서 고정
@@ -403,14 +422,14 @@ function render(){
 // ── 탭 ──
 function tabsHTML(){const cP=allNames().filter(n=>(S.vals[n]??'')!==saved(n)).length,cL=CELLS.filter(lootDirty).length,cT=tierDirty()?1:0,cC=(CR?crDirty().n:0)+(MK&&mkDirty()?1:0);
   const tb=(k,l,n)=>`<button class="tab${S.tab===k?' on':''}" type="button" data-tab="${k}" role="tab" aria-selected="${S.tab===k}">${l}${n?`<span class="n">${n}</span>`:''}</button>`;
-  return `<div class="tabs" role="tablist">${tb('price','물욕 시세',cP)}${tb('loot','기본 물욕템',cL)}${tb('tier','등급 기준',cT)}${tb('cry','결정석 가격',cC)}${tb('stat','방문 통계',0)}</div>`}
+  return `<div class="tabs" role="tablist">${tb('price','물욕 시세',cP)}${tb('loot','기본 물욕템',cL)}${tb('tier','등급 기준',cT)}${tb('cry','결정석 가격',cC)}${tb('pre','추천 프리셋',PR&&prDirty()?1:0)}${tb('stat','방문 통계',0)}</div>`}
 function bindTabs(){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(S.tab===b.dataset.tab)return;S.tab=b.dataset.tab;S.arm=false;saveView();render();window.scrollTo(0,0)})}
 const FX='<span class="gw" aria-hidden="true"></span><span class="gl" aria-hidden="true"><i></i></span><span class="gl2" aria-hidden="true"><i></i></span><span class="sp" aria-hidden="true"></span>';
 // 아이콘 + 등급 테두리 (값 v를 주면 그 값으로, 아니면 지금 시세 칸 값으로)
 function icHTML(n,cls,T,v){const ic=ICONS[n]||ICONS[pkey(n)],tr=v!=null?tierAt(v,T):isBox(n)?'':tierOf(pkey(n),T);
   return ic?`<span class="ic sx-ifr${tr?' '+tr:''}${cls?' '+cls:''}"><img src="${ic}" alt="">${tr?FX:''}</span>`:`<span class="ic gm${cls?' '+cls:''}" title="아이콘 없음 (사이트에서도 보석 모양)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 21L8 9l4-6 4 6-4 12"/></svg></span>`}
 async function saveConf(k,v,msg){S.busy=true;render();try{await api('/api/admin/conf',{k,v});toast(msg);await refresh();
-  if(k==='lootOn')CELLS.forEach(c=>S.on[c.k]=new Set(srvOn(c)));else if(k==='tiers')S.tv=srvTiers();else if(k==='crystal')crLoad();else if(k==='marks')mkLoad()}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}S.busy=false;render()}
+  if(k==='lootOn')CELLS.forEach(c=>S.on[c.k]=new Set(srvOn(c)));else if(k==='tiers')S.tv=srvTiers();else if(k==='crystal')crLoad();else if(k==='marks')mkLoad();else if(k==='presets')prLoad()}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}S.busy=false;render()}
 
 // ── 기본 물욕템: 보스·난이도마다 '물욕템 획득 기록' 창에 처음부터 켜 둘 템 ──
 function renderLoot(demo){const app=$('#app'),b=bossOf(S.boss)||BOSSL[0],cell=cellOf(b,S.diff),on=S.on[cell.k],cD=CELLS.filter(lootDirty).length,cC=CELLS.filter(lootSaved).length;
@@ -656,6 +675,59 @@ function chartSVG(list,today){const W=Math.round(Math.min(760,Math.max(300,($('#
   const pts=list.map((x,i)=>[L+cw*i+cw/2,y(x.uv)]),line=`<polyline class="ln" points="${pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')}"/>`+(n<=31?pts.map(p=>`<circle class="pt" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5"/>`).join(''):'');
   const ev=Math.ceil(n/Math.max(2,Math.min(n,Math.floor(W/80)))),lab=list.map((x,i)=>i%ev===(n-1)%ev?`<text x="${(L+cw*i+cw/2).toFixed(1)}" y="${H-8}" text-anchor="middle">${+x.d.slice(5,7)}.${+x.d.slice(8)}</text>`:'').join('');
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="날짜별 조회수와 실사용자">${grid}${bars}${line}${lab}</svg>`}
+// ── 추천 프리셋: 사이트 「보스 설정 › 프리셋 › 추천」 목록 (이름·설명·대표 그림·보스·순서·숨김) ──
+const PRE0=[{"id":"r1","name":"노멀 검밑솔","desc":"노멀 스우~진힐라 / 카파풀 하매 카퀸 카벨","slots":"lotus:n damien:n slime:n lucid:n will:n gloom:n darknell:n hilla:n papulatus:c magnus:h queen:c bellum:c"},{"id":"r2","name":"하드 검밑솔","desc":"스우~진힐라 / 카파풀 하매 카퀸 카벨","slots":"lotus:h damien:h slime:c lucid:h will:h gloom:c darknell:h hilla:h papulatus:c magnus:h queen:c bellum:c"},{"id":"r3","name":"노세이칼","desc":"하드 검밑솔 · 노세 이칼 / 카파풀 카벨","slots":"lotus:h damien:h slime:c lucid:h will:h gloom:c darknell:h hilla:h seren:n kalos:e papulatus:c bellum:c"},{"id":"r4","name":"노세이칼이적","desc":"하드 검밑솔 · 노세 이칼 이적 / 카파풀","slots":"lotus:h damien:h slime:c lucid:h will:h gloom:c darknell:h hilla:h seren:n kalos:e adversary:e papulatus:c"},{"id":"r5","name":"노세이칼카적","desc":"하드 검밑솔 · 노세 이칼 이적 이카","slots":"lotus:h damien:h slime:c lucid:h will:h gloom:c darknell:h hilla:h seren:n kalos:e adversary:e kaling:e"},{"id":"r6","name":"이카벨","desc":"스우 뺀 하드 검밑솔 · 하세 이칼 이적 이카 이벨","slots":"damien:h slime:c lucid:h will:h gloom:c darknell:h hilla:h seren:h kalos:e adversary:e kaling:e belona:e"},{"id":"r7","name":"이카벨 · 노칼","desc":"스우 뺀 하드 검밑솔 · 하세 노칼 이적 이카 이벨 · 올 솔플","slots":"damien:h slime:c lucid:h will:h gloom:c darknell:h hilla:h seren:h kalos:n adversary:e kaling:e belona:e"},{"id":"r8","name":"이카벨 · 노칼노적","desc":"스우 뺀 하드 검밑솔 · 하세 노칼 노적 이카 이벨 · 올 솔플","slots":"damien:h slime:c lucid:h will:h gloom:c darknell:h hilla:h seren:h kalos:n adversary:n kaling:e belona:e"},{"id":"r9","name":"노칼노적 · 익스우 노흉 2인","desc":"데미안·가엔슬 뺀 하드 검밑솔 · 하세 노칼 노적 이카 이벨 / 익스우 노흉 2인","slots":"lucid:h will:h gloom:c darknell:h hilla:h seren:h kalos:n adversary:n kaling:e belona:e lotus:x*2 radiant:n*2"},{"id":"r10","name":"노림노발","desc":"익스우 노흉 노카 1인 / 카칼 노벨 노림 2인 / 익세 노발 하적 3인 · 진듄더","slots":"lotus:x radiant:n kaling:n kalos:c*2 belona:n*2 limbo:n*2 seren:x*3 baldrix:n*3 adversary:h*3 hilla:h darknell:h gloom:c"},{"id":"r11","name":"하림하흉 3인","desc":"카칼 노벨 1인 / 익세 하적 하카 노발 2인 / 하림 하흉 3인 · 익스우 · 진듄더","slots":"kalos:c belona:n seren:x*2 adversary:h*2 kaling:h*2 baldrix:n*2 limbo:h*3 radiant:h*3 lotus:x hilla:h darknell:h gloom:c"},{"id":"r12","name":"하벨하발 3인","desc":"하림 하흉 노유 익세 하적 하카 2인 / 하벨 하발 3인 / 익스우 카칼 진듄 1인","slots":"limbo:h*2 radiant:h*2 jupiter:n*2 seren:x*2 adversary:h*2 kaling:h*2 belona:h*3 baldrix:h*3 lotus:x kalos:c hilla:h darknell:h"},{"id":"r13","name":"노유 2인","desc":"하림 하흉 노유 하벨 2인 / 하발 3인 / 익세 하적 하카 카칼 익스우 진듄 1인","slots":"limbo:h*2 radiant:h*2 jupiter:n*2 belona:h*2 baldrix:h*3 seren:x adversary:h kaling:h kalos:c lotus:x hilla:h darknell:h"},{"id":"r14","name":"노유 솔플","desc":"하림 하흉 하벨 2인 / 하발 3인 / 익세 카칼 하카 하적 노유 익스우 진듄 1인","slots":"limbo:h*2 radiant:h*2 belona:h*2 baldrix:h*3 seren:x kalos:c kaling:h adversary:h jupiter:n lotus:x hilla:h darknell:h"}]; // 코드에 들어 있는 기본 추천 프리셋 [{id,name,desc,slots:'보스:난이도[*인원] …'}]
+const PDK={e:'easy',n:'normal',h:'hard',c:'chaos',x:'extreme'},PDR={easy:'e',normal:'n',hard:'h',chaos:'c',extreme:'x'},PDN={easy:'이지',normal:'노멀',hard:'하드',chaos:'카오스',extreme:'익스트림'},PDB={easy:'EASY',normal:'NORMAL',hard:'HARD',chaos:'CHAOS',extreme:'EXTREME'};
+const WB=CRY.B.filter(b=>!b.season&&Object.values(b.diffs).includes('W')),WBY=Object.fromEntries(WB.map(b=>[b.id,b])); // 주간 보스만
+const wDiffs=id=>{const b=WBY[id];return b?['easy','normal','hard','chaos','extreme'].filter(d=>b.diffs[d]==='W'):[]};
+let PR=null;
+const prParse=str=>String(str||'').trim().split(/\s+/).filter(Boolean).map(t=>{const[m,pt]=t.split('*'),[b,d]=m.split(':');return {b,d:PDK[d]||'',p:Math.min(6,Math.max(1,+pt||1))}});
+const prTok=x=>`${x.b}:${PDR[x.d]||'?'}${x.p>1?'*'+x.p:''}`;
+const prOut=L=>L.map(p=>{const o={id:p.id,name:p.name.replace(/\s+/g,' ').trim(),desc:(p.desc||'').replace(/\s+/g,' ').trim(),slots:p.slots.map(prTok).join(' ')};if(p.icon&&p.slots.some(x=>x.b===p.icon))o.icon=p.icon;if(p.hide)o.hide=true;return o});
+const prSrc=()=>{const c=S.conf.presets;return c&&Array.isArray(c.list)&&c.list.length?c.list:PRE0};
+function prLoad(){PR={list:prSrc().map(p=>({id:p.id,name:p.name||'',desc:p.desc||'',icon:p.icon||'',hide:!!p.hide,slots:prParse(p.slots)})),sel:PR&&PR.sel||null,arm:null}}
+const prDirty=()=>!!PR&&JSON.stringify(prOut(PR.list))!==JSON.stringify(prOut(prSrc().map(p=>({...p,slots:prParse(p.slots)}))));
+const prBad=p=>!p.name.trim()?'이름이 비어 있어요':p.name.trim().length>24?'이름은 24자까지':(p.desc||'').length>120?'설명은 120자까지':!p.slots.length?'보스가 없어요':p.slots.length>14?'보스는 14칸까지':p.slots.some(x=>!WBY[x.b]||!wDiffs(x.b).includes(x.d))?'보스·난이도가 비어 있는 칸이 있어요':new Set(p.slots.map(x=>x.b)).size!==p.slots.length?'같은 보스가 두 번 있어요':'';
+const prMeso=p=>p.slots.reduce((a,x)=>a+((WBY[x.b]&&WBY[x.b].price[x.d])||0)/x.p,0);
+const prRep=p=>{const ok=p.slots.filter(x=>WBY[x.b]&&x.d);const f=p.icon&&ok.find(x=>x.b===p.icon);return f||ok.slice().sort((a,b)=>((WBY[b.b].price[b.d]||0)/b.p)-((WBY[a.b].price[a.d]||0)/a.p))[0]}; // 대표: 정한 보스, 없으면 가장 비싼(센) 보스
+const prImg=(x,big)=>x&&WBY[x.b]?`<span class="pr-ic${big?' big':''} rb-${x.d}">${WBY[x.b].img?`<img src="${WBY[x.b].img}" alt="">`:''}<b>${big?PDB[x.d]:PDB[x.d][0]}</b>${x.p>1?`<u>${x.p}인</u>`:''}</span>`:`<span class="pr-ic${big?' big':''}"></span>`;
+function renderPre(demo){if(!PR)prLoad();const app=$('#app'),d=prDirty(),bads=PR.list.map(prBad),anyBad=bads.some(Boolean);
+  const rows=PR.list.map((p,i)=>{const open=PR.sel===p.id,rep=prRep(p),bad=bads[i];
+    const ed=!open?'':`<div class="pr-ed">
+      <div class="pr-f"><span class="lbl">이름</span><input class="inp" data-pn="${i}" value="${esc(p.name)}" maxlength="24" style="flex:1"><label class="ck"><input type="checkbox" data-ph="${i}"${p.hide?' checked':''}> 숨기기</label></div>
+      <div class="pr-f"><span class="lbl">설명</span><input class="inp" data-pd="${i}" value="${esc(p.desc)}" maxlength="120" style="flex:1" placeholder="예: 스우~진힐라 / 카파풀 하매 카퀸 카벨"></div>
+      <div class="pr-f" style="align-items:flex-start"><span class="lbl" style="padding-top:8px">대표 그림</span><div class="pr-reps"><button type="button" class="pr-rep${!p.icon?' on':''}" data-pi="${i}:">${prImg(prRep({...p,icon:''}))}<span>자동 (가장 센 보스)</span></button>${p.slots.filter(x=>WBY[x.b]).map(x=>`<button type="button" class="pr-rep${p.icon===x.b?' on':''}" data-pi="${i}:${x.b}">${prImg(x)}<span>${esc(WBY[x.b].name)}</span></button>`).join('')}</div></div>
+      <div class="pr-f" style="align-items:flex-start"><span class="lbl" style="padding-top:8px">보스 <b class="num">${p.slots.length}</b>/14</span><div class="pr-sl">${p.slots.map((x,j)=>`<div class="pr-srow">${prImg(x)}
+          <select class="inp" data-psb="${i}:${j}">${x.b&&WBY[x.b]?'':'<option value="">보스 고르기</option>'}${WB.map(b=>`<option value="${b.id}"${b.id===x.b?' selected':''}${b.id!==x.b&&p.slots.some(y=>y.b===b.id)?' disabled':''}>${esc(b.name)}</option>`).join('')}</select>
+          <select class="inp" data-psd="${i}:${j}">${wDiffs(x.b).map(dd=>`<option value="${dd}"${dd===x.d?' selected':''}>${PDN[dd]}</option>`).join('')||'<option value="">-</option>'}</select>
+          <select class="inp" data-psp="${i}:${j}">${[1,2,3,4,5,6].map(n=>`<option value="${n}"${n===x.p?' selected':''}>${n===1?'솔로':n+'인'}</option>`).join('')}</select>
+          <span class="pr-m num">${WBY[x.b]&&WBY[x.b].price[x.d]?mesoKo(WBY[x.b].price[x.d]/x.p):''}</span>
+          <button class="btn out" type="button" data-psx="${i}:${j}" aria-label="빼기">빼기</button></div>`).join('')}
+        ${p.slots.length<14?`<button class="btn out" type="button" data-psa="${i}" style="align-self:flex-start">＋ 보스 넣기</button>`:''}</div></div>
+      <div class="pr-f"><span class="lbl"></span><span class="hint">한 주 <b class="num" style="color:var(--text)">${mesoKo(prMeso(p))}</b> (내 몫, 지금 결정석 가격)</span><span style="flex:1"></span><button class="btn ${PR.arm===p.id?'danger arm':'danger'}" type="button" data-pdel="${i}">${PR.arm===p.id?'한 번 더 누르면 삭제':'이 프리셋 삭제'}</button></div></div>`;
+    return `<div class="pr-row${open?' open':''}${p.hide?' hid':''}${bad?' bad':''}"><div class="pr-hd"><span class="pr-mv"><button type="button" data-pm="${i}:-1" ${i?'':'disabled'} aria-label="위로">▲</button><button type="button" data-pm="${i}:1" ${i<PR.list.length-1?'':'disabled'} aria-label="아래로">▼</button></span>
+      <button type="button" class="pr-tg" data-po="${p.id}">${prImg(rep,1)}<span class="pr-tx"><b>${esc(p.name||'(이름 없음)')}${p.hide?'<span class="tag c">숨김</span>':''}${bad?`<span class="tag e">${bad}</span>`:''}</b><small>${esc(p.desc||'')}</small><span class="pr-mini">${p.slots.filter(x=>x!==rep).map(x=>prImg(x)).join('')}</span></span><span class="pr-me num">${mesoKo(prMeso(p))}</span><span class="pr-car">${open?'▴':'▾'}</span></button></div>${ed}</div>`}).join('');
+  app.innerHTML=demo+tabsHTML()+`<div class="mode"><span>ⓘ</span><span>사이트 <b>보스 설정 › 프리셋 › 추천</b> 목록이에요. 위에서부터 이 순서로 보여요. 숨긴 프리셋은 사이트에 안 나와요. 저장하면 모든 사용자에게 바로 적용돼요.</span></div>
+    <div class="card" style="padding:8px">${rows}
+      <div class="cm-oa"><button class="btn out" type="button" id="pradd">＋ 새 프리셋</button><button class="btn out" type="button" id="prdef">코드 기본값 불러오기</button><span style="flex:1"></span>${d?'<button class="btn out" type="button" id="prund">되돌리기</button>':''}<button class="btn pri" type="button" id="prsave" ${S.busy||!d||anyBad?'disabled':''}>프리셋 저장</button></div></div>`;
+  bindTabs();const keep=f=>()=>{const y=window.scrollY;f();renderPre(demo);window.scrollTo(0,y)},at=v=>v.split(':').map(Number);
+  document.querySelectorAll('[data-po]').forEach(b=>b.onclick=keep(()=>{PR.sel=PR.sel===b.dataset.po?null:b.dataset.po;PR.arm=null}));
+  document.querySelectorAll('[data-pm]').forEach(b=>b.onclick=keep(()=>{const[i,dl]=at(b.dataset.pm),j=i+dl;if(j<0||j>=PR.list.length)return;const L=PR.list;[L[i],L[j]]=[L[j],L[i]]}));
+  document.querySelectorAll('[data-pn]').forEach(e=>{e.oninput=()=>{PR.list[+e.dataset.pn].name=e.value};e.onchange=keep(()=>{})});
+  document.querySelectorAll('[data-pd]').forEach(e=>{e.oninput=()=>{PR.list[+e.dataset.pd].desc=e.value};e.onchange=keep(()=>{})});
+  document.querySelectorAll('[data-ph]').forEach(e=>e.onchange=keep(()=>{PR.list[+e.dataset.ph].hide=e.checked}));
+  document.querySelectorAll('[data-pi]').forEach(b=>b.onclick=keep(()=>{const[i,k]=b.dataset.pi.split(':');PR.list[+i].icon=k||''}));
+  document.querySelectorAll('[data-psb]').forEach(e=>e.onchange=keep(()=>{const[i,j]=at(e.dataset.psb),x=PR.list[i].slots[j];x.b=e.value;const ds=wDiffs(x.b);if(!ds.includes(x.d))x.d=ds.includes('hard')?'hard':ds[ds.length-1]||''}));
+  document.querySelectorAll('[data-psd]').forEach(e=>e.onchange=keep(()=>{const[i,j]=at(e.dataset.psd);PR.list[i].slots[j].d=e.value}));
+  document.querySelectorAll('[data-psp]').forEach(e=>e.onchange=keep(()=>{const[i,j]=at(e.dataset.psp);PR.list[i].slots[j].p=+e.value}));
+  document.querySelectorAll('[data-psx]').forEach(b=>b.onclick=keep(()=>{const[i,j]=at(b.dataset.psx),p=PR.list[i];const[x]=p.slots.splice(j,1);if(x&&p.icon===x.b)p.icon=''}));
+  document.querySelectorAll('[data-psa]').forEach(b=>b.onclick=keep(()=>{PR.list[+b.dataset.psa].slots.push({b:'',d:'',p:1})}));
+  document.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=keep(()=>{const i=+b.dataset.pdel,p=PR.list[i];if(PR.arm!==p.id){PR.arm=p.id;return}PR.list.splice(i,1);PR.sel=null;PR.arm=null}));
+  const a=$('#pradd');if(a)a.onclick=keep(()=>{const id='a'+Date.now().toString(36);PR.list.push({id,name:'새 프리셋',desc:'',icon:'',hide:true,slots:[{b:'',d:'',p:1}]});PR.sel=id});
+  const df=$('#prdef');if(df)df.onclick=keep(()=>{PR.list=PRE0.map(p=>({id:p.id,name:p.name,desc:p.desc,icon:'',hide:false,slots:prParse(p.slots)}));PR.sel=null;toast('코드에 있는 기본 프리셋을 불러왔어요 · 저장해야 사이트에 적용돼요')});
+  const u=$('#prund');if(u)u.onclick=keep(()=>{const s0=PR.sel;prLoad();PR.sel=s0});
+  const sv=$('#prsave');if(sv)sv.onclick=()=>saveConf('presets',{list:prOut(PR.list)},'추천 프리셋을 저장했어요 · 사이트에 바로 적용돼요');
+}
 function renderStat(demo){const app=$('#app'),D=ST.data;
   if(!D&&!ST.busy&&!ST.err){loadStat();return}
   const today=D?D.today:kday(0),by=new Map(((D&&D.rows)||[]).map(x=>[x.d,x])),list=[];

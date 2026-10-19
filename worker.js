@@ -490,7 +490,7 @@ async function lootPrices(req, env, url, cors) {
     const k = String(body.k || '');
     if (!CONF_KEYS.includes(k)) throw new HttpError(400, 'CONF', '없는 설정이에요');
     if (body.v === null) { await env.DB.prepare('DELETE FROM site_conf WHERE k = ?1').bind(k).run(); await bumpVer(env.DB); return json({ ok: true, k, reset: true }, 200, { ...noStore(), ...keep }); }
-    const v = k === 'tiers' ? confTiers(body.v) : k === 'crystal' ? confCrystal(body.v) : k === 'marks' ? confMarks(body.v) : confLootOn(body.v);
+    const v = k === 'tiers' ? confTiers(body.v) : k === 'crystal' ? confCrystal(body.v) : k === 'marks' ? confMarks(body.v) : k === 'presets' ? confPresets(body.v) : confLootOn(body.v);
     await env.DB.prepare('INSERT INTO site_conf (k, v, updated_at) VALUES (?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET v = ?2, updated_at = ?3')
       .bind(k, JSON.stringify(v), new Date().toISOString()).run();
     await bumpVer(env.DB);
@@ -582,7 +582,7 @@ async function bumpVer(db) {
 // 사이트 설정 (관리 화면)
 //   tiers  : 물욕 등급 기준 { black, red, dia, gold, silver, bronze } 억 이상 — 위 등급일수록 커야 함
 //   lootOn : 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템이름…] } — 적은 칸만 바뀌고 나머지는 페이지 기본값
-const CONF_KEYS = ['tiers', 'lootOn', 'crystal', 'marks'], TIER_KEYS = ['black', 'red', 'dia', 'gold', 'silver', 'bronze'];
+const CONF_KEYS = ['tiers', 'lootOn', 'crystal', 'marks', 'presets'], TIER_KEYS = ['black', 'red', 'dia', 'gold', 'silver', 'bronze'];
 function confTiers(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw new HttpError(400, 'TIERS', '등급 기준이 이상해요');
   const out = {}; let prev = Infinity;
@@ -642,6 +642,28 @@ function confCrystal(v) {
   return notice ? { tables, open, notice } : { tables, open };
 }
 // 그래프 점선 { auto:{'2026.09.17':{t:'이름', off:true}}, add:[{d:'2026.08.20', t:'벨로나 출시'}] } — 이름은 1~10자
+// 추천 프리셋 (관리 화면에서 고침): {list:[{id,name,desc,slots:'보스:난이도[*인원] …',icon?,hide?}]} — 사이트는 이 목록으로 기본 추천 프리셋을 바꿔 보여 줌
+function confPresets(v) {
+  const bad = m => new HttpError(400, 'PRESETS', m);
+  if (!v || typeof v !== 'object' || !Array.isArray(v.list) || v.list.length > 40) throw bad('프리셋 목록이 이상해요');
+  const ids = new Set(), TOK = /^[a-z0-9_]{1,24}:[enhcx](\*[1-6])?$/;
+  const list = v.list.map((p, i) => {
+    if (!p || typeof p !== 'object' || Array.isArray(p)) throw bad(`${i + 1}번째 프리셋이 이상해요`);
+    const id = String(p.id || ''); if (!/^[a-z0-9_-]{1,24}$/i.test(id) || ids.has(id)) throw bad(`${i + 1}번째 프리셋 id가 이상해요`); ids.add(id);
+    const name = typeof p.name === 'string' ? p.name.replace(/\s+/g, ' ').trim() : '';
+    if (!name || name.length > 24) throw bad(`${i + 1}번째 프리셋 이름은 1 ~ 24자로 적어 주세요`);
+    const desc = typeof p.desc === 'string' ? p.desc.replace(/\s+/g, ' ').trim() : '';
+    if (desc.length > 120) throw bad(`'${name}' 설명이 너무 길어요 (120자까지)`);
+    const toks = typeof p.slots === 'string' ? p.slots.trim().split(/\s+/).filter(Boolean) : [];
+    if (!toks.length || toks.length > 14 || toks.some(t => !TOK.test(t))) throw bad(`'${name}' 보스 목록이 이상해요`);
+    const boss = toks.map(t => t.split(':')[0]); if (new Set(boss).size !== boss.length) throw bad(`'${name}'에 같은 보스가 두 번 있어요`);
+    const o = { id, name, desc, slots: toks.join(' ') };
+    if (p.icon != null && p.icon !== '') { if (typeof p.icon !== 'string' || !boss.includes(p.icon)) throw bad(`'${name}' 대표 그림은 목록에 있는 보스여야 해요`); o.icon = p.icon; }
+    if (p.hide === true) o.hide = true;
+    return o;
+  });
+  return { list };
+}
 function confMarks(v) {
   const bad = m => new HttpError(400, 'MARKS', m);
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw bad('점선 설정이 이상해요');
