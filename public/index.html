@@ -4880,18 +4880,21 @@ function openAdd(){ui.modal={kind:'add',q:'',found:null};renderLayer();setTimeou
 var cloud=null; // save()가 먼저 불릴 수 있어서 var
 // 방문 통계 (익명, 실서버에서만): 이 브라우저용 무작위 번호 + 화면을 연 횟수 + 화면을 보고 있던 시간만 보냄. 기록·캐릭터·IP는 안 보냄
 // 관리 화면에서 '이 브라우저는 세지 않기'를 켜면(mepuri-nostat) 안 보냄
-const STAT={sent:false,nw:0,mem:null,since:document.visibilityState==='visible'?Date.now():0,acc:0,tot:0};
+const STAT={sent:false,day:'',nw:0,mem:null,since:document.visibilityState==='visible'?Date.now():0,acc:0,tot:0};
 function statId(){try{if(localStorage.getItem('mepuri-nostat'))return null;let v=localStorage.getItem('mepuri-vid');
   if(!v||!/^[A-Za-z0-9_-]{8,40}$/.test(v)){v=[...crypto.getRandomValues(new Uint8Array(12))].map(b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem('mepuri-vid',v);STAT.nw=1}return v}
   catch(e){if(!STAT.mem){try{STAT.mem=[...crypto.getRandomValues(new Uint8Array(12))].map(b=>b.toString(16).padStart(2,'0')).join('')}catch(e2){return null}STAT.nw=1}return STAT.mem}}
 function statSend(o){try{if(!SAME_API||!navigator.sendBeacon)return;const v=statId();if(!v)return;navigator.sendBeacon('/api/stat',new Blob([JSON.stringify({...o,v,...(o.t==='pv'?{nw:STAT.nw}:{})})],{type:'text/plain'}))}catch(e){}}
-function statPv(){if(STAT.sent||!SAME_API)return;STAT.sent=true;statSend({t:'pv',li:cloud&&cloud.user?1:0});statFlush()}
+const statToday=()=>kst().toISOString().slice(0,10);
+function statPv(){if(STAT.sent||!SAME_API)return;STAT.sent=true;STAT.day=statToday();statSend({t:'pv',li:cloud&&cloud.user?1:0});statFlush()}
+// 탭을 열어 둔 채 날짜가 바뀌면(한국 0시) 그날 화면을 연 것으로 한 번 더 셈 — 새로 온 사람은 아님. 보고 있던 시간도 그날부터 다시 3시간까지
+function statDay(){if(!STAT.sent)return;const d=statToday();if(d===STAT.day)return;STAT.day=d;STAT.nw=0;STAT.tot=0;statSend({t:'pv',li:cloud&&cloud.user?1:0})}
 function statFlush(){ // 보고 있던 시간을 모아 두었다가 10초 넘게 쌓이면 보냄 (한 번 연 동안 3시간까지)
   if(STAT.since){STAT.acc+=Date.now()-STAT.since;STAT.since=document.visibilityState==='visible'?Date.now():0}
-  const s=Math.floor(STAT.acc/1000);if(!STAT.sent||s<10)return;STAT.acc-=s*1000;const n=Math.min(s,10800-STAT.tot);if(n<=0)return;STAT.tot+=n;statSend({t:'stay',s:n})}
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(!STAT.since)STAT.since=Date.now()}else statFlush()});
+  const s=Math.floor(STAT.acc/1000);if(!STAT.sent||s<10)return;statDay();STAT.acc-=s*1000;const n=Math.min(s,10800-STAT.tot);if(n<=0)return;STAT.tot+=n;statSend({t:'stay',s:n})}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(!STAT.since)STAT.since=Date.now();statDay()}else statFlush()});
 addEventListener('pagehide',statFlush);
-addEventListener('pageshow',e=>{if(e.persisted&&document.visibilityState==='visible')STAT.since=Date.now()});
+addEventListener('pageshow',e=>{if(e.persisted&&document.visibilityState==='visible'){STAT.since=Date.now();statDay()}});
 const CLOUDK='mepuri-cloud'; // 이 기기의 동기화 상태 {uid, rev, dirty}
 function cloudMeta(){try{return JSON.parse(localStorage.getItem(CLOUDK)||'null')||{}}catch(e){return {}}}
 function cloudSaveMeta(){if(!cloud)return;try{localStorage.setItem(CLOUDK,JSON.stringify({uid:cloud.user?cloud.user.email:cloud.uid||null,rev:cloud.rev,dirty:cloud.dirty,h:cloud.h||null,off:!!cloud.off}))}catch(e){}}
