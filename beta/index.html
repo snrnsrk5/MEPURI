@@ -2,7 +2,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark"><!-- 라이트·다크 둘 다 된다고 브라우저에 알림 → 삼성 인터넷 다크 모드가 화면을 억지로 어둡게 칠하지 않고 사이트 다크를 씀 -->
+<meta name="color-scheme" content="dark"><!-- 모든 브라우저에 '이미 다크'라고 알림 (다크인 척) → 삼성 인터넷 '어둡게 보기' 같은 강제 다크가 덧칠하지 않음. 보이는 색은 아래 CSS·테마가 정함 -->
+<script>/* 맨 처음에 바로: ① 저장된 테마를 <html>에 적용 (열 때 밝게 깜빡이지 않게 · 삼성 인터넷은 처음 열 때 한 번만 보고 덧칠을 정해서 이때 맞아야 함)
+   ② 아이폰·아이패드가 아니면 맨 바깥 배경도 어둡게 (html.pd). 아이폰은 강제 다크가 없고, 위아래로 당기면 바깥 배경이 보여서 뺌 */
+(function(){var R=document.documentElement,u=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);
+ try{var s=JSON.parse(localStorage.getItem('mepuri-test-v1')||'null');if(s&&typeof s==='object'){if(s.pal)R.setAttribute('data-pal',String(s.pal));var t=s.theme;if(t){R.setAttribute('data-theme',t==='light'?'light':'dark');if(t==='deep')R.setAttribute('data-mode','deep')}}}catch(e){}
+ if(!ios)R.classList.add('pd')})();</script>
 <title>메푸리 베타</title>
 <meta name="robots" content="noindex,nofollow">
 <!-- 링크 미리보기 그림 (public/og.png, 1200×630). 그림을 바꾸면 카톡 등이 예전 그림을 기억하니 파일 이름도 바꿀 것 (og2.png …) -->
@@ -2534,6 +2539,16 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 @keyframes tp-in{from{opacity:0;transform:translateY(4px)}}
 @media (prefers-reduced-motion:reduce){.tp-call{animation:none}}
 @media print{.tp-ring,.tp-call{display:none}}
+
+/* 다크인 척: 맨 바깥(html)은 늘 dark로 선언 → 삼성 인터넷 '어둡게 보기' 같은 강제 다크가 '이미 다크'로 보고 덧칠 안 함
+   보이는 화면은 본문(body)이 고른 테마 색 그대로 다 덮음 · 고르기 칸 같은 기본 부품은 본문 테마를 따라감
+   html.pd(아이폰 빼고): 맨 바깥 배경도 어둡게 · 본문이 화면 높이를 다 덮게 */
+html{color-scheme:dark!important}
+body{color-scheme:light}
+@media (prefers-color-scheme: dark){html:not([data-theme="light"]) body{color-scheme:dark}}
+html[data-theme="dark"] body,html[data-mode="deep"] body{color-scheme:dark}
+html.pd{background:#0C0D11}
+html.pd body{min-height:calc(100vh / var(--uiz,1));min-height:calc(100dvh / var(--uiz,1))}
 </style>
 </head>
 <body>
