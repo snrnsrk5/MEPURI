@@ -25,6 +25,7 @@ button{background:none;border:0;padding:0;cursor:pointer}
 .num{font-variant-numeric:tabular-nums}
 .top{background:var(--top)}.top .wrap{display:flex;align-items:center;gap:10px;height:40px}
 .logo{font-size:16px;font-weight:800;letter-spacing:.02em;color:var(--logo)}.top small{color:#98A0A9;font-size:12px;font-weight:500}
+.beta-go{margin-left:auto;height:26px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.28);color:#fff;font-size:12px;font-weight:700}.beta-go:hover{background:rgba(255,255,255,.12)} /* 로그인하면 보임 */
 .wrap{max-width:800px;margin:0 auto;padding-inline:16px}
 main.wrap{display:flex;flex-direction:column;gap:10px;padding-block:16px 48px}
 .card{padding:14px 16px;border-radius:12px;border:1px solid var(--card-bd);background:var(--card)}
@@ -282,7 +283,7 @@ textarea.inp{width:100%;height:120px;padding:8px 10px;resize:vertical;line-heigh
 </style>
 </head>
 <body>
-<div class="top"><div class="wrap"><span class="logo">MEPURI</span><small>관리</small></div></div>
+<div class="top"><div class="wrap"><span class="logo">MEPURI</span><small>관리</small><button class="beta-go" id="beta-go" type="button" hidden title="관리자만 보는 시험판 (/beta) — 이 기기에서 30일 동안 열려요">베타 열기 ↗</button></div></div>
 <main class="wrap sx-auc" id="app"></main>
 <script>
 // 메푸리 물욕 시세 관리: 비밀번호를 넣으면 시세를 고칠 수 있음 (서버 /api/admin/*)
@@ -329,6 +330,12 @@ async function api(path,body){
   if(!r.ok){const e=new Error((j&&j.error&&j.error.message)||('서버 오류 '+r.status));e.status=r.status;throw e}
   return j;
 }
+// 베타 열기: 이 기기에 30일짜리 베타 쿠키를 받고 새 탭에서 /beta/ (관리자만 보는 시험판 · 기록은 정식과 따로)
+async function openBeta(){if(DEMO){toast('테스트 화면이라 베타는 열 수 없어요');return}
+  const w=window.open('about:blank','_blank'); // 팝업 막힘 피하려고 누른 순간 먼저 열어 둠
+  try{await api('/api/admin/beta',{});if(w)w.location.href='/beta/';else location.href='/beta/'}
+  catch(e){if(w)w.close();if(e.status===401){S.ok=false;S.exp=true;render()}toast('베타를 열지 못했어요: '+e.message)}}
+document.getElementById('beta-go').onclick=openBeta;
 async function refresh(){try{const j=S.ok?await api('/api/admin/state',{}):await api('/api/loot-prices');const h=(j&&j.hist)||[];S.srv=Object.assign({},...h.sort((a,b)=>a.d<b.d?-1:1).map(s=>s.p));
   S.conf=(j&&j.conf&&typeof j.conf==='object')?j.conf:{};const tt=S.conf.tiers;TIERS=tt&&TKEYS.every(k=>+tt[k]>0)?TKEYS.map(k=>[+tt[k],k]):TIERS0}catch(e){toast('시세를 불러오지 못했어요: '+e.message)}}
 // ── 기본 물욕템 · 등급 기준 (서버 conf) ──
@@ -378,7 +385,7 @@ function rowHTML(n){const v=S.vals[n]??'',c=v!==saved(n),np=v==='',ni=noIcon(n);
     <span class="nmw"><span class="nm" title="${esc(n)}">${esc(n)}</span>${NOTE[n]?`<span class="hint" style="font-size:11px">${NOTE[n]}</span>`:''}${np||ni||t?`<span class="tags">${t?`<span class="tt sx-tv ${t}">${TKO[t]}</span>`:''}${np?'<span class="tag">가격 없음</span>':''}${ni?'<span class="tag">아이콘 없음</span>':''}</span>`:''}</span>
     <input class="inp num" inputmode="decimal" data-n="${esc(n)}" value="${esc(v)}" placeholder="억" aria-label="${esc(n)} 시세 (억)"></div>`}
 function render(){
-  const app=$('#app');
+  const app=$('#app');{const bg=$('#beta-go');if(bg)bg.hidden=!S.ok} // 베타 열기: 로그인했을 때만
   const demo=DEMO?'<div class="demo">테스트 화면이에요. 서버 없이 이 창 안에서만 저장돼요. 비밀번호는 <b>test</b>.</div>':'';
   if(!S.ok){app.innerHTML=demo+`<div class="card"><form class="row" id="lf"><span class="lbl">비밀번호</span><input class="inp" id="pw" type="password" autocomplete="current-password" style="flex:1;min-width:160px"><button class="btn pri" ${S.busy?'disabled':''}>확인</button></form><p class="hint" style="margin:8px 0 0">${S.exp?'30분이 지나서 다시 로그인해 주세요. ':''}비밀번호를 넣으면 30분 동안 물욕 시세를 고칠 수 있어요. 비밀번호는 이 브라우저에 남기지 않아요. 시세는 억 메소 단위예요.</p></div>`;
     $('#lf').onsubmit=async e=>{e.preventDefault();const pw=$('#pw').value;S.busy=true;render();try{await api('/api/admin/login',{password:pw});const had=Object.keys(S.vals).length>0;S.ok=true;S.exp=false;await refresh();if(!had)loadVals() /* 시간이 지나 다시 들어온 거면 고치던 값은 그대로 */}catch(err){toast(err.message)}S.busy=false;render()};

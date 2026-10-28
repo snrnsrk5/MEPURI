@@ -48,6 +48,11 @@
  *   POST /api/admin/delete           { d } 그 날짜 시세 지우기 (관리 쿠키 또는 password 필요)
  *   POST /api/admin/logout           관리 쿠키 지우기
  *   POST /api/admin/state            관리 화면용: /api/loot-prices와 같은 내용을 기억 없이 바로 읽음
+ *   POST /api/admin/beta             베타 열기: 이 기기에 30일짜리 베타 쿠키(mepuri_beta, Path=/beta)를 줌 (관리 쿠키 또는 password 필요)
+ *
+ * 베타 (/beta/) — 관리자만 보는 시험판. 화면 파일은 public이 아니라 beta/index.html을 Worker 안에 넣어서(import) 쿠키 없이는 절대 안 나감
+ *   베타 쿠키가 맞으면 보여 주고, 없으면 정식 사이트(/)로 보냄. (public 폴더 파일은 Worker를 안 거치고 바로 나가서 거기엔 안 둠)
+ *   베타 화면은 기록을 'mepuri-beta:' 칸에만 저장하고, 계정 저장(/api/state)·방문 통계(/api/stat)는 안 부름 (사이트 코드 BETA)
  *   POST /api/admin/conf             { k, v } 사이트 설정 저장 (v가 null이면 지워서 기본값으로)
  *                                    k='tiers'  물욕 등급 기준 { black, red, dia, gold, silver, bronze } (억 이상)
  *                                    k='lootOn' 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템…] }
@@ -70,11 +75,16 @@ const NEXON = 'https://open.api.nexon.com/maplestory/v1/';
 // ※ Cache API는 workers.dev 주소에선 저장이 안 되고, 내 도메인을 연결하면 동작함. 안 돼도 조회는 정상.
 const TTL = { id: 60 * 60 * 24, basic: 60 * 10, scheduler: 60 * 5 };
 
+// 베타 화면 (관리자만): Wrangler가 .html을 글자(Text)로 묶어 넣음 — 사이트 파일(public)이 아니라서 /beta 입구를 거치지 않고는 못 받음
+import BETA_HTML from './beta/index.html';
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     const cors = corsHeaders(req, env);
 
+    // 베타(관리자만): 쿠키를 확인하고 public/beta 파일을 보여 줌. 없으면 정식 사이트로
+    if (url.pathname === '/beta' || url.pathname.startsWith('/beta/')) return beta(req, env, url);
     // /api/ 가 아닌 주소는 사이트 파일(public 폴더)로 넘김
     if (!url.pathname.startsWith('/api/')) {
       if (env.ASSETS) return env.ASSETS.fetch(req);
@@ -485,6 +495,12 @@ async function lootPrices(req, env, url, cors) {
   const keep = viaCookie ? {} : { 'set-cookie': adminCookie(await adminToken(env, Date.now() + ADMIN_COOKIE_MIN * 60000), ADMIN_COOKIE_MIN * 60) };
 
   if (p === '/api/admin/login') return json({ ok: true, min: ADMIN_COOKIE_MIN }, 200, { ...noStore(), ...keep });
+  if (p === '/api/admin/beta') { // 베타 열기: 이 기기에 30일짜리 베타 쿠키 (관리 쿠키를 새로 줄 때는 둘 다)
+    const h = new Headers({ 'content-type': 'application/json; charset=utf-8', ...noStore() });
+    if (keep['set-cookie']) h.append('set-cookie', keep['set-cookie']);
+    h.append('set-cookie', betaCookie(await betaToken(env, Date.now() + BETA_DAYS * 864e5), BETA_DAYS * 86400));
+    return new Response(JSON.stringify({ ok: true, days: BETA_DAYS }), { status: 200, headers: h });
+  }
   if (p === '/api/admin/state') return json(await lootBody(env.DB), 200, { ...noStore(), ...keep }); // 관리 화면: 기억해 둔 값 말고 바로 지금 값
   if (p === '/api/admin/conf') { // { k, v } 사이트 설정 하나 저장 · v가 null이면 지워서 기본값으로
     const k = String(body.k || '');
@@ -748,6 +764,27 @@ async function adminCookieOk(req, env) {
   const [exp, sig] = v.split('.'); const e = Number(exp);
   if (!Number.isFinite(e) || e < Date.now() || e > Date.now() + ADMIN_COOKIE_MIN * 60000 + 60000 || !sig) return false;
   return sig === await adminSig(env, e);
+}
+
+// 베타 쿠키: 관리 쿠키와 같은 방식(만료 시각 + 관리 비밀번호로 만든 HMAC)이지만 서명 앞말이 달라서 서로 못 바꿔 씀. 비밀번호를 바꾸면 무효
+const BETA_COOKIE = 'mepuri_beta', BETA_DAYS = 30;
+const betaCookie = (v, maxAge) => `${BETA_COOKIE}=${v}; Path=/beta; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+async function betaSig(env, exp) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode('mepuri-beta|' + String(env.ADMIN_PASSWORD)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return b64url(new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(String(exp)))));
+}
+async function betaToken(env, exp) { return exp + '.' + await betaSig(env, exp); }
+async function betaOk(req, env) {
+  if (!env.ADMIN_PASSWORD) return false;
+  const v = readCookie(req, BETA_COOKIE); if (!v) return false;
+  const [exp, sig] = v.split('.'); const e = Number(exp);
+  if (!Number.isFinite(e) || e < Date.now() || e > Date.now() + BETA_DAYS * 864e5 + 60000 || !sig) return false;
+  return sig === await betaSig(env, e);
+}
+async function beta(req, env, url) {
+  if (!(await betaOk(req, env))) return new Response(null, { status: 302, headers: { location: '/', ...noStore() } }); // 관리자 아니면 정식 사이트로
+  if (url.pathname !== '/beta/') return new Response(null, { status: 307, headers: { location: '/beta/', ...noStore() } }); // 화면은 /beta/ 하나
+  return new Response(BETA_HTML, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex, nofollow', ...noStore() } }); // 검색에 안 걸리게 · 늘 새 화면
 }
 
 // ── 방문 통계 (익명) ──

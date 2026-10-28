@@ -9,6 +9,20 @@ GitHub에 올릴 때마다 한 칸씩 위에 쌓아요. 가장 위가 최신이�
 
 ---
 
+## 베타 추가 (관리자만) — 2026-10-28 · 정식 화면·버전은 v0.25.0 그대로
+
+바뀐 파일: `worker.js`, `beta/index.html`(새 폴더 — 저장소 맨 위), `public/admin.html`, `public/robots.txt`, `README.md`.
+`worker.js`가 바뀌어서 Worker도 다시 배포돼요(GitHub에 올리면 자동). `wrangler.toml`·`public/index.html`·`public/version.json`은 그대로예요.
+사용자에게 보이는 게 없어서 사이트 「패치 노트」는 없어요.
+
+- 관리 화면에 로그인하면 오른쪽 위 「베타 열기」 → 그 기기에서 30일 동안 `/beta/`가 열려요. 쿠키 없이 오면 정식 사이트로 보내요.
+- 베타 화면은 `beta/index.html`을 Worker 안에 넣어서(import) 보여 줘요. `public`에 두면 쿠키 없이도 열려서요.
+- 베타는 기록을 `mepuri-beta:` 칸에만 저장하고(정식 기록은 복사할 때 읽기만), 계정 저장·방문 통계·새 버전 알림은 꺼져 있어요. 로그인은 정식과 같이 써요.
+- 저장 공간을 정식과 같이 써서, 베타는 캐릭터 그림을 빼고 가볍게 저장하고, 공간이 빠듯하면 복사·저장을 안 해요.
+- 이번 베타 = 테스트판 그대로: 설정 창, 연말 결산(미리 보기로 늘 띠가 보임), 결과 그림.
+
+---
+
 ## v0.25.0 — 2026-10-24
 
 바뀐 파일: `public/index.html`, `public/version.json`, `public/admin.html`, `public/assets/icons.*.js`(새 파일 — 예전 `icons.5a67311a13.js`는 지워도 돼요)
