@@ -280,6 +280,18 @@ textarea.inp{width:100%;height:120px;padding:8px 10px;resize:vertical;line-heigh
 .pr-reps{flex:1;display:flex;flex-wrap:wrap;gap:6px}.pr-rep{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px 0 6px;border-radius:6px;border:1px solid var(--input-bd);background:var(--card);font-size:12px;color:var(--sub)}.pr-rep.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:700}
 .pr-sl{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}.pr-srow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.pr-srow select{height:30px}.pr-srow select:first-of-type{min-width:150px}.pr-m{min-width:84px;font-size:12px;color:var(--sub);text-align:right}.pr-srow .btn{height:30px;padding:0 10px}
 .ck{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--sub)}
+/* 공유 링크 (연말 결산 링크) */
+.shk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.shm{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px}.shm .lbl{font-size:13px;font-weight:700;color:var(--text)}.shm .hint{flex:1;min-width:200px}
+.shm .seg button.on.off{background:var(--danger);color:#fff}
+.shl{display:flex;flex-direction:column}
+.shr{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.3fr) 64px 64px 128px;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px}.shr:last-child{border-bottom:0}
+.shr.hd{min-height:34px;padding:0 12px;border:0;border-radius:9px;background:var(--seg);font-size:12px;color:var(--muted);margin-bottom:4px}
+.shr .t{min-width:0}.shr .t b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.shr .t small{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shr .o{min-width:0;font-size:12px;color:var(--sub)}.shr .o small{display:block;color:var(--muted)}
+.shr .n{text-align:right;font-variant-numeric:tabular-nums}.shr .a{display:flex;gap:6px;justify-content:flex-end}
+.shr .btn{height:28px;padding:0 10px;font-size:12px;text-decoration:none}
+@media (max-width:640px){.shk{grid-template-columns:1fr 1fr 1fr}.shr{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}.shr.hd{display:none}.shr .o{grid-column:1/-1;grid-row:2}.shr .n{display:none}.shr .a{grid-column:2;grid-row:1}}
 </style>
 </head>
 <body>
@@ -307,7 +319,7 @@ const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&
 const fmt=v=>v==null||v===''?'':String(+v);
 const BASE=Object.assign({},...BUILTIN.map(s=>s.p)); // 템마다 가장 최근 기본 시세
 const S={pw:'',ok:false,srv:{},vals:{},extra:[],arm:false,busy:false,paste:false,f:'all',sort:'price',q:'',tab:'price',conf:{},on:null,boss:BOSSL[0][0],diff:'',tv:null};
-try{sessionStorage.removeItem('mepuri-admin');const o=JSON.parse(localStorage.getItem('mepuri-admin-view')||'{}');if(o.sort)S.sort=o.sort;if(['price','loot','tier','cry','stat'].includes(o.tab))S.tab=o.tab;if(BOSSL.some(b=>b[0]===o.boss))S.boss=o.boss;if(o.diff)S.diff=o.diff}catch(e){}
+try{sessionStorage.removeItem('mepuri-admin');const o=JSON.parse(localStorage.getItem('mepuri-admin-view')||'{}');if(o.sort)S.sort=o.sort;if(['price','loot','tier','cry','stat','share'].includes(o.tab))S.tab=o.tab;if(BOSSL.some(b=>b[0]===o.boss))S.boss=o.boss;if(o.diff)S.diff=o.diff}catch(e){}
 
 // ── 서버 ──
 let demoDB=null;
@@ -323,6 +335,9 @@ async function api(path,body){
     if(path==='/api/admin/prices'){const p={};Object.entries(body.p).forEach(([k,v])=>{if(v!==''&&v!=null)p[k]=+v});demoDB.set(body.d,p);return {ok:true,count:Object.keys(p).length}}
     if(path==='/api/admin/delete'){demoDB.delete(body.d);return {ok:true}}
     if(path==='/api/admin/stats')return demoStats(body.days);
+    if(path==='/api/admin/shares')return demoShares();
+    if(path==='/api/admin/share-del'){demoDB.sh=(demoDB.sh||demoShares().links).filter(x=>x.id!==body.id);return {ok:true,deleted:true}}
+    if(path==='/api/admin/share-mode'){demoDB.shm=body.mode;return {ok:true,mode:body.mode}}
     if(path==='/api/admin/conf'){if(body.v===null)delete demoDB.conf[body.k];else demoDB.conf[body.k]=JSON.parse(JSON.stringify(body.v));return {ok:true,k:body.k,v:body.v}}
   }
   const r=await fetch(path,body?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),cache:'no-store'}:{cache:'no-store'});
@@ -395,6 +410,7 @@ function render(){
   if(S.tab==='cry')return renderCry(demo);
   if(S.tab==='pre')return renderPre(demo);
   if(S.tab==='stat')return renderStat(demo);
+  if(S.tab==='share')return renderShare(demo);
   const all=allNames(),cNop=all.filter(noPrice).length,cNoi=all.filter(noIcon).length,cChg=all.filter(n=>(S.vals[n]??'')!==saved(n)).length,srvOn=Object.keys(S.srv).length>0;
   if(S.reorder||!S.order){S.order=shownNames();S.reorder=false} // 값을 고칠 때는 줄이 움직이지 않게 순서 고정
   const list=S.order;
@@ -429,7 +445,7 @@ function render(){
 // ── 탭 ──
 function tabsHTML(){const cP=allNames().filter(n=>(S.vals[n]??'')!==saved(n)).length,cL=CELLS.filter(lootDirty).length,cT=tierDirty()?1:0,cC=(CR?crDirty().n:0)+(MK&&mkDirty()?1:0);
   const tb=(k,l,n)=>`<button class="tab${S.tab===k?' on':''}" type="button" data-tab="${k}" role="tab" aria-selected="${S.tab===k}">${l}${n?`<span class="n">${n}</span>`:''}</button>`;
-  return `<div class="tabs" role="tablist">${tb('price','물욕 시세',cP)}${tb('loot','기본 물욕템',cL)}${tb('tier','등급 기준',cT)}${tb('cry','결정석 가격',cC)}${tb('pre','추천 프리셋',PR&&prDirty()?1:0)}${tb('stat','방문 통계',0)}</div>`}
+  return `<div class="tabs" role="tablist">${tb('price','물욕 시세',cP)}${tb('loot','기본 물욕템',cL)}${tb('tier','등급 기준',cT)}${tb('cry','결정석 가격',cC)}${tb('pre','추천 프리셋',PR&&prDirty()?1:0)}${tb('stat','방문 통계',0)}${tb('share','공유 링크',0)}</div>`}
 function bindTabs(){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(S.tab===b.dataset.tab)return;S.tab=b.dataset.tab;S.arm=false;saveView();render();window.scrollTo(0,0)})}
 const FX='<span class="gw" aria-hidden="true"></span><span class="gl" aria-hidden="true"><i></i></span><span class="gl2" aria-hidden="true"><i></i></span><span class="sp" aria-hidden="true"></span>';
 // 아이콘 + 등급 테두리 (값 v를 주면 그 값으로, 아니면 지금 시세 칸 값으로)
@@ -768,6 +784,38 @@ function renderStat(demo){const app=$('#app'),D=ST.data;
   $('#nost').onchange=e=>{try{e.target.checked?localStorage.setItem('mepuri-nostat','1'):localStorage.removeItem('mepuri-nostat')}catch(x){}toast(e.target.checked?'이 브라우저에서 사이트를 열어도 세지 않아요':'이 브라우저 방문도 다시 세요')};
   const num=(id,k,min)=>{const i=$('#'+id);if(!i)return;i.onchange=()=>{const v=parseFloat(String(i.value).replace(/[,\s원개]/g,''));if(Number.isFinite(v)&&v>=min){ST[k]=v;saveAd()}const y=window.scrollY;render();window.scrollTo(0,y)}};
   num('rpm','rpm',0);num('ads','ads',0.1);
+}
+// ── 공유 링크 (연말 결산 링크 · 서버 /api/admin/shares · share-del · share-mode) ──
+// 링크는 만든 날부터 30일 뒤 저절로 지워짐. 주인 이메일은 앞 두 글자만. 새 링크 만들기: 멈춤 · 관리자만(베타) · 모두
+const SH={data:null,busy:false,err:'',arm:null};
+const SHM={off:['멈춤','새 링크를 못 만들어요. 이미 만든 링크는 그대로 보여요'],admin:['관리자만','베타(/beta)에서만 만들 수 있어요 — 링크 테스트용'],all:['모두','누구나 만들 수 있어요 (로그인 안 해도 접속 주소마다 하루 5개)']};
+function demoShares(){if(!demoDB)demoDB=new Map();const now=Date.now(),D=864e5;
+  if(!demoDB.sh)demoDB.sh=[[1,'tester@gmail.com',{nm:'show',lk:'show',mt:'hide'},'강은호님의 2026 메푸리 결산',40],[3,null,{nm:'hide',lk:'job',mt:'hide'},'2026 메푸리 결산',12],[8,'abcdef@naver.com',{nm:'hide',lk:'job',mt:'show'},'2026 메푸리 결산',3],[0.2,null,{nm:'show',lk:'job',mt:'hide'},'귤민님의 2026 메푸리 결산',0]]
+    .map(([ago,em,o,t,v],i)=>({id:'demo'+String(i).padStart(6,'0'),o,title:t,at:now-ago*D,exp:now-ago*D+30*D,views:v,owner:em?em.slice(0,2)+'***'+em.slice(em.indexOf('@')):null}));
+  const L=demoDB.sh,k=kday(0),t0=dayMs(k);return {mode:demoDB.shm||'admin',max:5,days:30,live:L.length,today:L.filter(x=>x.at>=t0).length,views:L.reduce((a,x)=>a+x.views,0),links:JSON.parse(JSON.stringify(L))}}
+async function loadShare(){if(SH.busy)return;SH.busy=true;SH.err='';render();
+  try{SH.data=await api('/api/admin/shares',{})}catch(e){if(e.status===401){S.ok=false;S.exp=true}else SH.err=e.message}SH.busy=false;render()}
+function renderShare(demo){const app=$('#app'),D=SH.data;
+  if(!D&&!SH.busy&&!SH.err){loadShare();return}
+  const left=x=>Math.max(0,Math.ceil((x.exp-Date.now())/864e5)),when=t=>{const d=new Date(t+9*3600000);return `${d.getUTCMonth()+1}.${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`};
+  const ot=o=>`이름 ${o&&o.nm==='show'?'보임':'가림'} · 모습 ${o&&o.lk==='show'?'보임':'직업 그림'} · 파티원 ${o&&o.mt==='show'?'넣음':'뺌'}`;
+  const kc=(l,v,sub)=>`<div class="kc"><span class="l">${l}</span><b class="num">${v}</b><small>${sub}</small></div>`;
+  const seg=`<div class="seg" role="group" aria-label="새 링크 만들기">${['off','admin','all'].map(m=>`<button class="${D&&D.mode===m?'on'+(m==='off'?' off':''):''}" data-shm="${m}" ${SH.busy||!D?'disabled':''} aria-pressed="${!!D&&D.mode===m}">${SHM[m][0]}</button>`).join('')}</div>`;
+  const rows=D?D.links.map(x=>`<div class="shr"><span class="t"><b title="${esc(x.title)}">${esc(x.title)}</b><small>${x.owner?esc(x.owner):'로그인 안 함 (기기 주인)'}</small></span>
+      <span class="o">${ot(x.o)}<small>${when(x.at)} 만듦</small></span><span class="n num">${left(x)}일</span><span class="n num">${nf(x.views)}번</span>
+      <span class="a"><a class="btn out" href="/r/${esc(x.id)}" target="_blank" rel="noopener">열기</a><button class="btn ${SH.arm===x.id?'danger arm':'danger'}" type="button" data-shd="${esc(x.id)}">${SH.arm===x.id?'한 번 더':'지우기'}</button></span></div>`).join(''):'';
+  const body=!D?`<div class="card empty">${SH.busy?'불러오는 중…':esc(SH.err||'')}</div>`:`
+    <div class="card shm"><span class="lbl">새 링크 만들기</span>${seg}<span class="hint">${SHM[D.mode]?SHM[D.mode][1]:''}</span></div>
+    <div class="shk">${kc('살아 있는 링크',nf(D.live),`한 사람 ${D.max}개까지 · ${D.days}일 뒤 저절로 지움`)}${kc('오늘 만든 링크',nf(D.today),'한국 시간 0시부터')}${kc('본 횟수 합',nf(D.views),'링크 미리보기 봇은 빼고')}</div>
+    <div class="card" style="padding:8px"><div class="shr hd"><span>제목 · 주인</span><span>옵션 · 만든 때</span><span class="n">남은 날</span><span class="n">본 횟수</span><span></span></div>
+      <div class="shl">${rows||'<div class="empty">살아 있는 링크가 없어요</div>'}</div></div>`;
+  app.innerHTML=demo+tabsHTML()+`<div class="mode"><span>ⓘ</span><span>연말 결산 <b>공유 링크</b>예요. 링크에는 결산 카드에 쓰는 숫자 요약만 있고, 주인이 고른 대로 이름·모습·파티원이 들어가요. <b>주인 이메일은 앞 두 글자만</b> 보여요. 링크는 만든 날부터 30일 뒤 저절로 지워지고, 주인이 지우거나 계정을 지우면 바로 지워져요. 문제 있는 링크는 여기서 지우고, 남발되면 <b>멈춤</b>으로 바꿔 주세요.</span></div>
+    <div class="bar"><span class="hint">${D?`${D.links.length}개 (최근 300개까지)`:''}</span><button class="btn out" id="shrf" ${SH.busy?'disabled':''}>${SH.busy?'불러오는 중':'새로고침'}</button></div>${body}`;
+  bindTabs();$('#shrf').onclick=loadShare;
+  app.querySelectorAll('[data-shm]').forEach(b=>b.onclick=async()=>{const m=b.dataset.shm;if(!D||D.mode===m)return;SH.busy=true;render();
+    try{await api('/api/admin/share-mode',{mode:m});D.mode=m;toast(`새 링크 만들기: ${SHM[m][0]}`)}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}SH.busy=false;render()});
+  app.querySelectorAll('[data-shd]').forEach(b=>b.onclick=async()=>{const id=b.dataset.shd;if(SH.arm!==id){SH.arm=id;render();setTimeout(()=>{if(SH.arm===id){SH.arm=null;if(S.tab==='share')render()}},3000);return}
+    SH.arm=null;SH.busy=true;render();try{await api('/api/admin/share-del',{id});toast('링크를 지웠어요');SH.busy=false;await loadShare();return}catch(e){if(e.status===401){S.ok=false;S.exp=true}toast(e.message)}SH.busy=false;render()});
 }
 function bindRows(){document.querySelectorAll('#rows .inp').forEach(i=>{i.oninput=()=>{S.vals[i.dataset.n]=i.value.trim()};i.onchange=()=>{const y=window.scrollY;render();window.scrollTo(0,y)}})}
 // 30분 관리 쿠키가 남아 있으면 바로 들어감

@@ -53,6 +53,18 @@
  * 베타 (/beta/) — 관리자만 보는 시험판. 화면 파일은 public이 아니라 beta/index.html을 Worker 안에 넣어서(import) 쿠키 없이는 절대 안 나감
  *   베타 쿠키가 맞으면 보여 주고, 없으면 정식 사이트(/)로 보냄. (public 폴더 파일은 Worker를 안 거치고 바로 나가서 거기엔 안 둠)
  *   베타 화면은 기록을 'mepuri-beta:' 칸에만 저장하고, 계정 저장(/api/state)·방문 통계(/api/stat)는 안 부름 (사이트 코드 BETA)
+ *
+ * 공유 링크 (연말 결산 · 10.28 링크 테스트, D1 표 share_links) — 결산 카드에 쓰는 숫자 요약만 저장 (원래 기록·가린 이름은 안 받음)
+ *   POST /api/share/list    { dk }                 내 링크 목록 { links:[{id,o,at,exp,views}], max, days, mode, can, who }
+ *   POST /api/share/create  { dk, o, data }        링크 만들기 → { id, at, exp }  (o = 옵션 {nm,lk,mt}, data = 결산 요약 V)
+ *   POST /api/share/delete  { dk, id }             내 링크 지우기
+ *     dk = 사이트가 브라우저에 둔 무작위 기기 키 (로그인 안 한 사람의 링크 주인 확인용, 해시로만 저장)
+ *     베타 화면은 /beta/api/share/… 로 부름 (베타 쿠키가 /beta에만 붙어서) → '관리자만' 모드에서 베타인지 확인
+ *   GET  /r/<id>            링크 보기 화면 (누구나, 로그인 없이 카드만) — 화면 파일은 public/r/view.*.js·css, 데이터는 이 Worker가 넣음
+ *                           검색엔진 막기 · 미리보기(og) 제목 · 본 횟수(미리보기 봇 빼고) · 30일 지난 링크는 '없거나 기간이 지난 링크'
+ *   POST /api/admin/shares       관리 화면: 숫자(살아 있는 링크·오늘 만든 수·본 횟수) + 목록(주인 이메일은 일부만)
+ *   POST /api/admin/share-del    { id } 관리자가 링크 지우기
+ *   POST /api/admin/share-mode   { mode } 새 링크 만들기: 'off' 멈춤 · 'admin' 관리자만(베타) · 'all' 모두 (처음엔 'admin')
  *   POST /api/admin/conf             { k, v } 사이트 설정 저장 (v가 null이면 지워서 기본값으로)
  *                                    k='tiers'  물욕 등급 기준 { black, red, dia, gold, silver, bronze } (억 이상)
  *                                    k='lootOn' 보스·난이도마다 물욕 기록 창에 기본으로 켜 둘 템 { '보스이름|난이도': [템…] }
@@ -84,7 +96,9 @@ export default {
     const cors = corsHeaders(req, env);
 
     // 베타(관리자만): 쿠키를 확인하고 public/beta 파일을 보여 줌. 없으면 정식 사이트로
-    if (url.pathname === '/beta' || url.pathname.startsWith('/beta/')) return beta(req, env, url);
+    if (url.pathname === '/beta' || url.pathname.startsWith('/beta/')) return beta(req, env, url, ctx);
+    // 공유 링크 보기 화면 (/r/<id>). public/r/의 화면 파일(view.*.js·css)은 Worker 전에 사이트 파일로 나감
+    if (url.pathname.startsWith('/r/')) return shareView(req, env, ctx, url);
     // /api/ 가 아닌 주소는 사이트 파일(public 폴더)로 넘김
     if (!url.pathname.startsWith('/api/')) {
       if (env.ASSETS) return env.ASSETS.fetch(req);
@@ -118,6 +132,8 @@ export default {
       }
       return new Response(null, { status: 204, headers: noStore() });
     }
+    // 공유 링크 만들기·목록·지우기 (같은 사이트에서만, POST)
+    if (url.pathname.startsWith('/api/share/')) return shareApi(req, env, ctx, url, false);
     if (req.method !== 'GET') return fail(405, 'METHOD', 'GET 요청만 받아요', cors);
 
     // 넥슨 조회: 로그인 확인 + 남발 방지 (외형 그림은 IP 제한만)
@@ -371,7 +387,9 @@ async function account(req, env, url) {
     return json({ rev: base + 1, updatedAt: now }, 200, noStore());
   }
   if (p === '/api/account' && m === 'DELETE') {
+    await ensureShareSchema(env.DB); // 공유 링크를 한 번도 안 만든 서버면 표부터 (없는 표를 지우면 계정 삭제가 실패하니)
     await env.DB.batch([
+      env.DB.prepare('DELETE FROM share_links WHERE user_id = ?1').bind(me.id), // 그 계정의 공유 링크도 바로 지움
       env.DB.prepare('DELETE FROM user_state WHERE user_id = ?1').bind(me.id),
       env.DB.prepare('DELETE FROM sessions WHERE user_id = ?1').bind(me.id),
       env.DB.prepare('DELETE FROM users WHERE id = ?1').bind(me.id),
@@ -513,6 +531,21 @@ async function lootPrices(req, env, url, cors) {
     return json({ ok: true, k, v }, 200, { ...noStore(), ...keep });
   }
   if (p === '/api/admin/stats') return json(await statReport(env.DB, body.days), 200, { ...noStore(), ...keep });
+  if (p === '/api/admin/shares') return json(await shareAdminList(env.DB), 200, { ...noStore(), ...keep });
+  if (p === '/api/admin/share-del') {
+    const id = String(body.id || '');
+    if (!SHARE_ID.test(id)) throw new HttpError(400, 'ID', '링크 주소가 이상해요');
+    await ensureShareSchema(env.DB);
+    const r = await env.DB.prepare('DELETE FROM share_links WHERE id = ?1').bind(id).run();
+    return json({ ok: true, deleted: !!(r.meta && r.meta.changes) }, 200, { ...noStore(), ...keep });
+  }
+  if (p === '/api/admin/share-mode') {
+    const mode = String(body.mode || '');
+    if (!SHARE_MODES.includes(mode)) throw new HttpError(400, 'MODE', '없는 설정이에요');
+    await env.DB.prepare("INSERT INTO site_conf (k, v, updated_at) VALUES ('share', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, updated_at = ?2").bind(mode, new Date().toISOString()).run();
+    SHARE_MODE_MEMO = null;
+    return json({ ok: true, mode }, 200, { ...noStore(), ...keep });
+  }
   const d = String(body.d || '');
   if (!validDay(d)) throw new HttpError(400, 'DATE', '날짜는 2026.10.03 모양으로 적어 주세요');
 
@@ -781,10 +814,215 @@ async function betaOk(req, env) {
   if (!Number.isFinite(e) || e < Date.now() || e > Date.now() + BETA_DAYS * 864e5 + 60000 || !sig) return false;
   return sig === await betaSig(env, e);
 }
-async function beta(req, env, url) {
+async function beta(req, env, url, ctx) {
+  if (url.pathname.startsWith('/beta/api/share/')) return shareApi(req, env, ctx, url, await betaOk(req, env)); // 베타 화면의 공유 링크 (베타 쿠키 확인은 '관리자만' 모드에서)
   if (!(await betaOk(req, env))) return new Response(null, { status: 302, headers: { location: '/', ...noStore() } }); // 관리자 아니면 정식 사이트로
   if (url.pathname !== '/beta/') return new Response(null, { status: 307, headers: { location: '/beta/', ...noStore() } }); // 화면은 /beta/ 하나
   return new Response(BETA_HTML, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex, nofollow', ...noStore() } }); // 검색에 안 걸리게 · 늘 새 화면
+}
+
+// ── 공유 링크 (연말 결산) ──
+// 링크 주인: 로그인했으면 계정(user_id) · 안 했으면 기기(dk의 해시 dev). 링크는 만든 날부터 30일 — 넥슨 데이터(이름·코디 등)를 오래 두지 않으려고 (링크 내용은 만든 날 그대로)
+// 남발 방지: 주인마다 살아 있는 링크 5개 · 로그인 안 함은 접속 주소(IPv6 /64)마다 하루 5개 · 계정마다 하루 20개 · 사이트 전체 하루 1000개
+// 지우기: 예약 작업 없이 — 30일 지난 링크는 그 순간부터 안 보이고, 데이터는 링크를 만들거나 관리 화면을 열거나 지난 링크를 열 때 지움
+const SHARE_DAYS = 30, SHARE_MAX = 5, SHARE_GUEST_DAY = 5, SHARE_USER_DAY = 20, SHARE_SITE_DAY = 1000, SHARE_MAX_BODY = 72 * 1024;
+const SHARE_ID = /^[A-Za-z0-9]{10}$/, SHARE_MODES = ['off', 'admin', 'all'];
+// 링크 보기 화면 파일 (public/r/) — build_view.py가 만든 파일 이름(내용 해시)으로 바꿔 넣음
+const SHARE_VIEW = { js: '/r/a/view.bc4a57c8e8.js', css: '/r/a/view.184ff87fbd.css' };
+// 본 횟수에서 빼는 것: 링크 미리보기·검색 봇 (카톡·디스코드·슬랙·트위터·텔레그램·페이스북…)
+const SHARE_BOT = /bot|crawl|spider|slurp|facebookexternalhit|kakaotalk-scrap|kakaostory-og|whatsapp|skypeuripreview|embedly|headless|lighthouse|curl|wget|python|axios|node-fetch|undici|go-http|okhttp|java\//i;
+const SHARE_LOOK = /^https:\/\/open\.api\.nexon\.com\/static\/maplestory\/character\/look\/[A-Za-z0-9._~%\/-]+(\?[A-Za-z0-9._~%=&-]*)?$/;
+const SHARE_OWN = '(user_id = ?1 OR (user_id IS NULL AND dev = ?2))'; // 지우기: 내 계정 링크 또는 이 기기 링크
+let SHARE_MODE_MEMO = null;
+async function shareMode(db) { // 'off' · 'admin'(관리자만 = 베타) · 'all'. 설정이 없으면 'admin'. 같은 서버 안에선 10초 기억
+  if (SHARE_MODE_MEMO && Date.now() - SHARE_MODE_MEMO.at < 10000) return SHARE_MODE_MEMO.v;
+  await ensurePriceSchema(db);
+  const r = await db.prepare("SELECT v FROM site_conf WHERE k = 'share'").first();
+  const v = r && SHARE_MODES.includes(r.v) ? r.v : 'admin';
+  SHARE_MODE_MEMO = { at: Date.now(), v };
+  return v;
+}
+const SHARE_HITS = new Map();
+function shareGuard(req) { // 목록·지우기까지 포함해서 접속 주소마다 1분 60번 (메모리에서만 셈)
+  const raw = req.headers.get('CF-Connecting-IP') || 'unknown';
+  const ip = raw.includes(':') ? raw.split(':').slice(0, 4).join(':') : raw;
+  const now = Date.now(), win = Math.floor(now / 60000);
+  if (SHARE_HITS.size > 5000) for (const [k, h] of SHARE_HITS) if (h.win !== win) SHARE_HITS.delete(k);
+  let h = SHARE_HITS.get(ip); if (!h || h.win !== win) { h = { win, n: 0 }; SHARE_HITS.set(ip, h); }
+  if (++h.n > 60) { const wait = Math.max(1, Math.ceil(((win + 1) * 60000 - now) / 1000)); const e = new HttpError(429, 'RATE', `요청이 너무 많아요. ${wait}초 뒤에 다시 시도해 주세요`); e.retry = wait; throw e; }
+}
+function shareId() { // 10자 (영문 대소문자·숫자 62가지, 고르게)
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; let s = '';
+  while (s.length < 10) for (const b of crypto.getRandomValues(new Uint8Array(16))) { if (b < 248 && s.length < 10) s += A[b % 62]; }
+  return s;
+}
+const shareOpts = o => ({ nm: o && o.nm === 'show' ? 'show' : 'hide', lk: o && o.lk === 'show' ? 'show' : 'job', mt: o && o.mt === 'show' ? 'show' : 'hide' }); // 기본 다 가림
+const shareParse = t => { try { return JSON.parse(t); } catch { return null; } };
+// 결산 요약 검사: 모양·크기만 (그리는 쪽에서도 하나하나 다시 확인). 바깥 주소는 넥슨 외형 그림(u)만
+function shareClean(v) {
+  const bad = m => new HttpError(400, 'SHARE_DATA', m || '결산 내용이 이상해요');
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw bad();
+  if (v.v !== 1 || !Number.isInteger(v.Y) || v.Y < 2020 || v.Y > 2100 || !Array.isArray(v.cs) || v.cs.length > 12) throw bad();
+  let nodes = 0;
+  const walk = (x, depth, key) => {
+    if (++nodes > 8000) throw bad('결산 내용이 너무 커요');
+    if (x === null || typeof x === 'boolean') return;
+    if (typeof x === 'number') { if (!Number.isFinite(x)) throw bad(); return; }
+    if (typeof x === 'string') {
+      if (key === 'u') { if (x.length > 1500 || !SHARE_LOOK.test(x)) throw bad('캐릭터 그림 주소가 이상해요'); return; }
+      if (x.length > 200 || /[\u0000-\u001f\u007f]/.test(x) || /:\/\/|^\s*(data|javascript|vbscript):/i.test(x)) throw bad();
+      return;
+    }
+    if (depth > 6) throw bad();
+    if (Array.isArray(x)) { if (x.length > 120) throw bad(); for (const y of x) walk(y, depth + 1, key); return; }
+    if (typeof x === 'object') {
+      const ks = Object.keys(x);
+      if (ks.length > (key === 'dayN' ? 400 : 80)) throw bad();
+      for (const k of ks) { if (k.length > 24 || !/^[\w.]+$/.test(k)) throw bad(); walk(x[k], depth + 1, k); }
+      return;
+    }
+    throw bad();
+  };
+  walk(v, 0, '');
+  return v;
+}
+// 미리보기 제목: 이름을 보이게 골랐으면 대표 캐릭터 이름, 아니면 해만
+function shareTitle(v, o) {
+  let nm = '';
+  if (o.nm === 'show' && Array.isArray(v.chars) && v.chars[0] && Number.isInteger(v.chars[0].ci)) {
+    const c = v.cs[v.chars[0].ci];
+    if (c && typeof c.n === 'string') nm = c.n.replace(/[\u0000-\u001f\u007f<>"&]/g, '').trim().slice(0, 16);
+  }
+  return nm ? `${nm}님의 ${v.Y} 메푸리 결산` : `${v.Y} 메푸리 결산`;
+}
+let shareSchemaReady = false;
+async function ensureShareSchema(db) {
+  if (shareSchemaReady) return;
+  await db.batch([
+    db.prepare(`CREATE TABLE IF NOT EXISTS share_links (
+      id TEXT PRIMARY KEY, user_id INTEGER, dev TEXT, y INTEGER NOT NULL, o TEXT NOT NULL, title TEXT NOT NULL,
+      data TEXT NOT NULL, at INTEGER NOT NULL, exp INTEGER NOT NULL, views INTEGER NOT NULL DEFAULT 0)`),
+    db.prepare('CREATE INDEX IF NOT EXISTS share_user ON share_links(user_id)'),
+    db.prepare('CREATE INDEX IF NOT EXISTS share_dev ON share_links(dev)'),
+    db.prepare('CREATE INDEX IF NOT EXISTS share_exp ON share_links(exp)'),
+  ]);
+  shareSchemaReady = true;
+}
+async function shareApi(req, env, ctx, url, isBeta) {
+  try {
+    if (req.method !== 'POST') throw new HttpError(405, 'METHOD', 'POST 요청만 받아요');
+    if (!env.DB) throw new HttpError(503, 'NO_DB', '데이터베이스가 아직 설정되지 않았어요');
+    // 다른 사이트에서 쿠키를 이용해 몰래 보내는 요청 막기 (로그인·기록 저장과 같은 방식)
+    const origin = req.headers.get('Origin');
+    if (origin && origin !== url.origin) throw new HttpError(403, 'ORIGIN', '다른 사이트에서는 요청할 수 없어요');
+    if (req.headers.get('x-mepuri') !== '1') throw new HttpError(403, 'HEADER', '잘못된 요청이에요');
+    shareGuard(req);
+    const op = url.pathname.slice(url.pathname.lastIndexOf('/') + 1);
+    if (!['list', 'create', 'delete'].includes(op)) throw new HttpError(404, 'NOT_FOUND', '없는 주소예요');
+    await ensureSchema(env.DB); await ensureRateSchema(env.DB); await ensureShareSchema(env.DB);
+    const body = await readJson(req, SHARE_MAX_BODY);
+    const me = env.GOOGLE_CLIENT_ID ? await sessionUser(req, env) : null;
+    const dk = typeof body.dk === 'string' && /^[A-Za-z0-9_-]{32,64}$/.test(body.dk) ? body.dk : '';
+    const dev = dk ? (await sha256('mepuri-share|' + dk)).slice(0, 32) : '';
+    const now = Date.now(), mode = await shareMode(env.DB), can = mode === 'all' || (mode === 'admin' && isBeta);
+    const own = me ? 'user_id = ?1' : 'user_id IS NULL AND dev = ?1', ownV = me ? me.id : (dev || '-'); // 목록·개수: 로그인했으면 계정 링크, 안 했으면 이 기기 링크
+    if (op === 'list') {
+      const { results } = await env.DB.prepare(`SELECT id, o, at, exp, views FROM share_links WHERE ${own} AND exp >= ?2 ORDER BY at DESC LIMIT 20`).bind(ownV, now).all();
+      const links = (results || []).map(r => ({ id: r.id, o: shareParse(r.o), at: r.at, exp: r.exp, views: r.views }));
+      return json({ links, max: SHARE_MAX, days: SHARE_DAYS, mode, can, who: me ? 'user' : 'device' }, 200, noStore());
+    }
+    if (op === 'delete') {
+      const id = String(body.id || '');
+      if (!SHARE_ID.test(id)) throw new HttpError(400, 'ID', '링크 주소가 이상해요');
+      const r = await env.DB.prepare(`DELETE FROM share_links WHERE id = ?3 AND ${SHARE_OWN}`).bind(me ? me.id : -1, dev || '-', id).run();
+      if (!r.meta || !r.meta.changes) throw new HttpError(404, 'NOT_FOUND', '이미 지워졌거나 내 링크가 아니에요');
+      return json({ ok: true }, 200, noStore());
+    }
+    // 만들기
+    if (mode === 'off') throw new HttpError(503, 'SHARE_OFF', '지금은 새 링크를 만들 수 없어요');
+    if (!can) throw new HttpError(403, 'SHARE_BETA', '아직 준비 중인 기능이에요');
+    if (!me && !dev) throw new HttpError(400, 'DEVICE', '이 브라우저에서는 링크를 만들 수 없어요 (사이트 저장 공간을 못 써요). 로그인하면 만들 수 있어요');
+    const o = shareOpts(body.o), data = shareClean(body.data), text = JSON.stringify(data);
+    if (text.length > 64 * 1024) throw new HttpError(413, 'TOO_BIG', '결산 내용이 너무 커서 링크를 만들지 못했어요');
+    await env.DB.prepare('DELETE FROM share_links WHERE exp < ?1').bind(now).run(); // 기간 지난 링크 정리
+    const cnt = await env.DB.prepare(`SELECT COUNT(*) AS n FROM share_links WHERE ${own} AND exp >= ?2`).bind(ownV, now).first();
+    if (cnt && cnt.n >= SHARE_MAX) throw new HttpError(409, 'SHARE_MAX', `링크는 ${SHARE_MAX}개까지예요. 하나 지우고 만들어 주세요`);
+    if (me) await hit(env.DB, 'shu:' + me.id, 86400, SHARE_USER_DAY, '오늘은 링크를 너무 많이 만들었어요', 'RATE');
+    else await hit(env.DB, 'shg:' + (await guestKey(req)).slice(4), 86400, SHARE_GUEST_DAY, `로그인하지 않으면 하루 ${SHARE_GUEST_DAY}개까지 만들 수 있어요. 내일 다시 하거나 로그인해 주세요`, 'RATE', true);
+    await hit(env.DB, 'shsite', 86400, SHARE_SITE_DAY, '오늘은 사이트 전체에서 만들 수 있는 링크 수를 다 썼어요');
+    const exp = now + SHARE_DAYS * 864e5, title = shareTitle(data, o);
+    for (let t = 0; t < 4; t++) { // 같은 주소가 이미 있으면(아주 드묾) 다시 뽑음
+      const id = shareId();
+      const r = await env.DB.prepare('INSERT OR IGNORE INTO share_links (id, user_id, dev, y, o, title, data, at, exp, views) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)')
+        .bind(id, me ? me.id : null, me ? null : dev, data.Y, JSON.stringify(o), title, text, now, exp).run();
+      if (r.meta && r.meta.changes) return json({ id, at: now, exp }, 200, noStore());
+    }
+    throw new HttpError(500, 'SERVER', '링크를 만들지 못했어요. 다시 해 주세요');
+  } catch (e) {
+    if (e instanceof HttpError) return fail(e.status, e.code, e.message, e.retry ? { ...noStore(), 'retry-after': String(e.retry) } : noStore());
+    return fail(500, 'SERVER', '서버 오류예요. 잠시 후 다시 시도해 주세요', noStore());
+  }
+}
+// 관리 화면: 숫자 + 목록 (주인 이메일은 앞 두 글자만)
+const maskEmail = e => { if (!e || typeof e !== 'string' || !e.includes('@')) return '(이메일 없음)'; const i = e.lastIndexOf('@'), a = e.slice(0, i); return (a.length <= 2 ? a.slice(0, 1) : a.slice(0, 2)) + '***' + e.slice(i); };
+async function shareAdminList(db) {
+  await ensureSchema(db); await ensureShareSchema(db);
+  const now = Date.now(), k = kstDay(0), today = Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) - 9 * 3600000; // 한국 시간 오늘 0시
+  await db.prepare('DELETE FROM share_links WHERE exp < ?1').bind(now).run();
+  const s = await db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(views), 0) AS v, COALESCE(SUM(CASE WHEN at >= ?1 THEN 1 ELSE 0 END), 0) AS t FROM share_links').bind(today).first();
+  const { results } = await db.prepare('SELECT s.id, s.user_id, s.o, s.title, s.at, s.exp, s.views, u.email FROM share_links s LEFT JOIN users u ON u.id = s.user_id ORDER BY s.at DESC LIMIT 300').all();
+  return {
+    mode: await shareMode(db), max: SHARE_MAX, days: SHARE_DAYS, live: (s && s.n) || 0, today: (s && s.t) || 0, views: (s && s.v) || 0,
+    links: (results || []).map(r => ({ id: r.id, o: shareParse(r.o), title: r.title, at: r.at, exp: r.exp, views: r.views, owner: r.user_id ? maskEmail(r.email) : null })),
+  };
+}
+// 링크 보기 화면: 껍데기 HTML(미리보기 제목·검색 막기·보안 정책) + 결산 요약 데이터. 그리는 건 public/r/view.*.js
+const escH = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const SHARE_CSP = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https://open.api.nexon.com; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+const shareHead = () => ({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer', 'x-content-type-options': 'nosniff', 'content-security-policy': SHARE_CSP });
+async function shareView(req, env, ctx, url) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return new Response(null, { status: 405, headers: { allow: 'GET, HEAD', ...noStore() } });
+  const id = url.pathname.slice(3);
+  let row = null;
+  if (SHARE_ID.test(id) && env.DB) {
+    try { await ensureShareSchema(env.DB); row = await env.DB.prepare('SELECT id, title, data, exp FROM share_links WHERE id = ?1').bind(id).first(); } catch (e) { row = null; }
+  }
+  if (!row || row.exp < Date.now()) {
+    if (row) ctx.waitUntil(env.DB.prepare('DELETE FROM share_links WHERE id = ?1').bind(id).run().catch(() => {})); // 기간 지난 링크는 열어 볼 때도 지움
+    return new Response(shareGoneHtml(), { status: 404, headers: shareHead() });
+  }
+  if (req.method === 'GET' && !SHARE_BOT.test(req.headers.get('User-Agent') || '')) ctx.waitUntil(env.DB.prepare('UPDATE share_links SET views = views + 1 WHERE id = ?1').bind(id).run().catch(() => {}));
+  return new Response(shareHtml(row, url), { status: 200, headers: shareHead() });
+}
+function shareHtml(row, url) {
+  const v = shareParse(row.data) || {}, n = x => (Number.isFinite(+x) ? Math.round(+x) : 0);
+  const t = escH(row.title), d = escH(`${n(v.Y)}년 보스 ${n(v.nK).toLocaleString('ko-KR')}마리 · ${n(v.nW)}주의 기록 — 메푸리에서 만든 결산이에요`), img = `${url.origin}/og.png`;
+  // JSON을 <script type="application/json">에 안전하게: </script>·<!--·줄 구분 문자를 바꿔 씀
+  const data = row.data.replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${t}</title>
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta name="description" content="${d}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="메푸리"><meta property="og:title" content="${t}"><meta property="og:description" content="${d}">
+<meta property="og:image" content="${img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="${url.origin}/r/${row.id}">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${t}"><meta name="twitter:description" content="${d}"><meta name="twitter:image" content="${img}">
+<meta name="theme-color" content="#F68600"><link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="${SHARE_VIEW.css}">
+<script id="rc-snap" type="application/json">${data}</script>
+<script src="${SHARE_VIEW.js}" defer></script>
+</head><body><noscript><p style="padding:24px;font-family:sans-serif">결산 카드를 보려면 자바스크립트를 켜 주세요. <a href="/">메푸리 열기</a></p></noscript></body></html>`;
+}
+function shareGoneHtml() {
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>없거나 기간이 지난 링크예요 · 메푸리</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.ico">
+<style>:root{color-scheme:light dark;--bg:#F1F4F6;--card:#fff;--text:#1E3043;--sub:#6C7784;--bd:rgba(0,0,0,.08)}@media (prefers-color-scheme:dark){:root{--bg:#14161B;--card:#1E2128;--text:#ECEEF2;--sub:#A3ABB6;--bd:rgba(255,255,255,.07)}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 16px;box-sizing:border-box;background:var(--bg);color:var(--text);font-family:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;word-break:keep-all}
+main{width:min(380px,100%);padding:28px 24px;border-radius:20px;background:var(--card);border:1px solid var(--bd);text-align:center}
+b{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;color:#F68600}h1{margin:10px 0 8px;font-size:21px}p{margin:0;font-size:14px;line-height:1.6;color:var(--sub)}
+a{display:inline-flex;align-items:center;height:44px;margin-top:20px;padding:0 20px;border-radius:999px;background:#F68600;color:#fff;font-weight:800;text-decoration:none}</style></head>
+<body><main><b>MEPURI</b><h1>없거나 기간이 지난 링크예요</h1><p>결산 공유 링크는 만든 날부터 ${SHARE_DAYS}일 동안만 볼 수 있어요.<br>만든 사람이 지웠을 수도 있어요.</p><a href="/">메푸리에서 내 결산 보기</a></main></body></html>`;
 }
 
 // ── 방문 통계 (익명) ──

@@ -2216,8 +2216,9 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 #rc-ov{position:fixed;inset:0;z-index:300;outline:none;background:rgba(10,12,18,.62);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:contain;animation:rcOv .2s ease-out both}
 @keyframes rcOv{from{opacity:0}}
 #rc-ov .rc-stage{display:flex;align-items:center;justify-content:center;gap:26px;width:100%;height:100%}
-#rc-ov .rc{position:relative;flex-shrink:0;display:flex;flex-direction:column;word-break:keep-all;overflow-wrap:anywhere;width:360px;height:640px;border-radius:20px;overflow:hidden;background:var(--card);color:var(--text);box-shadow:0 24px 64px rgba(0,0,0,.45);transition:--h1 .45s ease,--h2 .45s ease}
+.rc{position:relative;flex-shrink:0;display:flex;flex-direction:column;word-break:keep-all;overflow-wrap:anywhere;width:360px;height:640px;border-radius:20px;overflow:hidden;background:var(--card);color:var(--text);box-shadow:0 24px 64px rgba(0,0,0,.45);transition:--h1 .45s ease,--h2 .45s ease}
 #rc-ov.ph{background:var(--card);-webkit-backdrop-filter:none;backdrop-filter:none}
+#rc-ov.view{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;animation:none}#rc-ov.view.ph{background:var(--card)}
 #rc-ov.ph .rc-stage{gap:0}#rc-ov.ph .rc{border-radius:0;box-shadow:none}#rc-ov.ph .rc-arr{display:none}
 .rc-arr{display:grid;place-items:center;flex-shrink:0;width:48px;height:48px;border-radius:50%;background:color-mix(in srgb,var(--card) 94%,transparent);color:var(--text);box-shadow:0 6px 18px rgba(0,0,0,.28);transition:transform .15s,opacity .15s}
 .rc-arr:hover:not(:disabled){transform:scale(1.06)}.rc-arr:disabled{opacity:.28;cursor:default}
@@ -2409,6 +2410,13 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .rc-mate{display:flex;align-items:center;gap:16px;margin-top:22px}
 .rc-mate .av{display:grid;place-items:center;flex-shrink:0;width:84px;height:84px;border-radius:50%;background:color-mix(in srgb,var(--h1) 16%,var(--card));font-size:34px;font-weight:800;color:color-mix(in srgb,var(--h1) 75%,var(--text));border:3px solid color-mix(in srgb,var(--h1) 70%,var(--card))}
 .rc-mate .n{font-size:28px;font-weight:800;word-break:break-all}.rc-mate .m{margin-top:4px;font-size:15px;color:var(--sub)}.rc-mate .m b{font-size:20px;color:var(--accent)}
+.rc-mate .av b{font-weight:800}
+.rc-mate .av.lk,.rc-mate .av.an{overflow:hidden;background:var(--card)}.rc-mate .av.an{place-items:end center}
+.rc-mate .av.lk .ava{background:none}
+.rc-mate .mm{margin-top:3px;font-size:13px;font-weight:500;color:var(--muted)}
+.rc-ma{display:grid;place-items:center;flex:none!important;width:38px;height:38px;border-radius:50%;overflow:hidden;background:color-mix(in srgb,var(--h1) 14%,var(--card));color:color-mix(in srgb,var(--h1) 75%,var(--text));font-size:15px;font-weight:800}
+.rc-ma.lk{background:var(--soft)}.rc-ma.lk .ava{background:none}.rc-ma.an{place-items:end center;background:var(--soft)}
+.rc-rank .rc-ma .ava{border-radius:0}
 /* 18 52주 시계 */
 .rc-ring{position:relative;width:236px;height:236px;margin:18px auto 0}
 .rc-ring svg{width:100%;height:100%}
@@ -2424,12 +2432,64 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .rc-sum>div{padding:13px 14px 11px;border-radius:14px;background:color-mix(in srgb,var(--card) 72%,transparent);border:1px solid var(--card-bd);animation:rcIn .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--j,0) * 120ms + 380ms)}
 .rc-sum small{display:block;font-size:12px;color:var(--muted)}.rc-sum b{display:block;margin-top:4px;font-size:21px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc-sum b.long{font-size:16px;line-height:1.6}
 .rc-end{margin-top:18px;font-size:20px;font-weight:800;color:var(--accent);animation:rcFade .6s 1.35s ease both}
-.rc-endb{margin-top:auto;padding-bottom:6px}
+.rc-endb{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:auto;padding-bottom:6px}
 .rc-again{height:36px;padding:0 16px;border-radius:999px;border:1px solid var(--out-bd);background:var(--card);font-size:13px;font-weight:700;color:var(--sub)}
 .rc-again:hover{color:var(--text);border-color:var(--sub)}
+.rc-shb{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 15px 0 13px;border-radius:999px;background:var(--accent);color:#fff;font-size:13px;font-weight:700}
+.rc-shb:hover{background:var(--accent-hover)}
+.rc-cta{display:flex;align-items:center;justify-content:center;width:100%;height:46px;border-radius:999px;background:var(--accent);color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 30%,transparent)}
+.rc-cta:hover{background:var(--accent-hover)}
+.rc-endb a:focus-visible,.rc-endb button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 움직임 없이 (파티원 코디를 받아 바꿀 때 · 공유 창 미리 보기) */
+.rc-body.still *,.rc-still *,.rc-still .rc-body{animation:none!important}
+
+/* 공유 창 (결산 위에 따로 뜨는 층 — 결산의 누르기·밀기·키 처리와 안 섞이게) */
+#rc-sh{position:fixed;inset:0;z-index:310;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:rgba(8,10,14,.5);animation:rcOv .18s ease-out both}
+.rc-shp{position:relative;width:min(440px,100%);max-height:calc(100% - 48px);overflow:auto;overscroll-behavior:contain;padding:16px 20px 20px;border-radius:18px;background:var(--card);color:var(--text);box-shadow:var(--pop-shadow);border:1px solid var(--card-bd)}
+.rc-shh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rc-shh b{font-size:17px;font-weight:800}
+.rc-shx{display:grid;place-items:center;width:34px;height:34px;margin-right:-8px;border-radius:50%;color:var(--sub)}.rc-shx:hover{background:var(--soft);color:var(--text)}
+.rc-shd{margin:4px 0 0;font-size:13px;line-height:1.55;color:var(--sub)}
+.rc-shpv{display:flex;justify-content:center;gap:12px;margin:14px 0 2px}
+.rc-mini{flex:none;width:calc(360px * var(--mz,.44));height:calc(640px * var(--mz,.44));border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px var(--card-bd),0 6px 16px rgba(0,0,0,.12)}
+.rc-mini .rc{zoom:var(--mz,.44);width:360px;height:640px;border-radius:0;box-shadow:none;pointer-events:none}
+.rc-mini .rc-top{padding-left:18px}
+.rc-mini.rc-mout{display:grid;place-items:center;padding:12px;border:1.5px dashed var(--border2);box-shadow:none;background:var(--soft);text-align:center;font-size:12px;line-height:1.5;font-weight:700;color:var(--muted)}
+.rc-shopts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.rc-sho{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px}
+.rc-sho>span{font-size:14px;font-weight:700}
+.rc-seg{display:inline-flex;flex:none;padding:3px;border-radius:10px;background:var(--seg)}
+.rc-seg button{height:30px;min-width:64px;padding:0 12px;border-radius:8px;font-size:13px;font-weight:700;color:var(--sub)}
+.rc-seg button.on{background:var(--card);color:var(--text);box-shadow:var(--seg-shadow),0 0 0 1px var(--card-bd)}
+.rc-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rc-shgo{display:block;width:100%;height:46px;margin-top:16px;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:800}
+.rc-shgo:hover:not(:disabled){background:var(--accent-hover)}.rc-shgo:disabled{background:var(--dis-bg);color:var(--dis-fg);cursor:default}
+.rc-shwhy{margin:8px 2px 0;font-size:12.5px;line-height:1.5;color:var(--sub)}.rc-shwhy.err{color:var(--danger-fg)}
+.rc-shmade{margin-top:12px;padding:12px;border-radius:12px;background:var(--accent-bg);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--card-bd))}
+.rc-shurl input{width:100%;height:38px;padding:0 10px;border-radius:9px;border:1px solid var(--input-bd);background:var(--card);color:var(--input-fg);font-size:13px;font-family:inherit}
+.rc-shbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rc-shbtn{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 13px;border-radius:999px;border:1px solid var(--out-bd);background:var(--card);color:var(--text2);font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}
+.rc-shbtn:hover{border-color:var(--sub);color:var(--text)}
+.rc-shbtn.pri{border-color:var(--accent);background:var(--accent);color:#fff}.rc-shbtn.pri:hover{background:var(--accent-hover)}
+.rc-shbtn.sm{height:30px;padding:0 10px;font-size:12px}
+.rc-shbtn.del{color:var(--danger-fg)}.rc-shbtn.del.arm{border-color:var(--danger);background:var(--danger);color:#fff}
+.rc-shbtn:focus-visible,.rc-shx:focus-visible,.rc-shgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rc-shl{margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.rc-shlh{display:flex;align-items:baseline;gap:6px}.rc-shlh b{font-size:14px;font-weight:800}.rc-shlh span{font-size:12.5px;font-weight:700;color:var(--muted)}
+.rc-shrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--row-line)}.rc-shrow:last-child{border-bottom:0}
+.rc-shrow .t{flex:1;min-width:0}.rc-shrow .t b{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc-shrow .t small{font-size:12px;color:var(--muted)}
+.rc-shrow .a{display:flex;gap:4px;flex:none}
+.rc-shnone{margin:8px 0 0;font-size:13px;color:var(--muted)}
+@media (max-width:560px){
+  #rc-sh{align-items:flex-end;padding:0}
+  .rc-shp{width:100%;max-height:94%;border-radius:18px 18px 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom));animation:rcUp .22s cubic-bezier(.2,.8,.2,1) both}
+  .rc-shrow{flex-wrap:wrap}.rc-shrow .a{width:100%;justify-content:flex-end}
+}
+@keyframes rcUp{from{transform:translateY(24px);opacity:.6}}
 /* 줄인 움직임: 움직임 없이 0.15초 페이드만 */
 @media (prefers-reduced-motion:reduce){
   #rc-ov *,#rc-ov *::before,#rc-ov *::after,.rc-band-b::after{animation:rcFade .15s ease-out both!important;animation-delay:0s!important;transition:none!important}
+  #rc-sh,#rc-sh .rc-shp{animation:rcFade .15s ease-out both!important}
   #rc-ov .rc-hint,.rc-band-b::after,#rc-ov .rc-body.out{display:none}
   #rc-ov .rc-wd .on i{background:var(--accent)}
   #rc-ov .rc{transition:none}
@@ -5834,7 +5894,10 @@ function rpBind(v,x){const p=rpSt(x);
    · 여는 기간: 그해 마지막 주 목요일(초기화, 2026은 12.24) ~ 다음 해 1.31. RC_TEST면 언제나 띠가 보임 → 깃에선 false
    · 순서(막): 시작 → 보스 → 돈(절정 1) → 기록 → 물욕(절정 2) → 사람 → 한 바퀴 → 마무리. 막마다 배경 색조만 바뀜
    · 애니메이션은 1.5초 안에 끝나고 멈춤 (스크린샷용). 줄인 움직임이면 바로 최종 모습 + 넘김 시간 1.5배
-   · 기록이 적으면 카드를 숨김 (책망하는 카드는 안 만듦). 1주 미만·보스 3번 미만이면 2장짜리 미니 결산 */
+   · 기록이 적으면 카드를 숨김 (책망하는 카드는 안 만듦). 1주 미만·보스 3번 미만이면 2장짜리 미니 결산
+   · 카드는 '보기용 데이터' V(rcView, JSON)만 읽고 그림 → 앱 안 보기와 공유 링크 보기(/r/, public/r/view.*.js)가 같은 rcCards·재생 코드를 씀
+   · 파티원 코디 (10.28): 보스 설정의 '같이 간 사람' 이름으로 넥슨 조회 — 로그인했을 때만, 위 3명, 이 기기에 30일 기억(못 찾은 이름은 7일)
+   · 공유 링크 (10.28 링크 테스트): 결산 맨 위 아이콘 · 마무리 카드 → 공유 창. 링크마다 이름·모습(기본 보이기)·파티원 카드 넣기(기본 빼기)를 고름, 30일 뒤 저절로 지워짐 */
 const RC_TEST=true;
 const RC_RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rcYear=()=>{const y=+REAL.slice(0,4);return +REAL.slice(5,7)<=6?y-1:y}; // 1~6월에 보면 지난해
@@ -5848,7 +5911,9 @@ const RC_I={
   l:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   pause:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1.2"/><rect x="14" y="4.5" width="4" height="15" rx="1.2"/></svg>',
   play:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.8v14.4c0 .8.9 1.3 1.6.8l11-7.2c.6-.4.6-1.2 0-1.6l-11-7.2C7.9 3.5 7 4 7 4.8z"/></svg>',
-  x:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'};
+  x:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  share:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14.5V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 12v6.5A2 2 0 0 0 7 20.5h10a2 2 0 0 0 2-2V12"/></svg>',
+  link:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>'};
 let RC_SHINE=false;
 function rcBanner(){if(!rcShow())return '';const w=rcWin(),sh=!RC_SHINE;RC_SHINE=true;
   return `<div class="rc-band"><button type="button" class="rc-band-b${sh?' shine':''}" data-rcopen aria-haspopup="dialog"><span class="rc-band-ic">${RC_I.gift}</span>
@@ -5919,6 +5984,38 @@ function rcData(noL){
   return {Y,YR,end,asof:REAL<YR.to,d1,w1,span,wkAll,series,best,nW,kills,nK,wall,topBoss,busy,streak,sEnd,noGap,growth,eff,mt,pc,dex,have:have.length,lucky,unlucky,priciest,items:lt.length,
     wd,ws,wtop,per,chars,isFirst,first:fb&&{d:firstEver,id:fb.id,diff:fb.diff,c:fb.c},ring,buy,short,mini,crys,loot,tot,nDays:dayN.size,dayN,wkW:wkHas}}
 
+/* ---------- 보기용 데이터 V ----------
+   rcCards·재생은 V만 읽음 (캐릭터는 cs 목록의 번호 ci로).
+   · 앱: rcView(R,{mode:'app'}) — 사이트 숨김 설정 그대로(이름 '캐릭터 n'·직업 그림), 잘라 둔 그림(img)·대기 모션
+   · 링크: rcView(R,{mode:'share',nm,lk,mt}) — JSON으로 서버에 저장. 그림은 넥슨 외형 주소(u)만, 이름·모습·파티원은 고른 대로
+     (nm 'show'|'hide' · lk 'show'|'job' · mt 'show' 파티원 넣기 | 'hide' 빼기 — 사용자 10.28 "파티원은 아예 넣을지 말지"). 가린·뺀 건 아예 안 들어감 */
+const RC_LOOK=/^https:\/\/open\.api\.nexon\.com\/static\/maplestory\/character\/look\/[A-Za-z0-9._~%\/-]+(\?[A-Za-z0-9._~%=&-]*)?$/;
+const rcOkLook=u=>typeof u==='string'&&u.length<=1500&&RC_LOOK.test(u);
+function rcView(R,o){o=o||{};const app=o.mode!=='share',cs=[],at=new Map(),cut=(s,n)=>s==null?null:String(s).slice(0,n);
+  const ci=c=>{if(!c)return -1;if(at.has(c))return at.get(c);let v;
+    if(app){const im=cimg(c);v={n:nm(c),img:im||null,lkc:im?lkc(c):'',idl:im&&c.frames?c.id:null,j:HID(c).look&&c.job||null}}
+    else{const r=R.chars.findIndex(x=>x.c===c),u=o.lk==='show'&&rcOkLook(c.lookUrl)?c.lookUrl:null;
+      v={n:o.nm==='show'?cut(c.name||'',16):`캐릭터 ${(r>=0?r:R.chars.length)+1}`,u,j:u?null:cut(c.job,20)}} // 모습 '보이기'인데 넥슨 그림이 없는 캐릭터는 직업 그림
+    cs.push(v);at.set(c,cs.length-1);return cs.length-1};
+  const chars=R.chars.slice(0,6).map(x=>({ci:ci(x.c),v:x.v})); // 표지 얼굴 6 · 이름 3 · MVP 5
+  const first=R.first?{d:R.first.d,id:R.first.id,diff:R.first.diff,ci:ci(R.first.c)}:null;
+  const P=R.priciest,priciest=P?{n:P.n,price:P.price,d:P.d,id:P.id,diff:P.diff,ci:ci(P.c)}:null;
+  const mOut=!app&&o.mt!=='show'; // 링크에서 파티원 빼기 → 파티원 카드가 아예 없음 (이름·횟수 모두 안 올라감)
+  const mt=mOut?[]:R.mt.map(([n,k])=>{const e=typeof mlGet==='function'?mlGet(n):null; // (예전 '가린 파티원' an은 그리는 쪽만 남겨 둠)
+    return e&&e.ok?{n:app?n:cut(n,16),k,lk:{u:rcOkLook(e.u)?e.u:null,lv:+e.lv||null,j:cut(e.j,20),w:cut(e.w,12)}}:{n:app?n:cut(n,16),k}});
+  const it=x=>({n:x.n,kills:x.kills,got:x.got}),dl=R.dex.slice().sort((a,b)=>(b.got>0)-(a.got>0)||b.got-a.got||b.kills-a.kills);
+  const dayN={};R.dayN.forEach((n,d)=>{dayN[d]=n});
+  const V={v:1,Y:R.Y,real:REAL,asof:R.asof,isFirst:R.isFirst,d1:R.d1,w1:R.w1,yrTo:R.YR.to,span:R.span.slice(),series:R.series.map(x=>({w:x.w,v:x.v})),best:{w:R.best.w,v:R.best.v},
+    nW:R.nW,kills:{W:R.kills.W,D:R.kills.D,M:R.kills.M},nK:R.nK,wall:R.wall.slice(0,18).map(x=>({id:x.id,n:x.n})),nWall:R.wall.length,
+    topBoss:R.topBoss.map(x=>({id:x.id,diff:x.diff,n:x.n})),busy:{d:R.busy.d,n:R.busy.n,bosses:R.busy.bosses.slice(0,10).map(x=>({id:x.id,n:x.n}))},
+    streak:R.streak,sEnd:R.sEnd,noGap:R.noGap,growth:R.growth?{k:R.growth.k,f:R.growth.f,l:R.growth.l,up:R.growth.up}:null,eff:R.eff.map(x=>({id:x.id,diff:x.diff,avg:x.avg})),
+    mt,pc:R.pc,dex:dl.slice(0,24).map(it),nDex:R.dex.length,have:R.have,lucky:R.lucky.map(it),unlucky:R.unlucky.map(it),priciest,items:R.items,
+    wd:R.wd.slice(),ws:R.ws,wtop:R.wtop,per:R.per.slice(),chars,nC:R.chars.length,cTot:R.chars.reduce((t,x)=>t+x.v,0),first,
+    ring:R.ring.map(x=>({w:x.w,v:x.v,fut:!!x.fut})),buy:R.buy.map(x=>({n:x.n,p:x.p})),short:R.short,mini:R.mini,crys:R.crys,loot:R.loot,tot:R.tot,nDays:R.nDays,
+    dayN,wkW:[...R.wkW],cs};
+  if(!app)V.tiers=SX_TIERS.map(([v,t])=>[v,t]); // 물욕 등급 테두리 기준 (링크 보기는 서버 설정을 모름)
+  return V}
+
 /* ---------- 카드 ---------- */
 const RC_HUE={start:['#F68600','#E0588A'],boss:['#F68600','#E5484D'],money:['#F0B429','#F68600'],rec:['#2BB673','#14B8A6'],loot:['#9B5CF0','#E0588A'],ppl:['#4AA5D6','#5B6CF0'],end:['#FFC978','#F68600']};
 const rcE=v=>{v=v||0;if(v<1e8)return meso(v)||'0';const k=Math.round(v/1e8),j=Math.floor(k/1e4),e=k%1e4;return j?(e?`${j}조 ${e}억`:`${j}조`):`${e}억`};
@@ -5926,161 +6023,181 @@ const rcN=(n,dp)=>`<span class="num" data-to="${n}"${dp?` data-dp="${dp}"`:''}>$
 const rcBigE=v=>{v=v||0;if(v<1e8)return `${rcN(Math.round(v/1e4))}<small>만</small>`;const k=Math.round(v/1e8),j=Math.floor(k/1e4),e=k%1e4;return j?`${rcN(j)}<small>조</small>${e?` ${rcN(e)}<small>억</small>`:''}`:`${rcN(e)}<small>억</small>`};
 const rcA=i=>` data-a style="--i:${i}"`;
 const rcDow=d=>DOW[sxD(d).getUTCDay()];
+const rcBN=id=>BY[id]?BY[id].name:'';
 const rcBI=id=>BY[id]&&BY[id].img?`<img src="${BY[id].img}" alt="">`:'';
 const rcIco=n=>ITEM_ICONS[n]?`<img src="${ITEM_ICONS[n]}" alt="">`:`<i class="gi">${I.gem}</i>`;
 const rcSil=n=>ITEM_ICONS[n]?`<i class="rc-sil" style="--u:url(${ITEM_ICONS[n]})"></i>`:`<i class="gi">${I.gem}</i>`;
 const rcTier=p=>{for(const [v,t] of SX_TIERS)if(p>=v)return t;return ''};
 const rcIfr=(n,p)=>{const t=rcTier(p);return `<span class="sx-ifr${t?' '+t:''}">${lootIcon(n)}${t?'<span class="gw"></span><span class="gl"><i></i></span><span class="gl2"><i></i></span><span class="sp"></span>':''}</span>`};
 const rcIga=s=>/[가-힣]$/.test(s)&&(s.charCodeAt(s.length-1)-0xAC00)%28?'이면':'면'; // 받침 있으면 '이면'
-function rcAva(c,S){const z=`--z:${(S/92).toFixed(3)};--zf:${(S/85).toFixed(3)}`;
-  if(cimg(c)){const k=lkc(c);return `<img class="ava${k?' '+k:''}" src="${esc(c.img)}" alt="" style="${z};${k?'':`width:${S}px;height:${S}px`}"${idl(c)}>`}
-  const u=jill(c);if(u)return `<img class="jill ava" src="${u}" alt="" style="width:${S}px;height:${S}px">`;
+// 직업 그림 (코디 숨기기·링크 '직업 그림'): JOB_IMG는 사이트·링크 보기 둘 다 나중에 받음
+const rcJob=j=>{if(!j||typeof JOB_IMG==='undefined')return null;const k=String(j).replace(/\s/g,'');return JOB_IMG[k]||JOB_IMG[JOB_ALIAS[k]]||null};
+// 캐릭터 얼굴 (cs 한 칸): 잘라 둔 그림(앱) → 넥슨 원본 그림(링크) → 직업 그림 → 실루엣
+function rcAva(v,S){const z=`--z:${(S/92).toFixed(3)};--zf:${(S/85).toFixed(3)}`;v=v||{};
+  if(v.img){const k=v.lkc||'';return `<img class="ava${k?' '+k:''}" src="${esc(v.img)}" alt="" style="${z};${k?'':`width:${S}px;height:${S}px`}"${v.idl?` data-idle="${esc(v.idl)}"`:''}>`}
+  if(v.u&&rcOkLook(v.u))return `<img class="ava look" src="${esc(v.u)}" alt="" style="${z}" referrerpolicy="no-referrer">`;
+  const u=rcJob(v.j);if(u)return `<img class="jill ava" src="${u}" alt="" style="width:${S}px;height:${S}px">`;
   return `<span class="sil-ava" style="width:${S}px;height:${S}px">${sil(Math.round(S*.9))}</span>`}
-function rcCards(R,noL){
-  const C=[],add=(k,act,dur,html,o)=>C.push({k,act,dur,html,...(o||{})}),bn=(id,df)=>`${BY[id].name}${df&&DKO[df]?` <small>${DKO[df]}</small>`:''}`;
-  const pct=(a,b)=>(b?a/b*100:0).toFixed(1),asof=R.asof?`<div class="rc-asof"${rcA(6)}>${md(REAL)} 기준 · 남은 날 기록도 계속 더해져요</div>`:'';
-  const faces=(n,S)=>R.chars.slice(0,n).map((o,i)=>`<span class="rc-av" style="--j:${i}">${rcAva(o.c,S)}</span>`).join('')+(R.chars.length>n?`<span class="rc-av more" style="--j:${n}">+${R.chars.length-n}</span>`:'');
-  const names=R.chars.slice(0,3).map(o=>esc(nm(o.c))).join(' · ')+(R.chars.length>3?` 외 ${R.chars.length-3}명`:'');
+// 파티원 얼굴: 넥슨 코디 → 없으면 이름 첫 글자 (가린 파티원은 실루엣)
+function rcMAva(m,S,big){const L=esc([...String(m.n||'?')][0]||'?');
+  if(m.lk&&m.lk.u&&rcOkLook(m.lk.u))return `<img class="ava look" src="${esc(m.lk.u)}" alt="" style="--z:${(S/92).toFixed(3)}" referrerpolicy="no-referrer">`;
+  if(m.an)return sil(Math.round(S*(big?.78:.82)));
+  return `<b>${L}</b>`}
+const rcMKind=m=>m.lk&&m.lk.u&&rcOkLook(m.lk.u)?' lk':m.an?' an':'';
+/* rcCards(V, 보기 설정) → [{k:카드 이름, act:막, dur:넘김 ms, html}]
+   보기 설정 ro: {mode:'app'|'view', noL, hint} — 예전처럼 rcCards(R,false)로 불러도 됨 (앱 보기로 바꿔서 그림) */
+function rcCards(X,ro){if(!ro||typeof ro!=='object')ro={noL:!!ro};const V=X&&X.cs?X:rcView(X,{mode:'app'}),noL=!!ro.noL,view=ro.mode==='view';
+  const C=[],add=(k,act,dur,html,o)=>C.push({k,act,dur,html,...(o||{})}),bn=(id,df)=>`${esc(rcBN(id))}${df&&DKO[df]?` <small>${DKO[df]}</small>`:''}`,cv=i=>V.cs[i]||{n:''};
+  const pct=(a,b)=>(b?a/b*100:0).toFixed(1);
+  const asof=V.asof?`<div class="rc-asof"${rcA(6)}>${view?`${md(V.real)}까지의 기록이에요`:`${md(V.real)} 기준 · 남은 날 기록도 계속 더해져요`}</div>`:''; // 링크는 만든 날 그대로라 '계속 더해져요'는 안 씀
+  const faces=(n,S)=>V.chars.slice(0,n).map((o,i)=>`<span class="rc-av" style="--j:${i}">${rcAva(cv(o.ci),S)}</span>`).join('')+(V.nC>n?`<span class="rc-av more" style="--j:${n}">+${V.nC-n}</span>`:'');
+  const names=V.chars.slice(0,3).map(o=>esc(cv(o.ci).n)).join(' · ')+(V.nC>3?` 외 ${V.nC-3}명`:'');
   // 1 표지 (넘김 없음: 눌러서 시작)
-  add('cover','start',0,`<div class="rc-cover"><div class="yr num"${rcA(0)}>${R.Y}</div><div class="t"${rcA(1)}>메푸리 결산</div>
+  add('cover','start',0,`<div class="rc-cover"><div class="yr num"${rcA(0)}>${V.Y}</div><div class="t"${rcA(1)}>메푸리 결산</div>
     <div class="rc-avs"${rcA(2)}>${faces(6,58)}</div>
-    <div class="rc-sub"${rcA(3)}>${names}<br>${R.isFirst?`${md(R.d1)}부터 `:'올해 '}<b>${R.span.length}주</b> 동안의 보스 기록</div>${asof}</div>
+    <div class="rc-sub"${rcA(3)}>${names}<br>${V.isFirst?`${md(V.d1)}부터 `:'올해 '}<b>${V.span.length}주</b> 동안의 보스 기록</div>${asof}</div>
     <div class="rc-go"${rcA(5)}>눌러서 시작 <i>›</i></div>`);
-  if(R.mini){ // 기록이 너무 적으면 2장만
-    add('mini','end',0,`<div class="rc-mid"${rcA(0)}>${R.Y}년 기록은<br><em class="num">${R.nK}번</em></div><div class="rc-sub"${rcA(1)}>${R.Y+1} 결산에서 제대로 보여 드릴게요.<br>내년에도 메푸리에 차곡차곡 적어 주세요!</div>${asof}
-      <div class="rc-endb"${rcA(3)}><button type="button" class="rc-again" data-rc="again">처음부터 다시 보기</button></div>`);
+  if(V.mini){ // 기록이 너무 적으면 2장만
+    add('mini','end',0,`<div class="rc-mid"${rcA(0)}>${V.Y}년 기록은<br><em class="num">${V.nK}번</em></div><div class="rc-sub"${rcA(1)}>${V.Y+1} 결산에서 제대로 보여 드릴게요.<br>내년에도 메푸리에 차곡차곡 적어 주세요!</div>${asof}
+      <div class="rc-endb"${rcA(3)}>${view?'<a class="rc-cta" href="/">나도 결산 보기 · 메푸리 열기</a>':''}<button type="button" class="rc-again" data-rc="again">처음부터 다시 보기</button></div>`);
     return C}
   // 2 첫 기록 (처음 결산을 보는 사람만)
-  if(R.isFirst&&R.first){const F=R.first;add('first','start',6000,`<div class="rc-lab"${rcA(0)}>메푸리에 처음 적은 날</div><div class="rc-big num"${rcA(1)}>${md(F.d)}<small> ${rcDow(F.d)}</small></div>
-    <div class="rc-fb"${rcA(2)}>${rcBI(F.id)}<div><b>${bn(F.id,F.diff)}</b><span>${esc(nm(F.c))}</span></div></div>
-    <div class="rc-say"${rcA(3)}>여기서부터 시작됐어요</div><div class="rc-note"${rcA(4)}>그날부터 ${R.span.length}주 동안 함께했어요</div>`)}
+  if(V.isFirst&&V.first){const F=V.first;add('first','start',6000,`<div class="rc-lab"${rcA(0)}>메푸리에 처음 적은 날</div><div class="rc-big num"${rcA(1)}>${md(F.d)}<small> ${rcDow(F.d)}</small></div>
+    <div class="rc-fb"${rcA(2)}>${rcBI(F.id)}<div><b>${bn(F.id,F.diff)}</b><span>${esc(cv(F.ci).n)}</span></div></div>
+    <div class="rc-say"${rcA(3)}>여기서부터 시작됐어요</div><div class="rc-note"${rcA(4)}>그날부터 ${V.span.length}주 동안 함께했어요</div>`)}
   // 3 올해 잡은 보스 (+ 길게 누르면 멈춰요 힌트 한 번)
-  {const hint=!(st.tips&&st.tips.rch);add('kills','boss',6000,`<div class="rc-lab"${rcA(0)}>${R.isFirst?'그 뒤로 잡은 보스':'올해 잡은 보스'}</div><div class="rc-big"${rcA(1)}>${rcN(R.nK)}<small>마리</small></div>
-    <div class="rc-kt"${rcA(2)}>${[['W','주간'],['D','일간'],['M','월간']].filter(([t])=>R.kills[t]).map(([t,l])=>`<div><small>${l} 보스</small><b class="num">${R.kills[t]}</b></div>`).join('')}</div>
-    <div class="rc-wall">${R.wall.slice(0,18).map((o,i)=>`<span class="rc-pop" style="--j:${i}">${rcBI(o.id)}<b class="num">${o.n}</b></span>`).join('')}</div>
-    <div class="rc-note"${rcA(4)}>만난 보스 ${R.wall.length}종 · 같은 보스도 캐릭터마다 따로 셌어요</div>${hint?'<div class="rc-hint">길게 누르면 멈춰요</div>':''}`,{hint})}
+  {const hint=ro.hint===undefined?(!view&&typeof st!=='undefined'&&!(st.tips&&st.tips.rch)):!!ro.hint;add('kills','boss',6000,`<div class="rc-lab"${rcA(0)}>${V.isFirst?'그 뒤로 잡은 보스':'올해 잡은 보스'}</div><div class="rc-big"${rcA(1)}>${rcN(V.nK)}<small>마리</small></div>
+    <div class="rc-kt"${rcA(2)}>${[['W','주간'],['D','일간'],['M','월간']].filter(([t])=>V.kills[t]).map(([t,l])=>`<div><small>${l} 보스</small><b class="num">${V.kills[t]}</b></div>`).join('')}</div>
+    <div class="rc-wall">${V.wall.slice(0,18).map((o,i)=>`<span class="rc-pop" style="--j:${i}">${rcBI(o.id)}<b class="num">${o.n}</b></span>`).join('')}</div>
+    <div class="rc-note"${rcA(4)}>만난 보스 ${V.nWall}종 · 같은 보스도 캐릭터마다 따로 셌어요</div>${hint?'<div class="rc-hint">길게 누르면 멈춰요</div>':''}`,{hint})}
   // 4 제일 많이 만난 보스 (3 → 2 → 1 순서로 공개)
-  const tb=R.topBoss;if(tb.length&&(!R.short||tb[0].n>=3)){const n=tb.length,dl=r=>((n-r)*.45+.15).toFixed(2)+'s',t0=tb[0],ra=t0.n/Math.max(1,R.span.length);
+  const tb=V.topBoss;if(tb.length&&(!V.short||tb[0].n>=3)){const n=tb.length,dl=r=>((n-r)*.45+.15).toFixed(2)+'s',t0=tb[0],ra=t0.n/Math.max(1,V.span.length);
     const say=ra>=1.5?`한 주에 ${Math.round(ra)}번꼴로 만났어요`:ra>=.8?'거의 매주 봤네요':`올해 ${t0.n}번 만났어요`;
     add('top','boss',7000,`<div class="rc-lab"${rcA(0)}>올해 제일 자주 만난 보스</div>
-      <div class="rc-boss1 rc-seq" style="--sq:${dl(1)}">${rcBI(t0.id)}<div><div class="n">${BY[t0.id].name}</div><div class="m">${DKO[t0.diff]||''} · <b class="num">${t0.n}번</b></div></div></div>
+      <div class="rc-boss1 rc-seq" style="--sq:${dl(1)}">${rcBI(t0.id)}<div><div class="n">${esc(rcBN(t0.id))}</div><div class="m">${DKO[t0.diff]||''} · <b class="num">${t0.n}번</b></div></div></div>
       <div class="rc-say rc-seq" style="--sq:${(parseFloat(dl(1))+.2).toFixed(2)}s">${say}</div>
       <div class="rc-rank">${tb.slice(1).map((b,i)=>`<div class="rc-seq" style="--sq:${dl(i+2)}"><em class="num">${i+2}</em>${rcBI(b.id)}<span>${bn(b.id,b.diff)}</span><b class="num">${b.n}번</b></div>`).join('')}</div>`)}
   // 5 가장 바빴던 날 (하루 3번 이상)
-  if(R.busy.n>=3)add('busy','boss',8000,`<div class="rc-lab"${rcA(0)}>제일 바빴던 하루</div><div class="rc-big num"${rcA(1)}>${md(R.busy.d)}<small> ${rcDow(R.busy.d)}</small></div>
-    <div class="rc-sub"${rcA(2)}>이날 하루에 <b>${R.busy.n}번</b> 잡았어요</div>
-    <div class="rc-chips">${R.busy.bosses.slice(0,10).map((o,i)=>`<span class="rc-pop" style="--j:${i+3}">${rcBI(o.id)}${BY[o.id].name}${o.n>1?` <b class="num">×${o.n}</b>`:''}</span>`).join('')}</div>
+  if(V.busy.n>=3)add('busy','boss',8000,`<div class="rc-lab"${rcA(0)}>제일 바빴던 하루</div><div class="rc-big num"${rcA(1)}>${md(V.busy.d)}<small> ${rcDow(V.busy.d)}</small></div>
+    <div class="rc-sub"${rcA(2)}>이날 하루에 <b>${V.busy.n}번</b> 잡았어요</div>
+    <div class="rc-chips">${V.busy.bosses.slice(0,10).map((o,i)=>`<span class="rc-pop" style="--j:${i+3}">${rcBI(o.id)}${esc(rcBN(o.id))}${o.n>1?` <b class="num">×${o.n}</b>`:''}</span>`).join('')}</div>
     <div class="rc-note"${rcA(5)}>주간·월간 보스로 셌어요</div>`);
   // 6 보스 효율 (돈 막으로 넘어가는 다리)
-  if(!R.short&&R.eff.length){const e0=R.eff[0];add('eff','money',7000,`<div class="rc-lab"${rcA(0)}>한 번 잡을 때 제일 쏠쏠했던 보스</div>
-    <div class="rc-boss1"${rcA(1)}>${rcBI(e0.id)}<div><div class="n">${BY[e0.id].name}</div><div class="m">${DKO[e0.diff]||''} · 한 번에 <b class="num">${rcE(e0.avg)}</b></div></div></div>
-    <div class="rc-rank"${rcA(2)}>${R.eff.slice(1).map((b,i)=>`<div><em class="num">${i+2}</em>${rcBI(b.id)}<span>${bn(b.id,b.diff)}</span><b class="num">${rcE(b.avg)}</b></div>`).join('')}</div>
-    <div class="rc-note"${rcA(3)}>${noL||!R.loot?'결정석을':'결정석과 물욕을 더해서'} 잡은 횟수로 나눴어요 · 3번 이상 잡은 주간 보스</div>`)}
+  if(!V.short&&V.eff.length){const e0=V.eff[0];add('eff','money',7000,`<div class="rc-lab"${rcA(0)}>한 번 잡을 때 제일 쏠쏠했던 보스</div>
+    <div class="rc-boss1"${rcA(1)}>${rcBI(e0.id)}<div><div class="n">${esc(rcBN(e0.id))}</div><div class="m">${DKO[e0.diff]||''} · 한 번에 <b class="num">${rcE(e0.avg)}</b></div></div></div>
+    <div class="rc-rank"${rcA(2)}>${V.eff.slice(1).map((b,i)=>`<div><em class="num">${i+2}</em>${rcBI(b.id)}<span>${bn(b.id,b.diff)}</span><b class="num">${rcE(b.avg)}</b></div>`).join('')}</div>
+    <div class="rc-note"${rcA(3)}>${noL||!V.loot?'결정석을':'결정석과 물욕을 더해서'} 잡은 횟수로 나눴어요 · 3번 이상 잡은 주간 보스</div>`)}
   // 7 올해 번 돈 (절정 1)
-  {const lab=`${R.isFirst?`${R.span.length}주 동안`:'올해'} ${noL?'결정석으로':'보스로'} 번 돈`,mx=Math.max(1,...R.series.map(o=>o.v)),N=R.series.length;
-    add('money','money',8000,`<div class="rc-lab"${rcA(0)}>${lab}</div><div class="rc-big rc-hero${R.tot>=1e12?' long':''}"${rcA(1)}>${rcBigE(R.tot)}</div>
-    ${!noL&&R.loot>0?`<div class="rc-bar"${rcA(2)}><i class="cr" style="width:${pct(R.crys,R.tot)}%"></i><i class="lt" style="width:${pct(R.loot,R.tot)}%"></i></div><div class="rc-leg"${rcA(3)}><span><i class="cr"></i>결정석 <b class="num">${rcE(R.crys)}</b></span><span><i class="lt"></i>물욕 <b class="num">${rcE(R.loot)}</b></span></div>`:''}
-    ${R.short?'':`<div class="rc-kv"${rcA(4)}><div>주 평균<b class="num">${rcE(R.tot/R.span.length)}</b></div><div>제일 많이 번 주<b class="num">${md(R.best.w)} ~ ${md(sxAdd(R.best.w,6))} · ${rcE(R.best.v)}</b></div></div>`}
-    <div class="rc-spark">${R.series.map((o,i)=>`<i class="${o.w===R.best.w?'on':''}" style="height:${Math.max(3,o.v/mx*100).toFixed(1)}%;--d:${Math.round(i*Math.min(60,700/N))+500}ms"></i>`).join('')}</div>
-    <div class="rc-spl"${rcA(6)}><span>${md(R.span[0])} 주</span><span>주마다 번 돈</span><span>${md(R.span[R.span.length-1])} 주</span></div>`)}
+  {const lab=`${V.isFirst?`${V.span.length}주 동안`:'올해'} ${noL?'결정석으로':'보스로'} 번 돈`,mx=Math.max(1,...V.series.map(o=>o.v)),N=V.series.length;
+    add('money','money',8000,`<div class="rc-lab"${rcA(0)}>${lab}</div><div class="rc-big rc-hero${V.tot>=1e12?' long':''}"${rcA(1)}>${rcBigE(V.tot)}</div>
+    ${!noL&&V.loot>0?`<div class="rc-bar"${rcA(2)}><i class="cr" style="width:${pct(V.crys,V.tot)}%"></i><i class="lt" style="width:${pct(V.loot,V.tot)}%"></i></div><div class="rc-leg"${rcA(3)}><span><i class="cr"></i>결정석 <b class="num">${rcE(V.crys)}</b></span><span><i class="lt"></i>물욕 <b class="num">${rcE(V.loot)}</b></span></div>`:''}
+    ${V.short?'':`<div class="rc-kv"${rcA(4)}><div>주 평균<b class="num">${rcE(V.tot/V.span.length)}</b></div><div>제일 많이 번 주<b class="num">${md(V.best.w)} ~ ${md(sxAdd(V.best.w,6))} · ${rcE(V.best.v)}</b></div></div>`}
+    <div class="rc-spark">${V.series.map((o,i)=>`<i class="${o.w===V.best.w?'on':''}" style="height:${Math.max(3,o.v/mx*100).toFixed(1)}%;--d:${Math.round(i*Math.min(60,700/N))+500}ms"></i>`).join('')}</div>
+    <div class="rc-spl"${rcA(6)}><span>${md(V.span[0])} 주</span><span>주마다 번 돈</span><span>${md(V.span[V.span.length-1])} 주</span></div>`)}
   // 8 올해 번 돈이면 (큰 숫자 뒤 웃음 한 박자)
-  if(R.buy.length){const t=rcE(R.tot);add('buy','money',8000,`<div class="rc-lab"${rcA(0)}>${t}${rcIga(t.replace(/\s+$/,''))} 살 수 있는 것</div>
-    <div class="rc-buy">${R.buy.map((o,i)=>{const n=R.tot/1e8/o.p;return `<div${rcA(1+i)}>${rcIco(o.n)}<span>${o.n}<small class="num">개당 ${rcE(o.p*1e8)}</small></span><b>${rcN(n<10?+n.toFixed(1):Math.floor(n),n<10?1:0)}<small>개</small></b></div>`}).join('')}</div>
-    <div class="rc-note"${rcA(5)}>지금 메푸리 시세 기준 · 재미로 봐 주세요</div>`)}
+  if(V.buy.length){const t=rcE(V.tot);add('buy','money',8000,`<div class="rc-lab"${rcA(0)}>${t}${rcIga(t.replace(/\s+$/,''))} 살 수 있는 것</div>
+    <div class="rc-buy">${V.buy.map((o,i)=>{const n=V.tot/1e8/o.p;return `<div${rcA(1+i)}>${rcIco(o.n)}<span>${esc(o.n)}<small class="num">개당 ${rcE(o.p*1e8)}</small></span><b>${rcN(n<10?+n.toFixed(1):Math.floor(n),n<10?1:0)}<small>개</small></b></div>`}).join('')}</div>
+    <div class="rc-note"${rcA(5)}>${view?'만든 날 메푸리 시세 기준':'지금 메푸리 시세 기준'} · 재미로 봐 주세요</div>`)}
   // 9 처음과 지금 (자부심 — 는 경우만)
-  if(R.growth&&!R.short){const g=R.growth,m=Math.max(g.f,g.l);add('growth','money',8000,`<div class="rc-lab"${rcA(0)}>처음과 지금</div><div class="rc-mid"${rcA(1)}>주 수익이<br><em class="num">${rcN(g.up)}%</em> 늘었어요</div>
+  if(V.growth&&!V.short){const g=V.growth,m=Math.max(g.f,g.l);add('growth','money',8000,`<div class="rc-lab"${rcA(0)}>처음과 지금</div><div class="rc-mid"${rcA(1)}>주 수익이<br><em class="num">${rcN(g.up)}%</em> 늘었어요</div>
     <div class="rc-vs"><div><b class="num"${rcA(2)}>${rcE(g.f)}</b><i style="height:${(g.f/m*100).toFixed(1)}%;--d:350ms"></i><span>처음 ${g.k}주 평균</span></div><div class="on"><b class="num"${rcA(3)}>${rcE(g.l)}</b><i style="height:${(g.l/m*100).toFixed(1)}%;--d:450ms"></i><span>최근 ${g.k}주 평균</span></div></div>
     <div class="rc-note"${rcA(5)}>다 끝난 주만 셌어요</div>`)}
   // 10 보스 잡은 날 (잔디: 칸 하나 = 하루 · 세로 = 목~수, 가로 = 주). 26주 넘으면 두 줄(띠)로
-  {const wEnd=sxWeek(R.YR.to),wks=[];for(let w=R.w1;w<=wEnd;w=sxAdd(w,7))wks.push(w);
+  {const wEnd=sxWeek(V.yrTo),wks=[];for(let w=V.w1;w<=wEnd;w=sxAdd(w,7))wks.push(w);
     const nb=wks.length>26?2:1,cols=Math.ceil(wks.length/nb),gap=cols<=13?3:2,cs=Math.max(5,Math.min(20,Math.floor((292-(cols-1)*gap)/cols)));
     const bands=[];for(let i=0;i<wks.length;i+=cols)bands.push(wks.slice(i,i+cols));const tot=wks.length*7;let k=0;
     const mlab=b=>{const L=b.map(w=>+w.slice(8,10)<=7?+w.slice(5,7)+'월':'');if(!L[0]){const nx=L.findIndex((x,i)=>i>0&&x);if(nx<0||nx>=3)L[0]=+b[0].slice(5,7)+'월'}return L}; // 달 이름: 그달 첫 목요일 주 위에
     const cells=bands.map((b,bi)=>`<div class="rc-attb"><div class="rc-attm" style="grid-template-columns:repeat(${b.length},${cs}px);column-gap:${gap}px">${mlab(b).map(x=>`<span>${x}</span>`).join('')}</div>
       <div class="rc-attg"><div class="rc-attd" style="grid-template-rows:repeat(7,${cs}px);row-gap:${gap}px"><span>목</span><span></span><span></span><span>일</span><span></span><span></span><span>수</span></div>
-      <div class="rc-att" style="grid-template-columns:repeat(${b.length},${cs}px);grid-template-rows:repeat(7,${cs}px);gap:${gap}px">${b.map(w=>Array.from({length:7},(_,j)=>{const d=sxAdd(w,j),n=R.dayN.get(d)||0,i=k++;return `<i class="${d>REAL?'f':n>=6?'l3':n>=3?'l2':n?'l1':''}" style="--d:${Math.round(i*1100/tot)+300}ms"></i>`}).join('')).join('')}</div></div></div>`).join('');
-    add('days','rec',6000,`<div class="rc-lab"${rcA(0)}>보스 잡은 날</div><div class="rc-big"${rcA(1)}>${rcN(R.nDays)}<small>일</small></div><div class="rc-atts">${cells}</div>
+      <div class="rc-att" style="grid-template-columns:repeat(${b.length},${cs}px);grid-template-rows:repeat(7,${cs}px);gap:${gap}px">${b.map(w=>Array.from({length:7},(_,j)=>{const d=sxAdd(w,j),n=V.dayN[d]||0,i=k++;return `<i class="${d>V.real?'f':n>=6?'l3':n>=3?'l2':n?'l1':''}" style="--d:${Math.round(i*1100/tot)+300}ms"></i>`}).join('')).join('')}</div></div></div>`).join('');
+    add('days','rec',6000,`<div class="rc-lab"${rcA(0)}>보스 잡은 날</div><div class="rc-big"${rcA(1)}>${rcN(V.nDays)}<small>일</small></div><div class="rc-atts">${cells}</div>
     <div class="rc-attl"${rcA(3)}><span>적게</span><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>많이</span><span class="sp"></span><i class="f"></i><span>아직 안 온 날</span></div>
     <div class="rc-note"${rcA(4)}>칸 하나가 하루예요 · 주간·월간 보스를 잡은 날만 셌어요</div>`)}
   // 11 나의 보스 요일 (페르소나 도장)
-  if(!R.short&&R.ws>=3){const wl=['목','금','토','일','월','화','수'],wm=Math.max(...R.wd);add('wd','rec',8000,`<div class="rc-lab"${rcA(0)}>나의 보스 요일</div><div class="rc-stamp"><span>${R.per[0]}</span></div>
-    <div class="rc-sub"${rcA(2)}>${R.per[1]}<br>주간 보스를 <b>${wl[R.wtop]}요일</b>에 제일 많이 잡았어요</div>
-    <div class="rc-wd">${R.wd.map((n,i)=>`<div class="${i===R.wtop?'on':''}"><b class="num">${n}</b><i style="height:${Math.max(3,n/wm*100).toFixed(1)}%;--d:${i*60+400}ms"></i><span>${wl[i]}</span></div>`).join('')}</div>
+  if(!V.short&&V.ws>=3){const wl=['목','금','토','일','월','화','수'],wm=Math.max(...V.wd);add('wd','rec',8000,`<div class="rc-lab"${rcA(0)}>나의 보스 요일</div><div class="rc-stamp"><span>${esc(V.per[0])}</span></div>
+    <div class="rc-sub"${rcA(2)}>${esc(V.per[1])}<br>주간 보스를 <b>${wl[V.wtop]}요일</b>에 제일 많이 잡았어요</div>
+    <div class="rc-wd">${V.wd.map((n,i)=>`<div class="${i===V.wtop?'on':''}"><b class="num">${n}</b><i style="height:${Math.max(3,n/wm*100).toFixed(1)}%;--d:${i*60+400}ms"></i><span>${wl[i]}</span></div>`).join('')}</div>
     <div class="rc-note"${rcA(5)}>목요일에 초기화돼서 목요일부터 셌어요</div>`)}
   // 12 연속 기록
-  if(R.streak>=2){const s0=sxAdd(R.sEnd,-(R.streak-1)*7),wkH=R.wkW,N=R.span.length,big=N>20;
-    add('streak','rec',6000,`<div class="rc-lab"${rcA(0)}>연속 기록</div><div class="rc-big"${rcA(1)}>${rcN(R.streak)}<small>주 연속</small></div>
-    <div class="rc-sub"${rcA(2)}>${R.noGap?'시작한 뒤로 한 주도 안 쉬었어요':`${R.streak}주 동안 한 주도 안 쉬고 주간 보스를 잡았어요`}</div>
-    <div class="rc-dots${big?' sm':N<=10?' lg':''}">${R.span.map((w,i)=>`<i class="${w>=s0&&w<=R.sEnd?'s':wkH.has(w)?'on':''}" style="--d:${Math.round(i*Math.min(80,1000/N))+350}ms"></i>`).join('')}</div>
+  if(V.streak>=2){const s0=sxAdd(V.sEnd,-(V.streak-1)*7),wkH=new Set(V.wkW),N=V.span.length,big=N>20;
+    add('streak','rec',6000,`<div class="rc-lab"${rcA(0)}>연속 기록</div><div class="rc-big"${rcA(1)}>${rcN(V.streak)}<small>주 연속</small></div>
+    <div class="rc-sub"${rcA(2)}>${V.noGap?'시작한 뒤로 한 주도 안 쉬었어요':`${V.streak}주 동안 한 주도 안 쉬고 주간 보스를 잡았어요`}</div>
+    <div class="rc-dots${big?' sm':N<=10?' lg':''}">${V.span.map((w,i)=>`<i class="${w>=s0&&w<=V.sEnd?'s':wkH.has(w)?'on':''}" style="--d:${Math.round(i*Math.min(80,1000/N))+350}ms"></i>`).join('')}</div>
     <div class="rc-note"${rcA(4)}>점 하나 = 한 주 · 기록을 시작한 주부터 셌어요</div>`)}
   // 13~15 물욕 (물욕 끔이거나 먹은 게 없으면 통째로 빠짐)
-  if(!noL&&R.items){
-    if(R.dex.length){const dl=R.dex.slice().sort((a,b)=>(b.got>0)-(a.got>0)||b.got-a.got||b.kills-a.kills),cut=dl.length>24,sh=cut?dl.slice(0,23):dl;
-      add('dex','loot',8000,`<div class="rc-lab"${rcA(0)}>올해 모은 물욕 도감</div><div class="rc-big"${rcA(1)}>${rcN(R.have)}<small class="dim"> / ${R.dex.length}</small></div>
-      <div class="rc-prg"${rcA(2)}><i style="width:${pct(R.have,R.dex.length)}%"></i></div>
-      <div class="rc-dex">${sh.map((o,i)=>`<span class="rc-pop${o.got?'':' no'}" style="--j:${i+3}">${o.got?rcIco(o.n):rcSil(o.n)}${o.got>1?`<b class="num">×${o.got}</b>`:''}</span>`).join('')}${cut?`<span class="rc-pop more" style="--j:26">+${dl.length-23}</span>`:''}</div>
+  if(!noL&&V.items){
+    if(V.nDex){const cut=V.nDex>24,sh=cut?V.dex.slice(0,23):V.dex; // V.dex는 먹은 것 → 많이 먹은 것 → 많이 잡은 순, 24개까지
+      add('dex','loot',8000,`<div class="rc-lab"${rcA(0)}>올해 모은 물욕 도감</div><div class="rc-big"${rcA(1)}>${rcN(V.have)}<small class="dim"> / ${V.nDex}</small></div>
+      <div class="rc-prg"${rcA(2)}><i style="width:${pct(V.have,V.nDex)}%"></i></div>
+      <div class="rc-dex">${sh.map((o,i)=>`<span class="rc-pop${o.got?'':' no'}" style="--j:${i+3}">${o.got?rcIco(o.n):rcSil(o.n)}${o.got>1?`<b class="num">×${o.got}</b>`:''}</span>`).join('')}${cut?`<span class="rc-pop more" style="--j:26">+${V.nDex-23}</span>`:''}</div>
       <div class="rc-note"${rcA(5)}>내가 잡는 보스에서 나올 수 있는 템 기준이에요</div>`)}
-    if((R.lucky.length||R.unlucky.length)&&(R.items>=3||R.nK>=20)){const row=(o,no)=>`<div class="${no?'no':''}">${no?rcSil(o.n):rcIco(o.n)}<span><b>${o.n}</b><small class="num">${no?`${o.kills}번 잡았는데 아직`:`${o.kills}번 잡고 ${o.got}개`}</small></span><em class="num">${no?'0개':Math.round(o.got/o.kills*100)+'%'}</em></div>`;
-      add('luck','loot',8000,`<div class="rc-lab"${rcA(0)}>내 손의 드롭률</div><div class="rc-mid"${rcA(1)}>${R.lucky.length&&R.unlucky.length?'운이 좋았던 템,<br>아직 못 만난 템':R.lucky.length?'운이 좋았던 템':'아직 못 만난 템'}</div>
-      <div class="rc-luck">${R.lucky.length?`<h5${rcA(2)}>운이 좋았던 템</h5><div class="g"${rcA(3)}>${R.lucky.map(o=>row(o)).join('')}</div>`:''}${R.unlucky.length?`<h5${rcA(4)}>아직 못 만난 템</h5><div class="g"${rcA(5)}>${R.unlucky.map(o=>row(o,1)).join('')}</div>`:''}</div>
+    if((V.lucky.length||V.unlucky.length)&&(V.items>=3||V.nK>=20)){const row=(o,no)=>`<div class="${no?'no':''}">${no?rcSil(o.n):rcIco(o.n)}<span><b>${esc(o.n)}</b><small class="num">${no?`${o.kills}번 잡았는데 아직`:`${o.kills}번 잡고 ${o.got}개`}</small></span><em class="num">${no?'0개':Math.round(o.got/o.kills*100)+'%'}</em></div>`;
+      add('luck','loot',8000,`<div class="rc-lab"${rcA(0)}>내 손의 드롭률</div><div class="rc-mid"${rcA(1)}>${V.lucky.length&&V.unlucky.length?'운이 좋았던 템,<br>아직 못 만난 템':V.lucky.length?'운이 좋았던 템':'아직 못 만난 템'}</div>
+      <div class="rc-luck">${V.lucky.length?`<h5${rcA(2)}>운이 좋았던 템</h5><div class="g"${rcA(3)}>${V.lucky.map(o=>row(o)).join('')}</div>`:''}${V.unlucky.length?`<h5${rcA(4)}>아직 못 만난 템</h5><div class="g"${rcA(5)}>${V.unlucky.map(o=>row(o,1)).join('')}</div>`:''}</div>
       <div class="rc-note"${rcA(6)}>내 기록으로 센 거라 공식 확률과는 달라요</div>`)}
-    if(R.priciest){const P=R.priciest;add('pricey','loot',13000,`<div class="rc-lab"${rcA(0)}>올해 제일 비싼 물욕</div>
+    if(V.priciest){const P=V.priciest;add('pricey','loot',13000,`<div class="rc-lab"${rcA(0)}>올해 제일 비싼 물욕</div>
       <div class="rc-mys"${rcA(1)}><span class="ic">${rcSil(P.n)}<b>?</b></span><div class="q">뭐였을까요?</div><div class="tap">눌러서 열어 보기</div></div>
-      <div class="rc-item rc-rev"><span class="ic">${rcIfr(P.n,P.price)}</span><div class="nm">${P.n}</div><div class="pr">${rcBigE(P.price)}</div><div class="mt">${md(P.d)} · ${esc(nm(P.c))} · ${bn(P.id,P.diff)}</div></div>
-      <div class="rc-note rc-rev">올해 먹은 물욕템은 모두 ${R.items}개예요</div>`,{rev:5000})}}
+      <div class="rc-item rc-rev"><span class="ic">${rcIfr(P.n,P.price)}</span><div class="nm">${esc(P.n)}</div><div class="pr">${rcBigE(P.price)}</div><div class="mt">${md(P.d)} · ${esc(cv(P.ci).n)} · ${bn(P.id,P.diff)}</div></div>
+      <div class="rc-note rc-rev">올해 먹은 물욕템은 모두 ${V.items}개예요</div>`,{rev:5000})}}
   // 16 MVP 캐릭터 (얼굴은 0.8초 뒤에)
-  if(R.chars.length>=2){const ch=R.chars,t0=ch[0],tt=ch.reduce((t,o)=>t+o.v,0)||1;add('mvp','ppl',7000,`<div class="rc-lab"${rcA(0)}>올해의 MVP 캐릭터</div>
-    <div class="rc-mvp"><span class="av rc-face">${rcAva(t0.c,92)}</span><div class="rc-seq" style="--sq:.95s"><div class="n">${esc(nm(t0.c))}</div><div class="m"><b class="num">${rcE(t0.v)}</b> · 전체의 ${Math.round(t0.v/tt*100)}%</div></div></div>
-    <div class="rc-cb">${ch.slice(0,5).map((o,i)=>`<div${rcA(3+i)}>${rcAva(o.c,28)}<span>${esc(nm(o.c))}</span><b class="num">${rcE(o.v)}</b><span class="bb"><i style="width:${(o.v/t0.v*100).toFixed(1)}%"></i></span></div>`).join('')}</div>
-    ${ch.length>5?`<div class="rc-note"${rcA(8)}>외 ${ch.length-5}명도 함께했어요</div>`:''}`)}
-  // 17 올해의 파티원 (이름을 적은 사람만)
-  if(R.mt.length){const [m0,n0]=R.mt[0];add('mate','ppl',7000,`<div class="rc-lab"${rcA(0)}>올해 제일 많이 같이 간 사람</div>
-    <div class="rc-mate"${rcA(1)}><span class="av">${esc([...m0][0]||'?')}</span><div><div class="n">${esc(m0)}</div><div class="m">함께 <b class="num">${n0}번</b></div></div></div>
+  if(V.nC>=2){const ch=V.chars,t0=ch[0],tt=V.cTot||1;add('mvp','ppl',7000,`<div class="rc-lab"${rcA(0)}>올해의 MVP 캐릭터</div>
+    <div class="rc-mvp"><span class="av rc-face">${rcAva(cv(t0.ci),92)}</span><div class="rc-seq" style="--sq:.95s"><div class="n">${esc(cv(t0.ci).n)}</div><div class="m"><b class="num">${rcE(t0.v)}</b> · 전체의 ${Math.round(t0.v/tt*100)}%</div></div></div>
+    <div class="rc-cb">${ch.slice(0,5).map((o,i)=>`<div${rcA(3+i)}>${rcAva(cv(o.ci),28)}<span>${esc(cv(o.ci).n)}</span><b class="num">${rcE(o.v)}</b><span class="bb"><i style="width:${(o.v/t0.v*100).toFixed(1)}%"></i></span></div>`).join('')}</div>
+    ${V.nC>5?`<div class="rc-note"${rcA(8)}>외 ${V.nC-5}명도 함께했어요</div>`:''}`)}
+  // 17 올해의 파티원 (이름을 적은 사람만) — 넥슨에서 찾은 이름이면 코디·레벨·직업·월드
+  if(V.mt.length){const m0=V.mt[0],l0=m0.lk,meta=l0?[l0.lv?`Lv.${l0.lv}`:'',l0.j||'',l0.w||''].filter(Boolean).map(esc).join(' · '):'';
+    add('mate','ppl',7000,`<div class="rc-lab"${rcA(0)}>올해 제일 많이 같이 간 사람</div>
+    <div class="rc-mate"${rcA(1)}><span class="av${rcMKind(m0)}">${rcMAva(m0,78,1)}</span><div><div class="n">${esc(m0.n)}</div>${meta?`<div class="mm">${meta}</div>`:''}<div class="m">함께 <b class="num">${m0.k}번</b></div></div></div>
     <div class="rc-say"${rcA(2)}>든든한 파티원이에요</div>
-    <div class="rc-rank"${rcA(3)}>${R.mt.slice(1).map(([m,n],i)=>`<div><em class="num">${i+2}</em><span>${esc(m)}</span><b class="num">${n}번</b></div>`).join('')}</div>
-    <div class="rc-note"${rcA(4)}>파티로 잡은 ${R.pc}번 중에서 · 보스 설정의 '같이 간 사람' 이름으로 셌어요</div>`)}
+    <div class="rc-rank"${rcA(3)}>${V.mt.slice(1).map((m,i)=>`<div><em class="num">${i+2}</em><span class="rc-ma${rcMKind(m)}">${rcMAva(m,38)}</span><span>${esc(m.n)}</span><b class="num">${m.k}번</b></div>`).join('')}</div>
+    <div class="rc-note"${rcA(4)}>파티로 잡은 ${V.pc}번 중에서 · 보스 설정의 '같이 간 사람' 이름으로 셌어요</div>`)}
   // 18 52주 시계 (한 바퀴로 줌아웃)
-  {const sg=R.ring,Nn=sg.length,r0=98,r1=118,cx=120,cy=120,vm=Math.max(1,...sg.map(s=>s.v)),s0=R.streak>=2?sxAdd(R.sEnd,-(R.streak-1)*7):'~';
+  {const sg=V.ring,Nn=sg.length,r0=98,r1=118,cx=120,cy=120,vm=Math.max(1,...sg.map(s=>s.v)),s0=V.streak>=2?sxAdd(V.sEnd,-(V.streak-1)*7):'~';
     const arc=i=>{const a0=i/Nn*2*Math.PI-Math.PI/2+.014,a1=(i+1)/Nn*2*Math.PI-Math.PI/2-.014,p=(r,a)=>(cx+r*Math.cos(a)).toFixed(2)+' '+(cy+r*Math.sin(a)).toFixed(2);return 'M'+p(r1,a0)+' A'+r1+' '+r1+' 0 0 1 '+p(r1,a1)+' L'+p(r0,a1)+' A'+r0+' '+r0+' 0 0 0 '+p(r0,a0)+'Z'};
-    const full=R.nW>=Nn,say=full?'한 바퀴를 꽉 채웠어요!':R.isFirst?`${md(R.d1)}에 만나 ${R.nW}칸을 채웠어요 · 내년엔 한 바퀴!`:`올해 ${R.nW}칸을 채웠어요 · 내년엔 한 바퀴!`;
-    add('ring','end',8000,`<div class="rc-lab"${rcA(0)}>한 바퀴로 본 ${R.Y}</div>
-    <div class="rc-ring"><svg viewBox="0 0 240 240" aria-hidden="true">${sg.map((s,i)=>`<path class="${s.v?'on':s.fut?'fut':'off'}${s.v&&s.w>=s0&&s.w<=R.sEnd?' st':''}" d="${arc(i)}" style="--d:${Math.round(i*1000/Nn)+250}ms${s.v?`;opacity:${(.35+.65*s.v/vm).toFixed(2)}`:''}"/>`).join('')}</svg>
-      <div class="c"${rcA(2)}><b>${rcN(R.nW)}</b><span>/ ${Nn}주</span></div></div>
+    const full=V.nW>=Nn,say=full?'한 바퀴를 꽉 채웠어요!':V.isFirst?`${md(V.d1)}에 만나 ${V.nW}칸을 채웠어요 · 내년엔 한 바퀴!`:`올해 ${V.nW}칸을 채웠어요 · 내년엔 한 바퀴!`;
+    add('ring','end',8000,`<div class="rc-lab"${rcA(0)}>한 바퀴로 본 ${V.Y}</div>
+    <div class="rc-ring"><svg viewBox="0 0 240 240" aria-hidden="true">${sg.map((s,i)=>`<path class="${s.v?'on':s.fut?'fut':'off'}${s.v&&s.w>=s0&&s.w<=V.sEnd?' st':''}" d="${arc(i)}" style="--d:${Math.round(i*1000/Nn)+250}ms${s.v?`;opacity:${(.35+.65*s.v/vm).toFixed(2)}`:''}"/>`).join('')}</svg>
+      <div class="c"${rcA(2)}><b>${rcN(V.nW)}</b><span>/ ${Nn}주</span></div></div>
     <div class="rc-say"${rcA(3)}>${say}</div><div class="rc-note"${rcA(4)}>칸 하나 = 한 주 · 진할수록 많이 번 주</div>`)}
-  // 19 마무리 (넘김 없음 · 표지와 같은 얼굴로 끝)
-  {const t4=noL||!R.items?(R.topBoss[0]?['제일 많이 만난 보스',BY[R.topBoss[0].id].name]:['만난 보스',`${R.wall.length}종`]):['먹은 물욕템',`${R.items}개`];
-    const tiles=[['기록한 주',`${R.nW}주`],['잡은 보스',`${R.nK}마리`],[noL?'결정석으로 번 돈':'번 돈',rcE(R.tot)],t4];
-    add('end','end',0,`<div class="rc-mid rc-endt"${rcA(0)}>${R.Y}년 보스,<br>수고했어요</div><div class="rc-avs sm"${rcA(1)}>${faces(6,40)}</div>
+  // 19 마무리 (넘김 없음 · 표지와 같은 얼굴로 끝) — 앱: 공유 링크 만들기 · 링크 보기: 나도 결산 보기
+  {const t4=noL||!V.items?(V.topBoss[0]?['제일 많이 만난 보스',rcBN(V.topBoss[0].id)]:['만난 보스',`${V.nWall}종`]):['먹은 물욕템',`${V.items}개`];
+    const tiles=[['기록한 주',`${V.nW}주`],['잡은 보스',`${V.nK}마리`],[noL?'결정석으로 번 돈':'번 돈',rcE(V.tot)],t4];
+    add('end','end',0,`<div class="rc-mid rc-endt"${rcA(0)}>${V.Y}년 보스,<br>수고했어요</div><div class="rc-avs sm"${rcA(1)}>${faces(6,40)}</div>
     <div class="rc-sum">${tiles.map((t,i)=>`<div style="--j:${i}"><small>${t[0]}</small><b class="num${t[1].length>7?' long':''}">${esc(t[1])}</b></div>`).join('')}</div>
     <div class="rc-end">${noL?'내년에도 보스 잡으러 가요!':'내년에도 득템하세요!'}</div>${asof}
-    <div class="rc-endb"><button type="button" class="rc-again" data-rc="again">처음부터 다시 보기</button></div>`)}
+    <div class="rc-endb">${view?'<a class="rc-cta" href="/">나도 결산 보기 · 메푸리 열기</a>':''}<button type="button" class="rc-again" data-rc="again">처음부터 다시 보기</button>${!view?`<button type="button" class="rc-shb" data-rc="share">${RC_I.link}<span>공유 링크 만들기</span></button>`:''}</div>`)}
   return C}
 
 /* ---------- 보기 (스토리) ----------
    누르기: 왼쪽 25% = 이전, 나머지 = 다음 · 밀기: 왼쪽으로 = 다음, 오른쪽으로 = 이전, 아래로 = 닫기
    길게 누르기(0.2초) = 누르는 동안 멈춤 · ⏸ 버튼 · ←/→ · 스페이스 = 멈춤/재생 · Esc = 닫기
-   제일 비싼 물욕: 처음 누르면 열기(5초 지나면 저절로), 그다음부터 넘김 */
+   제일 비싼 물욕: 처음 누르면 열기(5초 지나면 저절로), 그다음부터 넘김
+   링크 보기(mode 'view'): 닫기·공유 없음, 화면 전체가 결산 (밖을 누르거나 아래로 밀어도 안 닫힘) */
 let RC=null;
-function rcOpen(){if(RC)return;const noL=false,R=rcData(noL); // 늘 전체 기록if(!R){toast('올해 기록이 아직 없어요');return}
-  const cards=rcCards(R,noL),ov=document.createElement('div');
-  ov.id='rc-ov';ov.tabIndex=-1;ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label',`${R.Y} 메푸리 결산`);
+function rcOpen(){if(RC)return;const noL=false,R=rcData(noL); // 늘 전체 기록
+  if(!R){toast('올해 기록이 아직 없어요');return}
+  rcMount(rcView(R,{mode:'app'}),{mode:'app',noL},R);
+  // 파티원 코디: 로그인했으면 이름으로 찾아 둠 (위 3명, 기억 안 된 이름만) → 다 받으면 파티원 카드만 다시 그림
+  if(R.mt.length&&mlCan())mlFetch(R.mt.map(m=>m[0])).then(got=>{if(got&&RC&&RC.R===R)rcMates()})}
+function rcMount(V,ro,R){const app=ro.mode!=='view',cards=rcCards(V,ro),ov=document.createElement('div');
+  ov.id='rc-ov';ov.tabIndex=-1;ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label',`${V.Y} 메푸리 결산`);if(!app)ov.classList.add('view');
   ov.innerHTML=`<div class="rc-stage"><button type="button" class="rc-arr" data-rc="prev" aria-label="이전 장">${RC_I.l}</button>
     <div class="rc"><span class="rc-bg" aria-hidden="true"></span><div class="rc-prog" aria-hidden="true">${cards.map(()=>'<i><b></b></i>').join('')}</div>
-      <div class="rc-top"><span>${R.Y} 메푸리 결산</span><span class="rc-ctl"><span class="rc-pz">일시정지</span><button type="button" data-rc="pause" aria-label="멈추기">${RC_I.pause}</button><button type="button" data-rc="close" aria-label="닫기">${RC_I.x}</button></span></div>
+      <div class="rc-top"><span>${V.Y} 메푸리 결산</span><span class="rc-ctl"><span class="rc-pz">일시정지</span>${app&&!V.mini?`<button type="button" data-rc="share" aria-label="공유 링크 만들기">${RC_I.share}</button>`:''}<button type="button" data-rc="pause" aria-label="멈추기">${RC_I.pause}</button>${app?`<button type="button" data-rc="close" aria-label="닫기">${RC_I.x}</button>`:''}</span></div>
       <div class="rc-page"></div><div class="rc-foot"><b>MEPURI</b><span>mepuri.bosslog.workers.dev</span></div></div>
     <button type="button" class="rc-arr" data-rc="next" aria-label="다음 장">${RC_I.r}</button></div>`;
   document.body.appendChild(ov);
-  RC={R,noL,cards,ov,card:ov.querySelector('.rc'),page:ov.querySelector('.rc-page'),segs:[...ov.querySelectorAll('.rc-prog i')],i:-1,el:0,last:0,paused:false,hold:false,rev:false,pd:null,
+  RC={V,R:R||null,ro,app,cards,ov,card:ov.querySelector('.rc'),page:ov.querySelector('.rc-page'),segs:[...ov.querySelectorAll('.rc-prog i')],i:-1,el:0,last:0,paused:false,hold:false,rev:false,pd:null,sh:null,
     back:document.activeElement,ovf:document.documentElement.style.overflow};
   document.documentElement.style.overflow='hidden';
   ov.addEventListener('pointerdown',rcDown);ov.addEventListener('pointerup',rcUp);ov.addEventListener('pointercancel',rcCancel);
   ov.addEventListener('click',rcClick);ov.addEventListener('contextmenu',e=>{if(e.target.closest('.rc'))e.preventDefault()});
   document.addEventListener('keydown',rcKey,true);addEventListener('resize',rcFit);
   rcFit();rcGo(0);ov.focus({preventScroll:true});RC.raf=requestAnimationFrame(rcTick)}
-function rcClose(){if(!RC)return;const o=RC;RC=null;cancelAnimationFrame(o.raf);clearTimeout(o.ht);document.removeEventListener('keydown',rcKey,true);removeEventListener('resize',rcFit);
+function rcClose(){if(!RC||!RC.app)return;if(RC.sh)rcShClose(true);const o=RC;RC=null;cancelAnimationFrame(o.raf);clearTimeout(o.ht);document.removeEventListener('keydown',rcKey,true);removeEventListener('resize',rcFit);
   o.ov.remove();document.documentElement.style.overflow=o.ovf;const b=o.back&&o.back.isConnected?o.back:document.querySelector('[data-rcopen]');if(b&&b.focus)b.focus({preventScroll:true})}
 // 카드 크기: 360 × 640 설계를 화면에 맞춰 키움(zoom). 폰은 화면을 꽉 채우고(세로가 길면 카드가 길어짐), PC는 가운데 + 양옆 화살표
-function rcFit(){if(!RC)return;const ov=RC.ov,W=ov.clientWidth,H=ov.clientHeight,ph=W<640||H<540;ov.classList.toggle('ph',ph);let k,h=640;
+function rcFit(){if(!RC)return;if(RC.sh)rcShFit();const ov=RC.ov,W=ov.clientWidth,H=ov.clientHeight,ph=W<640||H<540;ov.classList.toggle('ph',ph);let k,h=640;
   if(ph){k=Math.min(W/360,H/640);h=Math.max(640,Math.floor(H/k))}else k=Math.max(.6,Math.min(1.1,(H-48)/640,(W-190)/360));
   RC.card.style.zoom=k.toFixed(4);RC.card.style.height=h+'px'}
 function rcGo(i){if(!RC||i<0||i>=RC.cards.length||i===RC.i)return;const c=RC.cards[i];RC.i=i;RC.el=0;RC.rev=false;
@@ -6090,13 +6207,13 @@ function rcGo(i){if(!RC||i<0||i>=RC.cards.length||i===RC.i)return;const c=RC.car
   RC.page.querySelectorAll('.rc-body').forEach(o=>{o.classList.add('out');setTimeout(()=>o.remove(),220)});
   const b=document.createElement('div');b.className='rc-body';b.dataset.k=c.k;b.innerHTML=c.html;RC.page.appendChild(b);rcCount(b,false);
   RC.ov.querySelector('[data-rc="prev"]').disabled=i===0;RC.ov.querySelector('[data-rc="next"]').disabled=i===RC.cards.length-1;
-  if(c.hint){c.hint=false;c.html=c.html.replace('<div class="rc-hint">길게 누르면 멈춰요</div>','');st.tips={...(st.tips||{}),rch:1};save(true)}} // 힌트는 한 번만
+  if(c.hint){c.hint=false;c.html=c.html.replace('<div class="rc-hint">길게 누르면 멈춰요</div>','');if(RC.app){st.tips={...(st.tips||{}),rch:1};save(true)}}} // 힌트는 한 번만 (앱은 기억)
 function rcNext(){if(!RC)return;const c=RC.cards[RC.i];if(c.rev&&!RC.rev){rcReveal();return}rcGo(RC.i+1)}
 function rcReveal(){if(!RC||RC.rev)return;RC.rev=true;const c=RC.cards[RC.i],b=RC.page.querySelector('.rc-body:not(.out)');if(b){b.classList.add('rev');rcCount(b,true)}
   const D=(c.rev||0)*(RC_RM()?1.5:1);if(RC.el<D)RC.el=D}
 function rcPause(on){if(!RC)return;RC.paused=on==null?!RC.paused:!!on;RC.ov.classList.toggle('paused',RC.paused);const b=RC.ov.querySelector('[data-rc="pause"]');b.innerHTML=RC.paused?RC_I.play:RC_I.pause;b.setAttribute('aria-label',RC.paused?'이어 보기':'멈추기')}
 function rcTick(ts){if(!RC)return;const dt=RC.last?Math.min(100,ts-RC.last):0;RC.last=ts;const c=RC.cards[RC.i],m=RC_RM()?1.5:1;
-  if(c.dur){if(!RC.paused&&!RC.hold&&!document.hidden)RC.el+=dt;const D=c.dur*m;RC.segs[RC.i].firstChild.style.transform=`scaleX(${Math.min(1,RC.el/D).toFixed(4)})`;
+  if(c.dur){if(!RC.paused&&!RC.hold&&!RC.sh&&!document.hidden)RC.el+=dt;const D=c.dur*m;RC.segs[RC.i].firstChild.style.transform=`scaleX(${Math.min(1,RC.el/D).toFixed(4)})`;
     if(c.rev&&!RC.rev&&RC.el>=c.rev*m)rcReveal();
     if(RC.el>=D&&RC.i<RC.cards.length-1)rcGo(RC.i+1)}
   RC.raf=requestAnimationFrame(rcTick)}
@@ -6104,28 +6221,132 @@ function rcTick(ts){if(!RC)return;const dt=RC.last?Math.min(100,ts-RC.last):0;RC
 function rcCount(root,rev){const rm=RC_RM();root.querySelectorAll('[data-to]').forEach(el=>{if(!!el.closest('.rc-rev')!==!!rev)return;const to=+el.dataset.to,dp=+(el.dataset.dp||0),fin=to.toFixed(dp);if(rm||!to){el.textContent=fin;return}
   const a=el.closest('[data-a]'),ai=a?+(a.style.getPropertyValue('--i')||0):1,t0=performance.now()+(rev?200:120+ai*90),du=1100;el.textContent=(0).toFixed(dp);
   const f=now=>{if(!el.isConnected)return;const p=Math.max(0,Math.min(1,(now-t0)/du));el.textContent=p>=1?fin:(to*(1-Math.pow(2,-10*p))).toFixed(dp);if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)})}
-function rcDown(e){if(!RC||e.button>0)return;const t=e.target;if(t.closest('button'))return;
+function rcDown(e){if(!RC||e.button>0)return;const t=e.target;if(t.closest('button,a'))return; // 링크(나도 결산 보기)는 누르기·밀기로 안 잡음
   if(!t.closest('.rc')){RC.pd={bg:true};return}
   RC.pd={x:e.clientX,y:e.clientY};try{RC.ov.setPointerCapture(e.pointerId)}catch(_){}
   clearTimeout(RC.ht);RC.ht=setTimeout(()=>{if(RC&&RC.pd&&!RC.pd.bg){RC.hold=true;RC.ov.classList.add('held')}},200)}
 function rcUp(e){if(!RC)return;clearTimeout(RC.ht);const d=RC.pd,held=RC.hold;RC.pd=null;RC.hold=false;RC.ov.classList.remove('held');if(!d)return;
   const r=RC.card.getBoundingClientRect();
-  if(d.bg){if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)rcClose();return}
+  if(d.bg){if(RC.app&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))rcClose();return}
   const dx=e.clientX-d.x,dy=e.clientY-d.y;
   if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){if(dx<0)rcNext();else rcGo(RC.i-1);return}
-  if(dy>90&&dy>Math.abs(dx)*1.2){rcClose();return}
+  if(dy>90&&dy>Math.abs(dx)*1.2){if(RC.app)rcClose();return}
   if(held||Math.abs(dx)>12||Math.abs(dy)>12)return;
   if(e.clientX<r.left+r.width*.25)rcGo(RC.i-1);else rcNext()}
 function rcCancel(){if(!RC)return;clearTimeout(RC.ht);RC.pd=null;RC.hold=false;RC.ov.classList.remove('held')}
 function rcClick(e){e.stopPropagation();const b=e.target.closest('[data-rc]');if(!b||!RC)return;const a=b.dataset.rc;
-  if(a==='close')rcClose();else if(a==='pause')rcPause();else if(a==='prev')rcGo(RC.i-1);else if(a==='next')rcNext();else if(a==='again')rcGo(0)}
-function rcKey(e){if(!RC)return;const k=e.key,onBtn=e.target&&e.target.closest&&e.target.closest('button');
-  if(k==='Escape')rcClose();else if(k==='ArrowRight')rcNext();else if(k==='ArrowLeft')rcGo(RC.i-1);
+  if(a==='close')rcClose();else if(a==='pause')rcPause();else if(a==='prev')rcGo(RC.i-1);else if(a==='next')rcNext();else if(a==='again')rcGo(0);else if(a==='share'&&RC.app)rcShOpen()}
+function rcKey(e){if(!RC)return;if(RC.sh){rcShKey(e);return} // 공유 창이 열려 있으면 그 창이 키를 받음
+  const k=e.key,onBtn=e.target&&e.target.closest&&e.target.closest('button,a');
+  if(k==='Escape'){if(!RC.app)return;rcClose()}else if(k==='ArrowRight')rcNext();else if(k==='ArrowLeft')rcGo(RC.i-1);
   else if(k===' '||k==='Enter'){if(onBtn){e.stopPropagation();return}if(k===' ')rcPause();else rcNext()}
-  else if(k==='Tab'){const f=[...RC.ov.querySelectorAll('button:not(:disabled)')].filter(b=>b.offsetParent);if(!f.length)return;const i=f.indexOf(document.activeElement);
+  else if(k==='Tab'){const f=[...RC.ov.querySelectorAll('button:not(:disabled),a[href]')].filter(b=>b.offsetParent);if(!f.length)return;const i=f.indexOf(document.activeElement);
     (e.shiftKey?(i<=0?f[f.length-1]:f[i-1]):(i<0||i>=f.length-1?f[0]:f[i+1])).focus()}
   else{e.stopPropagation();return}
   e.preventDefault();e.stopPropagation()}
+// 파티원 코디를 다 받은 뒤: 파티원 카드만 새로 (보고 있는 중이면 움직임 없이 바로 바꿈) + 열린 공유 창 미리 보기
+function rcMates(){if(!RC||!RC.R)return;RC.V.mt=rcView(RC.R,{mode:'app'}).mt;const nc=rcCards(RC.V,RC.ro).find(c=>c.k==='mate'),i=RC.cards.findIndex(c=>c.k==='mate');
+  if(nc&&i>=0){RC.cards[i].html=nc.html;if(RC.i===i){const b=RC.page.querySelector('.rc-body:not(.out)');if(b){b.innerHTML=nc.html;b.classList.add('still')}}}
+  if(RC.sh)rcShPaint()}
+
+/* ---------- 파티원 코디 (넥슨 조회) ----------
+   이름 → /api/character (이 사이트 서버). 로그인했을 때만 (손님 조회 하루 3번을 안 씀) · 위 3명만 · 한 명씩 천천히
+   이 기기에 30일 기억 (넥슨 데이터 30일 규칙), 못 찾은 이름(400·404)은 7일. 한도(429)·로그인 풀림(401)·서버 오류면 기억하지 않고 멈춤
+   ※ srv()를 안 씀: 로그인이 풀렸을 때 로그인 창을 띄우는 동작이 결산 위로 뜨지 않게 */
+const ML_K='mepuri-mlook',ML_OK=30,ML_NO=7,ML_MAX=40;
+const mlKey=n=>String(n||'').trim().toLowerCase();
+function mlAll(){try{const o=JSON.parse(BLS.getItem(ML_K)||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return {}}}
+function mlGet(n,okDays){const e=mlAll()[mlKey(n)];if(!e||typeof e.at!=='string')return null;const age=(sxD(REAL)-sxD(e.at))/864e5;return age>=0&&age<(e.ok?(okDays||ML_OK):ML_NO)?e:null} // okDays: 찾은 결과를 며칠까지 쓸지 (링크 만들 땐 1일)
+function mlPut(n,e){const o=mlAll();o[mlKey(n)]={...e,at:REAL};const ks=Object.keys(o);
+  if(ks.length>ML_MAX)ks.sort((a,b)=>String(o[a].at)<String(o[b].at)?-1:1).slice(0,ks.length-ML_MAX).forEach(k=>delete o[k]); // 오래된 것부터 정리
+  try{BLS.setItem(ML_K,JSON.stringify(o))}catch(x){}}
+const mlCan=()=>typeof SAME_API!=='undefined'&&SAME_API&&!savedBase()&&typeof cloud!=='undefined'&&!!(cloud&&cloud.user);
+let ML_BUSY=null;
+function mlFetch(names,okDays){if(ML_BUSY)return ML_BUSY;const todo=[...new Set(names.filter(n=>n&&!mlGet(n,okDays)))].slice(0,3);if(!todo.length||!mlCan())return Promise.resolve(false);
+  ML_BUSY=(async()=>{let got=false;
+    for(const n of todo){if(!mlCan())break;let r,j={};
+      try{r=await fetch(location.origin+'/api/character?'+new URLSearchParams({name:n.trim()}),{cache:'no-store'});j=await r.json().catch(()=>({}))}catch(e){break}
+      if(r.ok&&j&&j.name){mlPut(n,{ok:true,u:rcOkLook(j.image)?j.image:null,lv:+j.level||null,j:j.job||null,w:j.world||null});got=true}
+      else if(r.status===400||r.status===404){mlPut(n,{ok:false});got=true}
+      else break;
+      await sleep(350)}
+    return got})().finally(()=>{ML_BUSY=null});
+  return ML_BUSY}
+
+/* ---------- 공유 링크 (10.28 링크 테스트 · 베타) ----------
+   공유 창: 캐릭터 이름·모습(기본 보이기) · 파티원 카드 넣기(기본 빼기)를 고르면 표지·파티원 카드 미리 보기가 바로 바뀜 → 링크 만들기 → 복사·공유
+   서버에는 고른 대로 만든 V(숫자 요약)만 올라감 — 원래 기록·가린 이름은 안 올라감. 링크는 30일 뒤 저절로 지워짐 (넥슨 데이터를 오래 두지 않게)
+   링크 주인: 로그인했으면 그 계정(어느 기기에서든 지우기) · 안 했으면 이 기기(기기 키 'mepuri-share-dk'를 가진 기기에서만 지우기)
+   베타에선 /beta/api/share/… 로 부름 (베타 쿠키가 /beta에만 붙어서 — 서버가 '관리자만' 모드에서 베타인지 확인) */
+const SH_MAX=5,SH_DAYS=30;
+const shOn=()=>typeof SAME_API!=='undefined'&&SAME_API&&!savedBase(); // 메푸리 서버에서 열었을 때만 (테스트판·내려받은 파일은 미리 보기만)
+const shUrl=op=>location.origin+(typeof BETA!=='undefined'&&BETA?'/beta':'')+'/api/share/'+op;
+function shDev(){const K='mepuri-share-dk';try{let v=BLS.getItem(K);if(!v||!/^[A-Za-z0-9_-]{32,64}$/.test(v)){const b=crypto.getRandomValues(new Uint8Array(24));v=btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');BLS.setItem(K,v)}return v}catch(e){return ''}}
+async function shApi(op,body){let r,j=null;
+  try{r=await fetch(shUrl(op),{method:'POST',headers:{'content-type':'application/json','x-mepuri':'1'},body:JSON.stringify({...(body||{}),dk:shDev()}),cache:'no-store'})}catch(e){throw new Error('서버에 연결하지 못했어요. 잠시 후 다시 해 주세요')}
+  try{j=await r.json()}catch(e){}
+  if(!r.ok){const e=new Error((j&&j.error&&j.error.message)||`서버 오류예요 (${r.status})`);e.status=r.status;e.code=(j&&j.error&&j.error.name)||'';throw e}
+  return j}
+const SH_OPT=[['nm','캐릭터 이름',[['show','보이기'],['hide','가리기']]],['lk','캐릭터 모습',[['show','보이기'],['job','직업 그림']]],['mt','파티원 카드',[['show','넣기'],['hide','빼기']]]];
+const shOptTxt=o=>`이름 ${o&&o.nm==='show'?'보임':'가림'} · 모습 ${o&&o.lk==='show'?'보임':'직업 그림'} · 파티원 ${o&&o.mt==='show'?'넣음':'뺌'}`;
+const shLeft=x=>Math.max(0,Math.ceil((x.exp-Date.now())/864e5));
+// 복사: 클립보드 → 안 되면 숨긴 입력칸으로 (예전 브라우저·http)
+async function shCopy(t){try{await navigator.clipboard.writeText(t);return true}catch(e){}
+  const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';(RC&&RC.sh?RC.sh.el:document.body).appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();return ok}
+function rcShOpen(){if(!RC||!RC.app||RC.sh||!RC.R)return;rcPause(true);
+  const el=document.createElement('div');el.id='rc-sh';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','결산 공유하기');
+  RC.sh={el,o:{nm:'show',lk:'show',mt:'hide'},info:null,list:null,made:null,busy:false,err:'',arm:null,copied:null,back:document.activeElement};
+  document.body.appendChild(el);
+  el.addEventListener('click',rcShClick);el.addEventListener('pointerdown',e=>{if(e.target===el)RC.sh.down=true});
+  rcShPaint();const f=el.querySelector('.rc-shx');if(f)f.focus({preventScroll:true});
+  if(RC.R.mt.length&&mlCan())mlFetch(RC.R.mt.map(m=>m[0])).then(got=>{if(got&&RC&&RC.sh)rcMates()});
+  if(shOn())rcShLoad()}
+function rcShClose(quiet){if(!RC||!RC.sh)return;const S=RC.sh;RC.sh=null;S.el.remove();if(!quiet){const b=S.back&&S.back.isConnected?S.back:RC.ov;try{b.focus({preventScroll:true})}catch(e){}}}
+async function rcShLoad(){const S=RC&&RC.sh;if(!S)return;try{const j=await shApi('list',{});if(RC&&RC.sh===S){S.info=j;S.list=j.links||[];S.err=''}}catch(e){if(RC&&RC.sh===S){S.err=e.message;S.list=S.list||[]}}if(RC&&RC.sh===S)rcShPaint()}
+// 미리 보기: 링크로 보낼 V로 표지·파티원 카드를 작게 (움직임 없이)
+function rcShMini(c){if(!c)return '';const[h1,h2]=RC_HUE[c.act]||RC_HUE.start;
+  return `<div class="rc-mini" aria-hidden="true"><div class="rc rc-still" data-k="${c.k}" style="--h1:${h1};--h2:${h2}"><span class="rc-bg"></span><div class="rc-top"><span>${RC.V.Y} 메푸리 결산</span></div><div class="rc-page"><div class="rc-body" data-k="${c.k}">${c.html}</div></div><div class="rc-foot"><b>MEPURI</b><span>mepuri.bosslog.workers.dev</span></div></div></div>`}
+function rcShPaint(){const S=RC&&RC.sh;if(!S)return;const V=rcView(RC.R,{mode:'share',...S.o}),C=rcCards(V,{mode:'view',hint:false}),on=shOn(),I=S.info,L=S.list||[];
+  const full=L.length>=((I&&I.max)||SH_MAX),can=on&&I&&I.can&&!full&&!S.busy;
+  const why=!on?'링크는 메푸리 사이트(베타)에서 만들 수 있어요 · 여기선 미리 보기만 돼요':!I?(S.err?'':'불러오는 중…'):I.mode==='off'?'지금은 새 링크를 만들 수 없어요':!I.can?'아직 준비 중인 기능이에요':full?`링크는 ${I.max||SH_MAX}개까지예요 · 하나 지우고 만들어 주세요`:I.who==='device'?'로그인하지 않아서 이 기기에서만 링크를 지울 수 있어요':'';
+  const msg=S.err||why;
+  const opt=SH_OPT.filter(([k])=>k!=='mt'||RC.R.mt.length).map(([k,l,vs])=>`<div class="rc-sho"><span>${l}</span><div class="rc-seg" role="group" aria-label="${l}">${vs.map(([v,t])=>`<button type="button" class="${S.o[k]===v?'on':''}" data-sho="${k}:${v}" aria-pressed="${S.o[k]===v}">${t}</button>`).join('')}</div></div>`).join('');
+  const made=S.made?`<div class="rc-shmade"><div class="rc-shurl"><input type="text" readonly value="${esc(S.made.url)}" aria-label="만든 링크"></div><div class="rc-shbtns"><button type="button" class="rc-shbtn pri" data-shc="${esc(S.made.url)}">${S.copied===S.made.url?'복사했어요':'링크 복사'}</button>${navigator.share?`<button type="button" class="rc-shbtn" data-shs="${esc(S.made.url)}">공유하기</button>`:''}<a class="rc-shbtn" href="${esc(S.made.url)}" target="_blank" rel="noopener">열어 보기</a></div></div>`:'';
+  const rows=L.map(x=>{const u=location.origin+'/r/'+x.id,arm=S.arm===x.id;return `<div class="rc-shrow"><div class="t"><b>${esc(shOptTxt(x.o))}</b><small>${shLeft(x)}일 남음 · ${x.views||0}번 봤어요</small></div><div class="a"><button type="button" class="rc-shbtn sm" data-shc="${esc(u)}">${S.copied===u?'복사했어요':'복사'}</button><a class="rc-shbtn sm" href="${esc(u)}" target="_blank" rel="noopener">열기</a><button type="button" class="rc-shbtn sm del${arm?' arm':''}" data-shd="${esc(x.id)}">${arm?'한 번 더 누르면 지워요':'지우기'}</button></div></div>`}).join('');
+  S.el.innerHTML=`<div class="rc-shp"><div class="rc-shh"><b>결산 공유하기</b><button type="button" class="rc-shx" data-shx aria-label="닫기">${RC_I.x}</button></div>
+    <p class="rc-shd">받은 사람은 로그인 없이 카드만 넘겨 볼 수 있어요. 링크는 ${(I&&I.days)||SH_DAYS}일 뒤 저절로 지워져요.</p>
+    <div class="rc-shpv">${rcShMini(C.find(c=>c.k==='cover'))}${RC.R.mt.length?(S.o.mt==='show'?rcShMini(C.find(c=>c.k==='mate')):'<div class="rc-mini rc-mout" aria-hidden="true"><span>파티원 카드는<br>링크에 안 들어가요</span></div>'):''}</div>
+    <div class="rc-shopts">${opt}</div>
+    <button type="button" class="rc-shgo" data-shgo${can?'':' disabled'}>${S.busy?'만드는 중…':'링크 만들기'}</button>${msg?`<p class="rc-shwhy${S.err?' err':''}" role="${S.err?'alert':'status'}">${esc(msg)}</p>`:''}
+    ${made}
+    ${on?`<div class="rc-shl"><div class="rc-shlh"><b>내 링크</b><span class="num">${L.length}/${(I&&I.max)||SH_MAX}</span></div>${S.list===null?'<p class="rc-shnone">불러오는 중…</p>':rows||'<p class="rc-shnone">아직 만든 링크가 없어요</p>'}</div>`:''}</div>`;
+  rcShFit()}
+// 미리 보기 카드 크기: 창 안 폭에 두 장이 들어가게 (폰 + 사이트 '화면 크기' 120%에서도 가로로 안 넘침). 최대 0.44배
+function rcShFit(){const pv=RC&&RC.sh&&RC.sh.el.querySelector('.rc-shpv');if(!pv)return;const n=pv.children.length||1,av=pv.clientWidth,mz=Math.max(.24,Math.min(.44,(av-(n-1)*12)/n/360));pv.style.setProperty('--mz',mz.toFixed(4))}
+function rcShKey(e){const S=RC.sh,k=e.key;e.stopPropagation();
+  if(k==='Escape'){e.preventDefault();rcShClose();return}
+  if(k==='Tab'){const f=[...S.el.querySelectorAll('button:not(:disabled),a[href],input')].filter(b=>b.offsetParent);if(!f.length)return;const i=f.indexOf(document.activeElement);e.preventDefault();
+    (e.shiftKey?(i<=0?f[f.length-1]:f[i-1]):(i<0||i>=f.length-1?f[0]:f[i+1])).focus()}} // 그 밖의 키(스페이스·엔터·글자)는 창 안 버튼·입력칸이 그대로 받음
+async function rcShClick(e){const S=RC&&RC.sh;if(!S)return;const t=e.target;
+  if(t===S.el){if(S.down)rcShClose();S.down=false;return} // 바깥(어두운 곳) 누르면 닫기
+  S.down=false;const b=t.closest('button,a');if(!b)return;
+  if(b.hasAttribute('data-shx')){rcShClose();return}
+  if(b.dataset.sho){const[k,v]=b.dataset.sho.split(':');if(!SH_OPT.some(([kk,,vs])=>kk===k&&vs.some(x=>x[0]===v)))return;S.o[k]=v;S.err='';rcShPaint();const n=S.el.querySelector(`[data-sho="${k}:${v}"]`);if(n)n.focus({preventScroll:true});return}
+  if(b.dataset.shc){const u=b.dataset.shc,ok=await shCopy(u);S.copied=ok?u:null;S.err=ok?'':'복사하지 못했어요. 링크를 길게 눌러 복사해 주세요';rcShPaint();
+    setTimeout(()=>{if(RC&&RC.sh===S&&S.copied===u){S.copied=null;rcShPaint()}},1600);return}
+  if(b.dataset.shs){try{await navigator.share({title:`${RC.V.Y} 메푸리 결산`,url:b.dataset.shs})}catch(x){}return}
+  if(b.hasAttribute('data-shgo')){if(S.busy)return;S.busy=true;S.err='';rcShPaint();
+    // 파티원을 보이게 했으면 만들기 직전에 하루 지난 파티원 정보를 새로 받음 (링크는 만든 날 정보 그대로 30일 가니까) — 5초 넘으면 기억한 걸로
+    if(S.o.mt==='show'&&RC.R.mt.length&&mlCan())await Promise.race([ML_BUSY?ML_BUSY.then(()=>mlFetch(RC.R.mt.map(m=>m[0]),1)):mlFetch(RC.R.mt.map(m=>m[0]),1),sleep(5000)]).catch(()=>{});
+    if(!RC||RC.sh!==S)return;
+    try{const V=rcView(RC.R,{mode:'share',...S.o});if(JSON.stringify(V).length>60000)throw new Error('결산 내용이 너무 커서 링크를 만들지 못했어요');
+      const j=await shApi('create',{o:{...S.o},data:V});if(!RC||RC.sh!==S)return;S.made={id:j.id,url:location.origin+'/r/'+j.id};S.list=[{id:j.id,o:{...S.o},at:j.at,exp:j.exp,views:0},...(S.list||[])]}
+    catch(x){if(RC&&RC.sh===S)S.err=x.message}
+    if(RC&&RC.sh===S){S.busy=false;rcShPaint()}
+    return}
+  if(b.dataset.shd){const id=b.dataset.shd;if(S.arm!==id){S.arm=id;rcShPaint();setTimeout(()=>{if(RC&&RC.sh===S&&S.arm===id){S.arm=null;rcShPaint()}},3000);return}
+    S.arm=null;try{await shApi('delete',{id});if(RC&&RC.sh===S){S.list=(S.list||[]).filter(x=>x.id!==id);if(S.made&&S.made.id===id)S.made=null}}catch(x){if(RC&&RC.sh===S)S.err=x.message}
+    if(RC&&RC.sh===S)rcShPaint();return}}
 
 
 /* ---------- 넥슨 Open API ----------

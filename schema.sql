@@ -63,3 +63,21 @@ CREATE TABLE IF NOT EXISTS stat_vis (
   st INTEGER NOT NULL DEFAULT 0,     -- 그날 화면을 보고 있던 초 (하루 12시간까지)
   PRIMARY KEY (d, v)
 );
+
+-- 공유 링크 (연말 결산). 결산 카드에 쓰는 숫자 요약만 저장 (원래 기록·가린 이름은 안 받음). 만든 날부터 30일 뒤 지움
+CREATE TABLE IF NOT EXISTS share_links (
+  id TEXT PRIMARY KEY,               -- 링크 주소 /r/<id> (무작위 10자)
+  user_id INTEGER,                   -- 로그인해서 만든 사람 (users.id) · 로그인 안 했으면 NULL
+  dev TEXT,                          -- 로그인 안 하고 만든 기기의 키 해시 (사이트가 브라우저에 둔 무작위 키 — 키 자체는 저장 안 함)
+  y INTEGER NOT NULL,                -- 결산 해
+  o TEXT NOT NULL,                   -- 고른 옵션 (JSON: 이름 nm · 모습 lk · 파티원 mt)
+  title TEXT NOT NULL,               -- 링크 미리보기 제목
+  data TEXT NOT NULL,                -- 결산 요약 (JSON)
+  at INTEGER NOT NULL,               -- 만든 시각 (밀리초)
+  exp INTEGER NOT NULL,              -- 지워지는 시각 (밀리초) = 만든 시각 + 30일
+  views INTEGER NOT NULL DEFAULT 0   -- 본 횟수 (링크 미리보기 봇 빼고)
+);
+CREATE INDEX IF NOT EXISTS share_user ON share_links(user_id);
+CREATE INDEX IF NOT EXISTS share_dev ON share_links(dev);
+CREATE INDEX IF NOT EXISTS share_exp ON share_links(exp);
+-- 새 링크 만들기 설정은 site_conf의 k='share' 한 줄 ('off' 멈춤 · 'admin' 관리자만 · 'all' 모두, 없으면 'admin')
