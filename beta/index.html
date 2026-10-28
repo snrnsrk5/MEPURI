@@ -3,10 +3,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark"><!-- 모든 브라우저에 '이미 다크'라고 알림 (다크인 척) → 삼성 인터넷 '어둡게 보기' 같은 강제 다크가 덧칠하지 않음. 보이는 색은 아래 CSS·테마가 정함 -->
-<script>/* 맨 처음에 바로: ① 저장된 테마를 <html>에 적용 (열 때 밝게 깜빡이지 않게 · 삼성 인터넷은 처음 열 때 한 번만 보고 덧칠을 정해서 이때 맞아야 함)
+<script>/* 맨 처음에 바로: ① 저장된 테마(베타 칸 mepuri-beta:)를 <html>에 적용 (열 때 밝게 깜빡이지 않게 · 삼성 인터넷은 처음 열 때 한 번만 보고 덧칠을 정해서 이때 맞아야 함)
    ② 아이폰·아이패드가 아니면 맨 바깥 배경도 어둡게 (html.pd). 아이폰은 강제 다크가 없고, 위아래로 당기면 바깥 배경이 보여서 뺌 */
 (function(){var R=document.documentElement,u=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);
- try{var s=JSON.parse(localStorage.getItem('mepuri-test-v1')||'null');if(s&&typeof s==='object'){if(s.pal)R.setAttribute('data-pal',String(s.pal));var t=s.theme;if(t){R.setAttribute('data-theme',t==='light'?'light':'dark');if(t==='deep')R.setAttribute('data-mode','deep')}}}catch(e){}
+ try{var s=JSON.parse(localStorage.getItem('mepuri-beta:mepuri-test-v1')||'null');if(s&&typeof s==='object'){if(s.pal)R.setAttribute('data-pal',String(s.pal));var t=s.theme;if(t){R.setAttribute('data-theme',t==='light'?'light':'dark');if(t==='deep')R.setAttribute('data-mode','deep')}}}catch(e){}
  if(!ios)R.classList.add('pd')})();</script>
 <title>메푸리 베타</title>
 <meta name="robots" content="noindex,nofollow">
