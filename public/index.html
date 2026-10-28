@@ -2,6 +2,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark"><!-- 라이트·다크 둘 다 된다고 브라우저에 알림 → 삼성 인터넷 다크 모드가 화면을 억지로 어둡게 칠하지 않고 사이트 다크를 씀 -->
 <title>메푸리 – 메이플스토리 주간 보스 결정석·물욕 수익 관리</title>
 <meta name="description" content="메이플스토리 보스 클리어를 캐릭터별로 체크하고, 결정석·물욕템 수익을 주간·월간으로 정리해 주는 무료 보스 트래커예요. 캐릭터 이름만 넣으면 바로 시작할 수 있어요.">
 <link rel="canonical" href="https://mepuri.bosslog.workers.dev/">
@@ -16,6 +17,7 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap"></noscript>
 <style>
 :root{
+  color-scheme:light dark; /* 아래 테마별로 다시 정함 · 'only' = 브라우저가 색을 억지로 바꾸지 말 것 (삼성 인터넷 다크 모드). only 모르는 브라우저는 앞 줄을 씀 */
   --bg:#F1F4F6;--top:#1F232E;--logo:#D2F53C;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2C364D;
   --card:#FFFFFF;--card-bd:rgba(0,0,0,.08);--nav-bd:rgba(0,0,0,.15);--frame:#E4E8EA;--seg:#E4E8EB;--soft:#F4F5F6;
   --border:#E4E8EB;--border2:#C8CFD5;--input-bd:#C6CFD7;--input-bd2:#D1DAE0;--input-fg:#223548;--dot-off:#8B94A3;--dot-on:#202226;
@@ -29,9 +31,10 @@
   --cm-head:#CED6DC;--cm-card:#F4F5F6;--cm-on:#3E4A65;
   --danger:#E0475B;--danger-hover:#C93A4D;--danger-fg:#D63C51;--danger-bg:#FFF4F5;--danger-bd:#F2BBC3;
 }
+:root[data-theme="light"]{color-scheme:light;color-scheme:only light} /* 사이트에서 라이트를 직접 고름 → 브라우저 다크 모드여도 라이트 그대로 */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    color-scheme:dark;
+    color-scheme:dark;color-scheme:only dark;
     --bg:#14161B;--top:#0C0D11;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2C364D;
     --card:#1E2128;--card-bd:rgba(255,255,255,.07);--nav-bd:rgba(255,255,255,.08);--frame:#262A32;--seg:#2A2E37;--soft:#252932;
     --border:#30343D;--border2:#4A4F5B;--input-bd:#3A3F4A;--input-bd2:#3A3F4A;--input-fg:#E3E7EC;--dot-off:#7D8591;--dot-on:#ECEEF2;
@@ -44,7 +47,7 @@
   }
 }
 :root[data-theme="dark"]{
-  color-scheme:dark;
+  color-scheme:dark;color-scheme:only dark;
   --bg:#14161B;--top:#0C0D11;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2C364D;
   --card:#1E2128;--card-bd:rgba(255,255,255,.07);--nav-bd:rgba(255,255,255,.08);--frame:#262A32;--seg:#2A2E37;--soft:#252932;
   --border:#30343D;--border2:#4A4F5B;--input-bd:#3A3F4A;--input-bd2:#3A3F4A;--input-fg:#E3E7EC;--dot-off:#7D8591;--dot-on:#ECEEF2;
@@ -56,7 +59,7 @@
   --scroll-thumb:#4A4F5B;--scroll-thumb-hover:#5F6572;--cm-head:#2A2F39;--cm-card:#252932;--cm-on:#4A5675;--danger:#E0475B;--danger-hover:#EA5A6D;--danger-fg:#FF7C8E;--danger-bg:#2B171B;--danger-bd:#5C2A33;
 }
 :root[data-mode="deep"]{
-  color-scheme:dark;
+  color-scheme:dark;color-scheme:only dark;
   --bg:#000000;--top:#000000;--banner:#000000;
   --card:#000000;--card-bd:#2F3336;--nav-bd:#2F3336;--frame:#000000;--seg:#16181C;--soft:#16181C;
   --border:#2F3336;--border2:#3E4144;--input-bd:#2F3336;--input-bd2:#2F3336;--input-fg:#E7E9EA;--dot-off:#71767B;--dot-on:#E7E9EA;
@@ -2610,7 +2613,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.25.0", "d": "2026-10-24", "l": ["수익 통계를 수정하고 몇 가지를 추가했어요", "익스트림 림보·발드릭스 익셉셔널 해머를 추가했어요", "UI 색과 모양을 조금 조정했어요"], "prev": [{"v": "0.24.3", "d": "2026-10-19", "l": ["추천 프리셋을 한눈에 비교해요"]}, {"v": "0.24.2", "d": "2026-10-19", "l": ["이번 주에 얼마 버는지 한눈에 봐요", "캐릭터 순서를 바꿀 수 있어요"]}]};
+const NEWS={"v": "0.25.1", "d": "2026-10-28", "l": ["삼성 인터넷 다크 모드에서 색이 이상하게 보이던 문제를 고쳤어요"], "prev": [{"v": "0.25.0", "d": "2026-10-24", "l": ["수익 통계를 수정하고 몇 가지를 추가했어요", "익스트림 림보·발드릭스 익셉셔널 해머를 추가했어요", "UI 색과 모양을 조금 조정했어요"]}, {"v": "0.24.3", "d": "2026-10-19", "l": ["추천 프리셋을 한눈에 비교해요"]}]};
 const HAD_DATA=(()=>{try{return !!localStorage.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 let st,LOAD_LOST=false; // LOAD_LOST: 이 기기 기록을 읽지 못해 새로 시작함 → 계정 기록을 덮어쓰지 않게 동기화 상태도 지움
 try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null;LOAD_LOST=true}

@@ -2,6 +2,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark"><!-- 라이트·다크 둘 다 된다고 브라우저에 알림 → 삼성 인터넷 다크 모드가 화면을 억지로 어둡게 칠하지 않고 사이트 다크를 씀 -->
 <title>메푸리 베타</title>
 <meta name="robots" content="noindex,nofollow">
 <!-- 링크 미리보기 그림 (public/og.png, 1200×630). 그림을 바꾸면 카톡 등이 예전 그림을 기억하니 파일 이름도 바꿀 것 (og2.png …) -->
@@ -11,6 +12,7 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap"></noscript>
 <style>
 :root{
+  color-scheme:light dark; /* 아래 테마별로 다시 정함 · 'only' = 브라우저가 색을 억지로 바꾸지 말 것 (삼성 인터넷 다크 모드). only 모르는 브라우저는 앞 줄을 씀 */
   --bg:#F1F4F6;--top:#1F232E;--logo:#D2F53C;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2C364D;
   --card:#FFFFFF;--card-bd:rgba(0,0,0,.08);--nav-bd:rgba(0,0,0,.15);--frame:#E4E8EA;--seg:#E4E8EB;--soft:#F4F5F6;
   --border:#E4E8EB;--border2:#C8CFD5;--input-bd:#C6CFD7;--input-bd2:#D1DAE0;--input-fg:#223548;--dot-off:#8B94A3;--dot-on:#202226;
@@ -24,9 +26,10 @@
   --cm-head:#CED6DC;--cm-card:#F4F5F6;--cm-on:#3E4A65;
   --danger:#E0475B;--danger-hover:#C93A4D;--danger-fg:#D63C51;--danger-bg:#FFF4F5;--danger-bd:#F2BBC3;
 }
+:root[data-theme="light"]{color-scheme:light;color-scheme:only light} /* 사이트에서 라이트를 직접 고름 → 브라우저 다크 모드여도 라이트 그대로 */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    color-scheme:dark;
+    color-scheme:dark;color-scheme:only dark;
     --bg:#14161B;--top:#0C0D11;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2C364D;
     --card:#1E2128;--card-bd:rgba(255,255,255,.07);--nav-bd:rgba(255,255,255,.08);--frame:#262A32;--seg:#2A2E37;--soft:#252932;
     --border:#30343D;--border2:#4A4F5B;--input-bd:#3A3F4A;--input-bd2:#3A3F4A;--input-fg:#E3E7EC;--dot-off:#7D8591;--dot-on:#ECEEF2;
@@ -39,7 +42,7 @@
   }
 }
 :root[data-theme="dark"]{
-  color-scheme:dark;
+  color-scheme:dark;color-scheme:only dark;
   --bg:#14161B;--top:#0C0D11;--banner:linear-gradient(90deg,rgba(7,15,37,.2) 28.27%,rgba(104,115,140,.2) 63.61%),linear-gradient(90deg,rgba(7,15,37,.2) 30.94%,rgba(104,115,140,.2) 64%),#2C364D;
   --card:#1E2128;--card-bd:rgba(255,255,255,.07);--nav-bd:rgba(255,255,255,.08);--frame:#262A32;--seg:#2A2E37;--soft:#252932;
   --border:#30343D;--border2:#4A4F5B;--input-bd:#3A3F4A;--input-bd2:#3A3F4A;--input-fg:#E3E7EC;--dot-off:#7D8591;--dot-on:#ECEEF2;
@@ -51,7 +54,7 @@
   --scroll-thumb:#4A4F5B;--scroll-thumb-hover:#5F6572;--cm-head:#2A2F39;--cm-card:#252932;--cm-on:#4A5675;--danger:#E0475B;--danger-hover:#EA5A6D;--danger-fg:#FF7C8E;--danger-bg:#2B171B;--danger-bd:#5C2A33;
 }
 :root[data-mode="deep"]{
-  color-scheme:dark;
+  color-scheme:dark;color-scheme:only dark;
   --bg:#000000;--top:#000000;--banner:#000000;
   --card:#000000;--card-bd:#2F3336;--nav-bd:#2F3336;--frame:#000000;--seg:#16181C;--soft:#16181C;
   --border:#2F3336;--border2:#3E4144;--input-bd:#2F3336;--input-bd2:#2F3336;--input-fg:#E7E9EA;--dot-off:#71767B;--dot-on:#E7E9EA;
@@ -2480,6 +2483,23 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .rc-shrow .t{flex:1;min-width:0}.rc-shrow .t b{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc-shrow .t small{font-size:12px;color:var(--muted)}
 .rc-shrow .a{display:flex;gap:4px;flex:none}
 .rc-shnone{margin:8px 0 0;font-size:13px;color:var(--muted)}
+/* 링크 이름 · 닉네임 입력 · 채팅 미리보기 (작은 그림 카드 모양: 제목 · 짧은 설명 · 오른쪽 정사각 그림) */
+.rc-sho{flex-wrap:wrap}
+.rc-seg button:disabled{opacity:.42;cursor:not-allowed}
+.rc-shnk{margin:-2px 0 2px}
+.rc-shnk input{width:100%;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--input-bd);background:var(--card);color:var(--input-fg);font-size:16px;font-family:inherit}
+.rc-shnk input::placeholder{color:var(--faint)}.rc-shnk input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.rc-shnkm{display:block;margin:5px 2px 0;font-size:12px;color:var(--muted)}.rc-shnkm.err{color:var(--danger-fg)}
+.rc-shchat{margin-top:14px}
+.rc-shchl{display:block;margin:0 2px 6px;font-size:12px;font-weight:700;color:var(--muted)}
+.rc-shem{display:flex;align-items:flex-start;gap:12px;padding:10px 12px 12px 14px;border-radius:6px 10px 10px 6px;border-left:4px solid var(--accent);background:var(--soft)}
+.rc-shem .tx{flex:1;min-width:0}.rc-shem small{display:block;font-size:11.5px;color:var(--muted)}
+.rc-shem .tx b{display:block;margin-top:3px;font-size:14.5px;line-height:1.35;font-weight:800;color:var(--info-fg);overflow-wrap:anywhere}
+.rc-shem .tx span{display:block;margin-top:4px;font-size:13px;color:var(--text2)}
+.rc-shem .th{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;width:64px;height:64px;border-radius:8px;background:radial-gradient(56px 48px at 0 0,rgba(246,134,0,.34),transparent 70%),radial-gradient(56px 48px at 100% 100%,rgba(224,88,138,.32),transparent 70%),#FFFBF6;box-shadow:0 0 0 1px var(--card-bd)}
+.rc-shem .th b{font-size:21px;line-height:1;font-weight:900;letter-spacing:-.05em;background:linear-gradient(135deg,#F68600 10%,#EE6E3F 55%,#E0588A 92%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rc-shem .th em{margin-top:3px;font-size:10.5px;font-style:normal;font-weight:900;letter-spacing:-.02em;color:#1E3043}
+.rc-shmt{display:block;margin:0 0 8px;font-size:14px;font-weight:800;line-height:1.4}
 @media (max-width:560px){
   #rc-sh{align-items:flex-end;padding:0}
   .rc-shp{width:100%;max-height:94%;border-radius:18px 18px 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom));animation:rcUp .22s cubic-bezier(.2,.8,.2,1) both}
@@ -2927,7 +2947,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.25.0", "d": "2026-10-24", "l": ["수익 통계를 수정하고 몇 가지를 추가했어요", "익스트림 림보·발드릭스 익셉셔널 해머를 추가했어요", "UI 색과 모양을 조금 조정했어요"], "prev": [{"v": "0.24.3", "d": "2026-10-19", "l": ["추천 프리셋을 한눈에 비교해요"]}, {"v": "0.24.2", "d": "2026-10-19", "l": ["이번 주에 얼마 버는지 한눈에 봐요", "캐릭터 순서를 바꿀 수 있어요"]}]};
+const NEWS={"v": "0.25.1", "d": "2026-10-28", "l": ["삼성 인터넷 다크 모드에서 색이 이상하게 보이던 문제를 고쳤어요"], "prev": [{"v": "0.25.0", "d": "2026-10-24", "l": ["수익 통계를 수정하고 몇 가지를 추가했어요", "익스트림 림보·발드릭스 익셉셔널 해머를 추가했어요", "UI 색과 모양을 조금 조정했어요"]}, {"v": "0.24.3", "d": "2026-10-19", "l": ["추천 프리셋을 한눈에 비교해요"]}]};
 const HAD_DATA=(()=>{try{return !!BLS.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 const BETA_FRESH=BETA&&!HAD_DATA&&(()=>{try{return !!BLS.raw.getItem(KEY)}catch(e){return false}})(); // 베타: 베타 칸은 비었고 이 기기에 정식 기록은 있음
 let BETA_NOSAVE=false; // 베타: 이 기기 저장 공간(정식과 같이 씀)이 빠듯하면 베타 기록을 비우고 이번엔 저장 안 함 → 정식 기록이 저장될 자리를 남김
@@ -6275,6 +6295,8 @@ function mlFetch(names,okDays){if(ML_BUSY)return ML_BUSY;const todo=[...new Set(
 
 /* ---------- 공유 링크 (10.28 링크 테스트 · 베타) ----------
    공유 창: 캐릭터 이름·모습(기본 보이기) · 파티원 카드 넣기(기본 빼기)를 고르면 표지·파티원 카드 미리 보기가 바로 바뀜 → 링크 만들기 → 복사·공유
+   링크 이름(채팅 미리보기 제목 「○○님의 2026 메푸리 연말정산」): 대표 캐릭터(기본) · 닉네임(직접 씀, 이 기기에 기억) · 안 넣기. 캐릭터 이름을 가리면 대표 캐릭터는 못 고름
+   '채팅에 이렇게 보여요' = 디스코드 등 작은 그림 카드 모양 (제목 · 짧은 설명 · 오른쪽 정사각 그림). 앱 안 화면 문구는 '결산' 그대로
    서버에는 고른 대로 만든 V(숫자 요약)만 올라감 — 원래 기록·가린 이름은 안 올라감. 링크는 30일 뒤 저절로 지워짐 (넥슨 데이터를 오래 두지 않게)
    링크 주인: 로그인했으면 그 계정(어느 기기에서든 지우기) · 안 했으면 이 기기(기기 키 'mepuri-share-dk'를 가진 기기에서만 지우기)
    베타에선 /beta/api/share/… 로 부름 (베타 쿠키가 /beta에만 붙어서 — 서버가 '관리자만' 모드에서 베타인지 확인) */
@@ -6287,17 +6309,26 @@ async function shApi(op,body){let r,j=null;
   try{j=await r.json()}catch(e){}
   if(!r.ok){const e=new Error((j&&j.error&&j.error.message)||`서버 오류예요 (${r.status})`);e.status=r.status;e.code=(j&&j.error&&j.error.name)||'';throw e}
   return j}
-const SH_OPT=[['nm','캐릭터 이름',[['show','보이기'],['hide','가리기']]],['lk','캐릭터 모습',[['show','보이기'],['job','직업 그림']]],['mt','파티원 카드',[['show','넣기'],['hide','빼기']]]];
+const SH_OPT=[['tn','링크 이름',[['char','대표 캐릭터'],['nick','닉네임'],['none','안 넣기']]],['nm','캐릭터 이름',[['show','보이기'],['hide','가리기']]],['lk','캐릭터 모습',[['show','보이기'],['job','직업 그림']]],['mt','파티원 카드',[['show','넣기'],['hide','빼기']]]];
 const shOptTxt=o=>`이름 ${o&&o.nm==='show'?'보임':'가림'} · 모습 ${o&&o.lk==='show'?'보임':'직업 그림'} · 파티원 ${o&&o.mt==='show'?'넣음':'뺌'}`;
 const shLeft=x=>Math.max(0,Math.ceil((x.exp-Date.now())/864e5));
+// 링크 이름: 닉네임은 12자, 글자·숫자·띄어쓰기와 기호 몇 개만 (서버도 같은 규칙으로 다시 확인하고 제목을 만듦). 한글 채움 문자(빈칸처럼 보임)는 안 됨
+const SH_NICK_K='mepuri-share-nick',SH_NICK_RE=/^[\p{L}\p{N} _\-·~!?♡♥★☆^]{1,12}$/u,SH_FILL=/[\u115F\u1160\u3164\uFFA0]/;
+const shNick=s=>String(s==null?'':s).replace(/\s+/g,' ').trim(),shNickOk=s=>{s=shNick(s);return SH_NICK_RE.test(s)&&!SH_FILL.test(s)};
+const shNickLoad=()=>{try{const v=BLS.getItem(SH_NICK_K)||'';return shNickOk(v)?shNick(v):''}catch(e){return ''}};
+const shNickMsg=v=>!shNick(v)?'글자·숫자·띄어쓰기 12자까지':shNickOk(v)?`${[...shNick(v)].length}/12`:'12자까지, 글자·숫자·띄어쓰기와 _ - · ~ ! ? ♡ ★ ^ 만 쓸 수 있어요';
+const shTop=V=>{const c=V&&V.chars&&V.chars[0];return c&&V.cs[c.ci]?V.cs[c.ci].n:''}; // 대표 캐릭터 = 올해 가장 많이 번 캐릭터 (서버 제목과 같음)
+const shTitle=(V,o)=>{const n=o.tn==='nick'?(shNickOk(o.nk)?shNick(o.nk):''):o.tn==='char'&&o.nm==='show'?shTop(V):'';return (n?n+'님의 ':'')+V.Y+' 메푸리 연말정산'};
+const shDesc=V=>`보스 ${Math.round(V.nK||0).toLocaleString('ko-KR')}마리 · ${V.nW||0}주의 기록`;
+function shCan(S){const I=S.info;return shOn()&&!!I&&!!I.can&&(S.list||[]).length<(I.max||SH_MAX)&&!S.busy&&!(S.o.tn==='nick'&&!shNickOk(S.o.nk))}
 // 복사: 클립보드 → 안 되면 숨긴 입력칸으로 (예전 브라우저·http)
 async function shCopy(t){try{await navigator.clipboard.writeText(t);return true}catch(e){}
   const a=document.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';(RC&&RC.sh?RC.sh.el:document.body).appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();return ok}
 function rcShOpen(){if(!RC||!RC.app||RC.sh||!RC.R)return;rcPause(true);
   const el=document.createElement('div');el.id='rc-sh';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','결산 공유하기');
-  RC.sh={el,o:{nm:'show',lk:'show',mt:'hide'},info:null,list:null,made:null,busy:false,err:'',arm:null,copied:null,back:document.activeElement};
+  RC.sh={el,o:{tn:'char',nk:shNickLoad(),nm:'show',lk:'show',mt:'hide'},info:null,list:null,made:null,busy:false,err:'',arm:null,copied:null,back:document.activeElement};
   document.body.appendChild(el);
-  el.addEventListener('click',rcShClick);el.addEventListener('pointerdown',e=>{if(e.target===el)RC.sh.down=true});
+  el.addEventListener('click',rcShClick);el.addEventListener('input',rcShInput);el.addEventListener('pointerdown',e=>{if(e.target===el)RC.sh.down=true});
   rcShPaint();const f=el.querySelector('.rc-shx');if(f)f.focus({preventScroll:true});
   if(RC.R.mt.length&&mlCan())mlFetch(RC.R.mt.map(m=>m[0])).then(got=>{if(got&&RC&&RC.sh)rcMates()});
   if(shOn())rcShLoad()}
@@ -6306,20 +6337,27 @@ async function rcShLoad(){const S=RC&&RC.sh;if(!S)return;try{const j=await shApi
 // 미리 보기: 링크로 보낼 V로 표지·파티원 카드를 작게 (움직임 없이)
 function rcShMini(c){if(!c)return '';const[h1,h2]=RC_HUE[c.act]||RC_HUE.start;
   return `<div class="rc-mini" aria-hidden="true"><div class="rc rc-still" data-k="${c.k}" style="--h1:${h1};--h2:${h2}"><span class="rc-bg"></span><div class="rc-top"><span>${RC.V.Y} 메푸리 결산</span></div><div class="rc-page"><div class="rc-body" data-k="${c.k}">${c.html}</div></div><div class="rc-foot"><b>MEPURI</b><span>mepuri.bosslog.workers.dev</span></div></div></div>`}
-function rcShPaint(){const S=RC&&RC.sh;if(!S)return;const V=rcView(RC.R,{mode:'share',...S.o}),C=rcCards(V,{mode:'view',hint:false}),on=shOn(),I=S.info,L=S.list||[];
-  const full=L.length>=((I&&I.max)||SH_MAX),can=on&&I&&I.can&&!full&&!S.busy;
+function rcShPaint(){const S=RC&&RC.sh;if(!S)return;const V=rcView(RC.R,{mode:'share',...S.o}),C=rcCards(V,{mode:'view',hint:false}),on=shOn(),I=S.info,L=S.list||[];S.V=V;
+  const full=L.length>=((I&&I.max)||SH_MAX),can=shCan(S),nkBad=S.o.tn==='nick'&&!!shNick(S.o.nk)&&!shNickOk(S.o.nk);
   const why=!on?'링크는 메푸리 사이트(베타)에서 만들 수 있어요 · 여기선 미리 보기만 돼요':!I?(S.err?'':'불러오는 중…'):I.mode==='off'?'지금은 새 링크를 만들 수 없어요':!I.can?'아직 준비 중인 기능이에요':full?`링크는 ${I.max||SH_MAX}개까지예요 · 하나 지우고 만들어 주세요`:I.who==='device'?'로그인하지 않아서 이 기기에서만 링크를 지울 수 있어요':'';
   const msg=S.err||why;
-  const opt=SH_OPT.filter(([k])=>k!=='mt'||RC.R.mt.length).map(([k,l,vs])=>`<div class="rc-sho"><span>${l}</span><div class="rc-seg" role="group" aria-label="${l}">${vs.map(([v,t])=>`<button type="button" class="${S.o[k]===v?'on':''}" data-sho="${k}:${v}" aria-pressed="${S.o[k]===v}">${t}</button>`).join('')}</div></div>`).join('');
-  const made=S.made?`<div class="rc-shmade"><div class="rc-shurl"><input type="text" readonly value="${esc(S.made.url)}" aria-label="만든 링크"></div><div class="rc-shbtns"><button type="button" class="rc-shbtn pri" data-shc="${esc(S.made.url)}">${S.copied===S.made.url?'복사했어요':'링크 복사'}</button>${navigator.share?`<button type="button" class="rc-shbtn" data-shs="${esc(S.made.url)}">공유하기</button>`:''}<a class="rc-shbtn" href="${esc(S.made.url)}" target="_blank" rel="noopener">열어 보기</a></div></div>`:'';
-  const rows=L.map(x=>{const u=location.origin+'/r/'+x.id,arm=S.arm===x.id;return `<div class="rc-shrow"><div class="t"><b>${esc(shOptTxt(x.o))}</b><small>${shLeft(x)}일 남음 · ${x.views||0}번 봤어요</small></div><div class="a"><button type="button" class="rc-shbtn sm" data-shc="${esc(u)}">${S.copied===u?'복사했어요':'복사'}</button><a class="rc-shbtn sm" href="${esc(u)}" target="_blank" rel="noopener">열기</a><button type="button" class="rc-shbtn sm del${arm?' arm':''}" data-shd="${esc(x.id)}">${arm?'한 번 더 누르면 지워요':'지우기'}</button></div></div>`}).join('');
+  const opt=SH_OPT.filter(([k])=>k!=='mt'||RC.R.mt.length).map(([k,l,vs])=>`<div class="rc-sho"><span>${l}</span><div class="rc-seg" role="group" aria-label="${l}">${vs.map(([v,t])=>{const dis=k==='tn'&&v==='char'&&S.o.nm!=='show';return `<button type="button" class="${S.o[k]===v?'on':''}" data-sho="${k}:${v}" aria-pressed="${S.o[k]===v}"${dis?' disabled title="캐릭터 이름을 가리면 못 골라요"':''}>${t}</button>`}).join('')}</div></div>`
+    +(k==='tn'&&S.o.tn==='nick'?`<div class="rc-shnk"><input type="text" data-shnk maxlength="16" value="${esc(S.o.nk||'')}" placeholder="닉네임" aria-label="닉네임 (12자까지)" autocomplete="off" spellcheck="false" enterkeyhint="done"><small class="rc-shnkm${nkBad?' err':''}" aria-live="polite">${esc(shNickMsg(S.o.nk))}</small></div>`:'')).join('');
+  const chat=`<div class="rc-shchat"><span class="rc-shchl">채팅에 이렇게 보여요</span><div class="rc-shem"><div class="tx"><small>메푸리</small><b class="rc-shct">${esc(shTitle(V,S.o))}</b><span>${esc(shDesc(V))}</span></div><div class="th" aria-hidden="true"><b>${V.Y}</b><em>연말정산</em></div></div></div>`;
+  const made=S.made?`<div class="rc-shmade">${S.made.title?`<b class="rc-shmt">${esc(S.made.title)}</b>`:''}<div class="rc-shurl"><input type="text" readonly value="${esc(S.made.url)}" aria-label="만든 링크"></div><div class="rc-shbtns"><button type="button" class="rc-shbtn pri" data-shc="${esc(S.made.url)}">${S.copied===S.made.url?'복사했어요':'링크 복사'}</button>${navigator.share?`<button type="button" class="rc-shbtn" data-shs="${esc(S.made.url)}">공유하기</button>`:''}<a class="rc-shbtn" href="${esc(S.made.url)}" target="_blank" rel="noopener">열어 보기</a></div></div>`:'';
+  const rows=L.map(x=>{const u=location.origin+'/r/'+x.id,arm=S.arm===x.id;return `<div class="rc-shrow"><div class="t"><b>${esc(x.title||shOptTxt(x.o))}</b><small>${x.title?esc(shOptTxt(x.o))+' · ':''}${shLeft(x)}일 남음 · ${x.views||0}번 봤어요</small></div><div class="a"><button type="button" class="rc-shbtn sm" data-shc="${esc(u)}">${S.copied===u?'복사했어요':'복사'}</button><a class="rc-shbtn sm" href="${esc(u)}" target="_blank" rel="noopener">열기</a><button type="button" class="rc-shbtn sm del${arm?' arm':''}" data-shd="${esc(x.id)}">${arm?'한 번 더 누르면 지워요':'지우기'}</button></div></div>`}).join('');
+  // 다시 그려도 스크롤 위치·닉네임 입력 커서는 그대로 (목록이 늦게 와서 다시 그릴 때 입력이 끊기지 않게)
+  const sc0=S.el.querySelector('.rc-shp'),top0=sc0?sc0.scrollTop:0,ae=document.activeElement,keep=ae&&ae.matches&&ae.matches('[data-shnk]')&&S.el.contains(ae)?[ae.selectionStart,ae.selectionEnd]:null;
   S.el.innerHTML=`<div class="rc-shp"><div class="rc-shh"><b>결산 공유하기</b><button type="button" class="rc-shx" data-shx aria-label="닫기">${RC_I.x}</button></div>
     <p class="rc-shd">받은 사람은 로그인 없이 카드만 넘겨 볼 수 있어요. 링크는 ${(I&&I.days)||SH_DAYS}일 뒤 저절로 지워져요.</p>
     <div class="rc-shpv">${rcShMini(C.find(c=>c.k==='cover'))}${RC.R.mt.length?(S.o.mt==='show'?rcShMini(C.find(c=>c.k==='mate')):'<div class="rc-mini rc-mout" aria-hidden="true"><span>파티원 카드는<br>링크에 안 들어가요</span></div>'):''}</div>
+    ${chat}
     <div class="rc-shopts">${opt}</div>
     <button type="button" class="rc-shgo" data-shgo${can?'':' disabled'}>${S.busy?'만드는 중…':'링크 만들기'}</button>${msg?`<p class="rc-shwhy${S.err?' err':''}" role="${S.err?'alert':'status'}">${esc(msg)}</p>`:''}
     ${made}
     ${on?`<div class="rc-shl"><div class="rc-shlh"><b>내 링크</b><span class="num">${L.length}/${(I&&I.max)||SH_MAX}</span></div>${S.list===null?'<p class="rc-shnone">불러오는 중…</p>':rows||'<p class="rc-shnone">아직 만든 링크가 없어요</p>'}</div>`:''}</div>`;
+  const sc1=S.el.querySelector('.rc-shp');if(sc1&&top0)sc1.scrollTop=top0;
+  if(keep){const i=S.el.querySelector('[data-shnk]');if(i){i.focus({preventScroll:true});try{i.setSelectionRange(keep[0],keep[1])}catch(x){}}}
   rcShFit()}
 // 미리 보기 카드 크기: 창 안 폭에 두 장이 들어가게 (폰 + 사이트 '화면 크기' 120%에서도 가로로 안 넘침). 최대 0.44배
 function rcShFit(){const pv=RC&&RC.sh&&RC.sh.el.querySelector('.rc-shpv');if(!pv)return;const n=pv.children.length||1,av=pv.clientWidth,mz=Math.max(.24,Math.min(.44,(av-(n-1)*12)/n/360));pv.style.setProperty('--mz',mz.toFixed(4))}
@@ -6327,20 +6365,30 @@ function rcShKey(e){const S=RC.sh,k=e.key;e.stopPropagation();
   if(k==='Escape'){e.preventDefault();rcShClose();return}
   if(k==='Tab'){const f=[...S.el.querySelectorAll('button:not(:disabled),a[href],input')].filter(b=>b.offsetParent);if(!f.length)return;const i=f.indexOf(document.activeElement);e.preventDefault();
     (e.shiftKey?(i<=0?f[f.length-1]:f[i-1]):(i<0||i>=f.length-1?f[0]:f[i+1])).focus()}} // 그 밖의 키(스페이스·엔터·글자)는 창 안 버튼·입력칸이 그대로 받음
+function rcShInput(e){const S=RC&&RC.sh,t=e.target;if(!S||!t.matches||!t.matches('[data-shnk]'))return;S.o.nk=t.value;const ok=shNickOk(t.value);
+  if(ok)try{BLS.setItem(SH_NICK_K,shNick(t.value))}catch(x){}
+  const ct=S.el.querySelector('.rc-shct');if(ct&&S.V)ct.textContent=shTitle(S.V,S.o);
+  const m=S.el.querySelector('.rc-shnkm');if(m){m.textContent=shNickMsg(t.value);m.classList.toggle('err',!!shNick(t.value)&&!ok)}
+  const g=S.el.querySelector('[data-shgo]');if(g)g.disabled=!shCan(S)}
 async function rcShClick(e){const S=RC&&RC.sh;if(!S)return;const t=e.target;
   if(t===S.el){if(S.down)rcShClose();S.down=false;return} // 바깥(어두운 곳) 누르면 닫기
   S.down=false;const b=t.closest('button,a');if(!b)return;
   if(b.hasAttribute('data-shx')){rcShClose();return}
-  if(b.dataset.sho){const[k,v]=b.dataset.sho.split(':');if(!SH_OPT.some(([kk,,vs])=>kk===k&&vs.some(x=>x[0]===v)))return;S.o[k]=v;S.err='';rcShPaint();const n=S.el.querySelector(`[data-sho="${k}:${v}"]`);if(n)n.focus({preventScroll:true});return}
+  if(b.dataset.sho){const[k,v]=b.dataset.sho.split(':');if(!SH_OPT.some(([kk,,vs])=>kk===k&&vs.some(x=>x[0]===v))||b.disabled)return;S.o[k]=v;S.err='';
+    if(k==='nm'&&v==='hide'&&S.o.tn==='char')S.o.tn='none'; // 캐릭터 이름을 가리면 제목에도 안 씀
+    rcShPaint();const inp=k==='tn'&&v==='nick'&&S.el.querySelector('[data-shnk]'),n=inp||S.el.querySelector(`[data-sho="${k}:${v}"]`);
+    if(n){n.focus({preventScroll:true});if(inp)try{inp.setSelectionRange(inp.value.length,inp.value.length)}catch(x){}}return}
   if(b.dataset.shc){const u=b.dataset.shc,ok=await shCopy(u);S.copied=ok?u:null;S.err=ok?'':'복사하지 못했어요. 링크를 길게 눌러 복사해 주세요';rcShPaint();
     setTimeout(()=>{if(RC&&RC.sh===S&&S.copied===u){S.copied=null;rcShPaint()}},1600);return}
-  if(b.dataset.shs){try{await navigator.share({title:`${RC.V.Y} 메푸리 결산`,url:b.dataset.shs})}catch(x){}return}
+  if(b.dataset.shs){try{await navigator.share({title:(S.made&&S.made.title)||`${RC.V.Y} 메푸리 연말정산`,url:b.dataset.shs})}catch(x){}return}
   if(b.hasAttribute('data-shgo')){if(S.busy)return;S.busy=true;S.err='';rcShPaint();
     // 파티원을 보이게 했으면 만들기 직전에 하루 지난 파티원 정보를 새로 받음 (링크는 만든 날 정보 그대로 30일 가니까) — 5초 넘으면 기억한 걸로
     if(S.o.mt==='show'&&RC.R.mt.length&&mlCan())await Promise.race([ML_BUSY?ML_BUSY.then(()=>mlFetch(RC.R.mt.map(m=>m[0]),1)):mlFetch(RC.R.mt.map(m=>m[0]),1),sleep(5000)]).catch(()=>{});
     if(!RC||RC.sh!==S)return;
     try{const V=rcView(RC.R,{mode:'share',...S.o});if(JSON.stringify(V).length>60000)throw new Error('결산 내용이 너무 커서 링크를 만들지 못했어요');
-      const j=await shApi('create',{o:{...S.o},data:V});if(!RC||RC.sh!==S)return;S.made={id:j.id,url:location.origin+'/r/'+j.id};S.list=[{id:j.id,o:{...S.o},at:j.at,exp:j.exp,views:0},...(S.list||[])]}
+      const o={nm:S.o.nm,lk:S.o.lk,mt:S.o.mt,tn:S.o.tn};if(o.tn==='nick'){if(!shNickOk(S.o.nk))throw new Error('닉네임을 확인해 주세요 (12자까지)');o.nk=shNick(S.o.nk)}
+      const j=await shApi('create',{o,data:V});if(!RC||RC.sh!==S)return;const title=j.title||shTitle(V,o);
+      S.made={id:j.id,url:location.origin+'/r/'+j.id,title};S.list=[{id:j.id,o,title,at:j.at,exp:j.exp,views:0},...(S.list||[])]}
     catch(x){if(RC&&RC.sh===S)S.err=x.message}
     if(RC&&RC.sh===S){S.busy=false;rcShPaint()}
     return}

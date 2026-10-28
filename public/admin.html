@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark"><!-- 삼성 인터넷 다크 모드가 억지로 어둡게 칠하지 않게 -->
 <meta name="robots" content="noindex, nofollow">
 <title>메푸리 관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,11 +13,11 @@
 :root{--bg:#F1F4F6;--top:#1F232E;--logo:#D2F53C;--card:#FFFFFF;--card-bd:rgba(0,0,0,.08);--border:#E4E8EB;--border2:#C8CFD5;--seg:#E4E8EB;--soft:#F4F5F6;
   --text:#1E3043;--text2:#3B546B;--sub:#6C7784;--muted:#98A0A9;--faint:#B1B9C3;--input-bd:#C6CFD7;--input-fg:#223548;--dot-off:#8B94A3;--dot-on:#202226;
   --accent:#F68600;--accent-hover:#DA7700;--accent-soft:#FFECD5;--accent-bg:#FFFBF6;--danger:#E0475B;--danger-bg:#FFF4F5;--danger-bd:#F2BBC3;
-  --warn:#C77700;--warn-bg:#FFF6E5;--warn-bd:#F5D9A6;--frame-bg:linear-gradient(180deg,#F8F9FA,#E6E9EC);--toast:#2B2F3A;--seg-shadow:0 1.5px 0 rgba(152,162,179,.25);color-scheme:light}
+  --warn:#C77700;--warn-bg:#FFF6E5;--warn-bd:#F5D9A6;--frame-bg:linear-gradient(180deg,#F8F9FA,#E6E9EC);--toast:#2B2F3A;--seg-shadow:0 1.5px 0 rgba(152,162,179,.25);color-scheme:light dark}
 @media (prefers-color-scheme:dark){:root{--bg:#14161B;--top:#0C0D11;--card:#1E2128;--card-bd:rgba(255,255,255,.07);--border:#30343D;--border2:#4A4F5B;--seg:#2A2E37;--soft:#252932;
   --text:#ECEEF2;--text2:#C9D2DC;--sub:#A3ABB6;--muted:#7D8591;--faint:#5B606B;--input-bd:#3A3F4A;--input-fg:#E3E7EC;--dot-off:#7D8591;--dot-on:#ECEEF2;
   --accent:#FF8A33;--accent-hover:#FF9C52;--accent-soft:#3A2616;--accent-bg:#2A1F16;--danger:#E0475B;--danger-bg:#2B171B;--danger-bd:#5C2A33;
-  --warn:#F2B14C;--warn-bg:#2E2414;--warn-bd:#5A4320;--frame-bg:linear-gradient(180deg,#2C313B,#22262E);--toast:#2B2F3A;--seg-shadow:0 1.5px 0 rgba(0,0,0,.35);color-scheme:dark}}
+  --warn:#F2B14C;--warn-bg:#2E2414;--warn-bd:#5A4320;--frame-bg:linear-gradient(180deg,#2C313B,#22262E);--toast:#2B2F3A;--seg-shadow:0 1.5px 0 rgba(0,0,0,.35);color-scheme:dark;color-scheme:only dark}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
 button,input,textarea{font-family:inherit;font-size:13px;color:inherit}

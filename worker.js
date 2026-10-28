@@ -55,8 +55,10 @@
  *   베타 화면은 기록을 'mepuri-beta:' 칸에만 저장하고, 계정 저장(/api/state)·방문 통계(/api/stat)는 안 부름 (사이트 코드 BETA)
  *
  * 공유 링크 (연말 결산 · 10.28 링크 테스트, D1 표 share_links) — 결산 카드에 쓰는 숫자 요약만 저장 (원래 기록·가린 이름은 안 받음)
- *   POST /api/share/list    { dk }                 내 링크 목록 { links:[{id,o,at,exp,views}], max, days, mode, can, who }
- *   POST /api/share/create  { dk, o, data }        링크 만들기 → { id, at, exp }  (o = 옵션 {nm,lk,mt}, data = 결산 요약 V)
+ *   POST /api/share/list    { dk }                 내 링크 목록 { links:[{id,o,title,at,exp,views}], max, days, mode, can, who }
+ *   POST /api/share/create  { dk, o, data }        링크 만들기 → { id, at, exp, title }  (o = 옵션 {nm,lk,mt,tn,nk}, data = 결산 요약 V)
+ *     링크 이름 tn: 'char' 대표 캐릭터(이름 보이기일 때만) · 'nick' 닉네임 nk(12자, 글자·숫자·띄어쓰기·기호 몇 개) · 'none' → 미리보기 제목 「○○님의 2026 메푸리 연말정산」
+ *     미리보기: 작은 그림 카드(twitter:card summary) — 제목 · 짧은 설명(보스 N마리 · N주의 기록) · 연도별 정사각 그림(public/r/a/og<연도>.<해시>.jpg, 없으면 og.png)
  *   POST /api/share/delete  { dk, id }             내 링크 지우기
  *     dk = 사이트가 브라우저에 둔 무작위 기기 키 (로그인 안 한 사람의 링크 주인 확인용, 해시로만 저장)
  *     베타 화면은 /beta/api/share/… 로 부름 (베타 쿠키가 /beta에만 붙어서) → '관리자만' 모드에서 베타인지 확인
@@ -828,7 +830,9 @@ async function beta(req, env, url, ctx) {
 const SHARE_DAYS = 30, SHARE_MAX = 5, SHARE_GUEST_DAY = 5, SHARE_USER_DAY = 20, SHARE_SITE_DAY = 1000, SHARE_MAX_BODY = 72 * 1024;
 const SHARE_ID = /^[A-Za-z0-9]{10}$/, SHARE_MODES = ['off', 'admin', 'all'];
 // 링크 보기 화면 파일 (public/r/) — build_view.py가 만든 파일 이름(내용 해시)으로 바꿔 넣음
-const SHARE_VIEW = { js: '/r/a/view.bc4a57c8e8.js', css: '/r/a/view.184ff87fbd.css' };
+// 링크 미리보기 작은 그림 (정사각 600×600, 연도별) — build_view.py가 만든 파일 이름으로 바꿔 넣음. 없는 해는 사이트 그림(og.png)
+const SHARE_OG = { 2025: '/r/a/og2025.196aeccbe9.jpg', 2026: '/r/a/og2026.fccda8118b.jpg', 2027: '/r/a/og2027.5cc5e51301.jpg', 2028: '/r/a/og2028.1894725dc9.jpg' };
+const SHARE_VIEW = { js: '/r/a/view.66754278c5.js', css: '/r/a/view.c68dd52d39.css' };
 // 본 횟수에서 빼는 것: 링크 미리보기·검색 봇 (카톡·디스코드·슬랙·트위터·텔레그램·페이스북…)
 const SHARE_BOT = /bot|crawl|spider|slurp|facebookexternalhit|kakaotalk-scrap|kakaostory-og|whatsapp|skypeuripreview|embedly|headless|lighthouse|curl|wget|python|axios|node-fetch|undici|go-http|okhttp|java\//i;
 const SHARE_LOOK = /^https:\/\/open\.api\.nexon\.com\/static\/maplestory\/character\/look\/[A-Za-z0-9._~%\/-]+(\?[A-Za-z0-9._~%=&-]*)?$/;
@@ -856,7 +860,21 @@ function shareId() { // 10자 (영문 대소문자·숫자 62가지, 고르게)
   while (s.length < 10) for (const b of crypto.getRandomValues(new Uint8Array(16))) { if (b < 248 && s.length < 10) s += A[b % 62]; }
   return s;
 }
-const shareOpts = o => ({ nm: o && o.nm === 'show' ? 'show' : 'hide', lk: o && o.lk === 'show' ? 'show' : 'job', mt: o && o.mt === 'show' ? 'show' : 'hide' }); // 기본 다 가림
+// 옵션: 모르는 값은 가리는 쪽으로. 링크 이름 tn — 예전 화면(tn 없음)은 이름 보이기면 대표 캐릭터. 캐릭터 이름을 가렸으면 대표 캐릭터 이름도 제목에 안 씀
+// 닉네임: 띄어쓰기 정리 후 1~12자, 글자·숫자·띄어쓰기와 기호 몇 개만 (주소·꺾쇠·보이지 않는 글자·한글 채움 문자 안 됨)
+const SHARE_NICK = /^[\p{L}\p{N} _\-·~!?♡♥★☆^]{1,12}$/u, SHARE_FILL = /[\u115F\u1160\u3164\uFFA0]/;
+function shareOpts(o) {
+  o = o && typeof o === 'object' ? o : {};
+  const r = { nm: o.nm === 'show' ? 'show' : 'hide', lk: o.lk === 'show' ? 'show' : 'job', mt: o.mt === 'show' ? 'show' : 'hide' };
+  r.tn = ['char', 'nick', 'none'].includes(o.tn) ? o.tn : (r.nm === 'show' ? 'char' : 'none');
+  if (r.tn === 'char' && r.nm !== 'show') r.tn = 'none';
+  if (r.tn === 'nick') {
+    const nk = typeof o.nk === 'string' ? o.nk.replace(/\s+/g, ' ').trim() : '';
+    if (!SHARE_NICK.test(nk) || SHARE_FILL.test(nk)) throw new HttpError(400, 'NICK', '닉네임은 12자까지, 글자·숫자·띄어쓰기와 _ - · ~ ! ? ♡ ★ ^ 만 쓸 수 있어요');
+    r.nk = nk;
+  }
+  return r;
+}
 const shareParse = t => { try { return JSON.parse(t); } catch { return null; } };
 // 결산 요약 검사: 모양·크기만 (그리는 쪽에서도 하나하나 다시 확인). 바깥 주소는 넥슨 외형 그림(u)만
 function shareClean(v) {
@@ -886,14 +904,15 @@ function shareClean(v) {
   walk(v, 0, '');
   return v;
 }
-// 미리보기 제목: 이름을 보이게 골랐으면 대표 캐릭터 이름, 아니면 해만
+// 미리보기 제목: 링크 이름(대표 캐릭터 · 닉네임 · 안 넣기) + 「○○님의 2026 메푸리 연말정산」 (앱 안 화면은 '결산' 그대로, 링크만 연말정산)
 function shareTitle(v, o) {
   let nm = '';
-  if (o.nm === 'show' && Array.isArray(v.chars) && v.chars[0] && Number.isInteger(v.chars[0].ci)) {
+  if (o.tn === 'nick' && o.nk) nm = o.nk;
+  else if (o.tn === 'char' && o.nm === 'show' && Array.isArray(v.chars) && v.chars[0] && Number.isInteger(v.chars[0].ci)) {
     const c = v.cs[v.chars[0].ci];
     if (c && typeof c.n === 'string') nm = c.n.replace(/[\u0000-\u001f\u007f<>"&]/g, '').trim().slice(0, 16);
   }
-  return nm ? `${nm}님의 ${v.Y} 메푸리 결산` : `${v.Y} 메푸리 결산`;
+  return nm ? `${nm}님의 ${v.Y} 메푸리 연말정산` : `${v.Y} 메푸리 연말정산`;
 }
 let shareSchemaReady = false;
 async function ensureShareSchema(db) {
@@ -927,8 +946,8 @@ async function shareApi(req, env, ctx, url, isBeta) {
     const now = Date.now(), mode = await shareMode(env.DB), can = mode === 'all' || (mode === 'admin' && isBeta);
     const own = me ? 'user_id = ?1' : 'user_id IS NULL AND dev = ?1', ownV = me ? me.id : (dev || '-'); // 목록·개수: 로그인했으면 계정 링크, 안 했으면 이 기기 링크
     if (op === 'list') {
-      const { results } = await env.DB.prepare(`SELECT id, o, at, exp, views FROM share_links WHERE ${own} AND exp >= ?2 ORDER BY at DESC LIMIT 20`).bind(ownV, now).all();
-      const links = (results || []).map(r => ({ id: r.id, o: shareParse(r.o), at: r.at, exp: r.exp, views: r.views }));
+      const { results } = await env.DB.prepare(`SELECT id, o, title, at, exp, views FROM share_links WHERE ${own} AND exp >= ?2 ORDER BY at DESC LIMIT 20`).bind(ownV, now).all();
+      const links = (results || []).map(r => ({ id: r.id, o: shareParse(r.o), title: r.title, at: r.at, exp: r.exp, views: r.views }));
       return json({ links, max: SHARE_MAX, days: SHARE_DAYS, mode, can, who: me ? 'user' : 'device' }, 200, noStore());
     }
     if (op === 'delete') {
@@ -955,7 +974,7 @@ async function shareApi(req, env, ctx, url, isBeta) {
       const id = shareId();
       const r = await env.DB.prepare('INSERT OR IGNORE INTO share_links (id, user_id, dev, y, o, title, data, at, exp, views) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)')
         .bind(id, me ? me.id : null, me ? null : dev, data.Y, JSON.stringify(o), title, text, now, exp).run();
-      if (r.meta && r.meta.changes) return json({ id, at: now, exp }, 200, noStore());
+      if (r.meta && r.meta.changes) return json({ id, at: now, exp, title }, 200, noStore());
     }
     throw new HttpError(500, 'SERVER', '링크를 만들지 못했어요. 다시 해 주세요');
   } catch (e) {
@@ -996,16 +1015,19 @@ async function shareView(req, env, ctx, url) {
 }
 function shareHtml(row, url) {
   const v = shareParse(row.data) || {}, n = x => (Number.isFinite(+x) ? Math.round(+x) : 0);
-  const t = escH(row.title), d = escH(`${n(v.Y)}년 보스 ${n(v.nK).toLocaleString('ko-KR')}마리 · ${n(v.nW)}주의 기록 — 메푸리에서 만든 결산이에요`), img = `${url.origin}/og.png`;
+  // 미리보기: 디스코드 등은 작은 그림 카드(제목 · 짧은 설명 · 오른쪽 정사각 그림). 그 해 그림이 없으면 사이트 그림(가로)으로 큰 카드
+  const og = SHARE_OG[n(v.Y)], img = url.origin + (og || '/og.png'), iw = og ? 600 : 1200, ih = og ? 600 : 630, card = og ? 'summary' : 'summary_large_image';
+  const t = escH(row.title), d = escH(`보스 ${n(v.nK).toLocaleString('ko-KR')}마리 · ${n(v.nW)}주의 기록`), alt = escH(`${n(v.Y)} 메푸리 연말정산`);
   // JSON을 <script type="application/json">에 안전하게: </script>·<!--·줄 구분 문자를 바꿔 씀
   const data = row.data.replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>${t}</title>
 <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta name="description" content="${d}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="메푸리"><meta property="og:title" content="${t}"><meta property="og:description" content="${d}">
-<meta property="og:image" content="${img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:url" content="${url.origin}/r/${row.id}">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${t}"><meta name="twitter:description" content="${d}"><meta name="twitter:image" content="${img}">
+<meta property="og:image" content="${img}"><meta property="og:image:width" content="${iw}"><meta property="og:image:height" content="${ih}"><meta property="og:image:alt" content="${alt}"><meta property="og:url" content="${url.origin}/r/${row.id}">
+<meta name="twitter:card" content="${card}"><meta name="twitter:title" content="${t}"><meta name="twitter:description" content="${d}"><meta name="twitter:image" content="${img}">
 <meta name="theme-color" content="#F68600"><link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap">
@@ -1015,9 +1037,9 @@ function shareHtml(row, url) {
 </head><body><noscript><p style="padding:24px;font-family:sans-serif">결산 카드를 보려면 자바스크립트를 켜 주세요. <a href="/">메푸리 열기</a></p></noscript></body></html>`;
 }
 function shareGoneHtml() {
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark">
 <title>없거나 기간이 지난 링크예요 · 메푸리</title><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/favicon.ico">
-<style>:root{color-scheme:light dark;--bg:#F1F4F6;--card:#fff;--text:#1E3043;--sub:#6C7784;--bd:rgba(0,0,0,.08)}@media (prefers-color-scheme:dark){:root{--bg:#14161B;--card:#1E2128;--text:#ECEEF2;--sub:#A3ABB6;--bd:rgba(255,255,255,.07)}}
+<style>:root{color-scheme:light dark;--bg:#F1F4F6;--card:#fff;--text:#1E3043;--sub:#6C7784;--bd:rgba(0,0,0,.08)}@media (prefers-color-scheme:dark){:root{color-scheme:dark;color-scheme:only dark;--bg:#14161B;--card:#1E2128;--text:#ECEEF2;--sub:#A3ABB6;--bd:rgba(255,255,255,.07)}}
 body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 16px;box-sizing:border-box;background:var(--bg);color:var(--text);font-family:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;word-break:keep-all}
 main{width:min(380px,100%);padding:28px 24px;border-radius:20px;background:var(--card);border:1px solid var(--bd);text-align:center}
 b{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;color:#F68600}h1{margin:10px 0 8px;font-size:21px}p{margin:0;font-size:14px;line-height:1.6;color:var(--sub)}
