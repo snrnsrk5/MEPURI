@@ -2603,6 +2603,7 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .rc.v2 .rc-body{padding:14px 24px 12px}
 
 #rc-ov.v2 .rc-body.out{animation:r2Out .22s ease-in both}
+.r2-meas,.r2-meas *{animation:none!important;transition:none!important} /* 글자 자리 재기 (rc2Keep) — 같은 순간에 바로 뗌 */
 
 @keyframes r2Out{to{opacity:0;transform:translateY(-16px)}}
 
@@ -3527,7 +3528,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.25.2", "d": "2026-10-29", "l": ["몇몇 브라우저의 다크 모드에서 버튼·배경 색을 원래 색에 더 가깝게 맞췄어요"], "prev": [{"v": "0.25.1", "d": "2026-10-28", "l": ["몇몇 브라우저의 다크 모드에서 색이 완전히 틀어지던 걸 보정했어요"]}, {"v": "0.25.0", "d": "2026-10-24", "l": ["수익 통계를 수정하고 몇 가지를 추가했어요", "익스트림 림보·발드릭스 익셉셔널 해머를 추가했어요", "UI 색과 모양을 조금 조정했어요"]}]};
+const NEWS={"v": "0.25.3", "d": "2026-10-30", "l": ["보스 설정에서 일간·월간 보스도 과거부터 넣을 수 있어요", "보스 현황에서 지난 주 일간 보스를 채울 수 있어요"], "prev": [{"v": "0.25.2", "d": "2026-10-29", "l": ["몇몇 브라우저의 다크 모드에서 버튼·배경 색을 원래 색에 더 가깝게 맞췄어요"]}, {"v": "0.25.1", "d": "2026-10-28", "l": ["몇몇 브라우저의 다크 모드에서 색이 완전히 틀어지던 걸 보정했어요"]}]};
 const HAD_DATA=(()=>{try{return !!BLS.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 const BETA_FRESH=BETA&&!HAD_DATA&&(()=>{try{return !!BLS.raw.getItem(KEY)}catch(e){return false}})(); // 베타: 베타 칸은 비었고 이 기기에 정식 기록은 있음
 let BETA_NOSAVE=false; // 베타: 이 기기 저장 공간(정식과 같이 씀)이 빠듯하면 베타 기록을 비우고 이번엔 저장 안 함 → 정식 기록이 저장될 자리를 남김
@@ -4375,7 +4376,7 @@ const hRange=(dates,t)=>{const a=dates[0],z=dates[dates.length-1];
   if(t==='W')return `${md(a)} ~ ${md(addD(z,6))}`;const mo=d=>+d.slice(5,7)+'월';return a===z?mo(a):`${mo(a)} ~ ${mo(z)}`};
 const histSpan=(dates,t)=>`${FROMW[t]} (${hRange(dates,t)})`;
 const nextP=(d,t)=>{if(t==='W')return addD(d,7);let y=+d.slice(0,4),m=+d.slice(5,7)+1;if(m>12){m=1;y++}return y+'.'+String(m).padStart(2,'0')+'.01'};
-const pkOf=(d,t)=>t+(t==='W'?d:d.slice(0,7));
+const pkOf=(d,t)=>t+(t==='M'?d.slice(0,7):d); // 일간(D)도 날짜 그대로 — 지난 주 일간 채우기의 '그대로 두기' 기억 키 (10.30)
 const pLabel=(d,t)=>t==='W'?md(d):(+d.slice(5,7))+'월';
 /* 그 기간의 '계속' 목록: 그 주만 넣은 보스·그 주만 바꾼 난이도·그 주만 뺀 것은 무시 */
 function regAt(c,t){const sl=c.slots.filter(s=>!s.only).map(s=>{const x={...s};['skips','skip','tmps','tmp','backs','back'].forEach(k=>delete x[k]);return x});
@@ -4423,7 +4424,7 @@ const weekSig=(c,t)=>regSig(live(c).filter(x=>tOf(x)===t&&!isSeason(x.boss)).map
 /* 채우기 물어보기: 칸 단위로 그때그때 계산
    - 채웠거나 '그대로 두기'를 누른 그 상태 그대로면 안 물어봄 → 보스를 빼거나 바꿔서 상태가 달라지면 다시 물어봄
    - 그 기간이 '계속' 목록 그대로이고 뒤에 새로 시작한 보스도 없으면 일부러 그렇게 둔 기간으로 봄 */
-function fillNeed(c,t){if(t==='D'||!pastP(t)||(t==='M'&&noMon(TODAY)))return null;const key=pkey(t),sig=weekSig(c,t);
+function fillNeed(c,t){if(t==='D')return fillNeedD(c);if(!pastP(t)||(t==='M'&&noMon(TODAY)))return null;const key=pkey(t),sig=weekSig(c,t);
   if((c.fillSeen||{})[key]===sig)return null;
   const late=c.slots.some(s=>tOf(s)===t&&!s.only&&s.start&&s.start>key),reg=regAt(c,t).filter(x=>!isSeason(x.boss));
   if(!late&&reg.length&&regSig(reg)===sig)return null;
@@ -4457,15 +4458,15 @@ function applyFillOne(c,p){const t=p.t,key=p.key,toK=p.toK,keys=[key,...p.also.m
   c.fillSeen=c.fillSeen||{};[p.from,...p.also].forEach(d=>{c.fillSeen[pkOf(d,t)]=atDay(d,()=>weekSig(c,t))});
   return k}
 /* 채우기: 보는 기간 + 같은 목록이 이어지는 뒤 기간들에 같은 선택을 적용 */
-function applyFill(c,p){let k=applyFillOne(c,p);const t=p.t,want=regSig(p.cands[p.ci].list);
+function applyFill(c,p){if(p.t==='D')return applyFillD(c,p);let k=applyFillOne(c,p);const t=p.t,want=regSig(p.cands[p.ci].list);
   const rk=r=>r.k+':'+(r.n?r.n.boss:'')+':'+(r.e?r.e.boss:''),pick=new Map(p.rows.map(r=>[rk(r),r.pick]));
   (p.run||[]).forEach(d=>atDay(d,()=>{const q0=fillPlan(c,t);if(!q0)return;const ci=q0.cands.findIndex(g=>regSig(g.list)===want);if(ci<0)return;
     const q=ci===q0.ci?q0:fillPlan(c,t,ci);q.also=[];q.rows.forEach(r=>{const v=pick.get(rk(r));if(v!==undefined)r.pick=v});k+=applyFillOne(c,q)}));
   return k}
-function fillBar(c,t){if(!VIEW_OFF)return '';const p=fillNeed(c,t);if(!p)return '';
+function fillBar(c,t){if(!VIEW_OFF)return '';if(t==='D')return fillBarD(c);const p=fillNeed(c,t);if(!p)return '';
   const E=p.rows.filter(r=>r.e).length,n=Math.min(p.rows.filter(r=>r.k==='add'||r.k==='swap').length,Math.max(0,p.cap-E)),u=t==='W'?'주':'달';
   const c0=p.cands[0],src=p.cands.length>1?`기록된 목록 ${p.cands.length}가지 중에 골라서 채워요`:`${c0.next&&c0.prev?'앞뒤 기록':c0.next?'바로 뒤 기록':c0.prev?'바로 앞 기록':'기록된 목록'}으로 채워요`;
-  return `<div class="fillbar"><span class="fb-t"><b>${p.regEmpty&&!E?`기록이 없는 ${u}예요`:`비어 있는 칸 ${n}개`}</b><small>${src}${p.also.length+p.run.length?` · ${p.also.length+p.run.length+1}${u} 같이`:''}</small></span><span class="fb-btns"><button class="btn out" type="button" data-fillno="${t}">그대로 두기</button><button class="btn pri" type="button" data-fill="${t}">채우기</button></span></div>`}
+  return `<div class="fillbar"><span class="fb-t"><b>${p.regEmpty&&!E?`기록이 없는 ${jo(u,'이에요')}`:`비어 있는 칸 ${n}개`}</b><small>${src}${p.also.length+p.run.length?` · ${p.also.length+p.run.length+1}${u} 같이`:''}</small></span><span class="fb-btns"><button class="btn out" type="button" data-fillno="${t}">그대로 두기</button><button class="btn pri" type="button" data-fill="${t}">채우기</button></span></div>`}
 /* 카드·보스 설정 표 공통: '다르게 잡았어요' 창 */
 function bindCfg(v){
   v.querySelectorAll('.cfgp').forEach(p=>p.onclick=e=>e.stopPropagation());
@@ -4538,7 +4539,7 @@ function bindStatus(){
     toast(`${BY[id].name} ${DKO[diff]} 클리어!${other?` · ${nm(other)}도 이 주에 잡았어요 (메이플ID당 주 1회)`:''}`)});
   v.querySelectorAll('[data-fillno]').forEach(b=>b.onclick=()=>{const c=cur(),t=b.dataset.fillno,p=fillNeed(c,t);if(!p)return;
     set(()=>{c.fillSeen=c.fillSeen||{};[p.from,...p.also,...p.run].forEach(d=>{c.fillSeen[pkOf(d,t)]=atDay(d,()=>weekSig(c,t))})});
-    toast(`${t==='W'?'이 주는':'이 달은'} 지금 목록 그대로 둘게요`)});
+    toast(`${t==='W'?'이 주는':t==='D'?'이 주 일간은':'이 달은'} 지금 목록 그대로 둘게요`)});
   v.querySelectorAll('[data-fill]').forEach(b=>b.onclick=()=>{const p=fillNeed(cur(),b.dataset.fill);if(!p)return;ui.modal={kind:'fill',p,cid:cur().id};renderLayer()});
   // 기록은 지우지 않고 쌓음 (나중에 수익 기록에 씀)
   const clearOne=(c,id)=>{const s=live(c).find(x=>x.boss===id);if(!s||(tOf(s)==='M'&&noMon(TODAY))||notYet(id,TODAY,s.diff))return;const a=(c.clears[id]||[]).slice();
@@ -4605,8 +4606,8 @@ function diffsOf(id,type){return DORDER.filter(d=>BY[id].diffs[d]===type)}
 const SLOTN={W:12,M:1}; // 주간 결정석 12칸, 월간 1칸
 function fixForm(){const f=st.form;if(f.leq===undefined)f.leq=true;{const c=cur();if(c){if(st.sel!==c.id&&HID(st.chars.find(x=>x.id===st.sel)).all)st.sel=c.id;f.targets=[c.id]}} // 보스 설정은 위에서 고른 캐릭터에만
 const list=bossesOf(f.type);if(!list.find(b=>b.id===f.boss))f.boss=list[0].id;
-  if(f.type==='D'){f.span='keep';f.forced=false} // 일간은 기간 설정 없음
-  else if(f.span==='hist'||(f.span==='past'&&(f.type!=='W'||VIEW_OFF))){f.span='keep'} // 보스 설정은 이번 주부터·이번 주만 (+ 주간은 과거 주부터: 고치기·새로 넣기·바꾸기)
+  if(f.type==='D'){if(f.span!=='past'||VIEW_OFF)f.span='keep';f.forced=false} // 일간은 이번 주부터·과거 주부터만 (10.30 과거 주부터 추가)
+  else if(f.span==='hist'||(f.span==='past'&&(VIEW_OFF||(f.type==='M'&&(f.slot||!pastMons().length))))){f.span='keep'} // 월간 과거 달부터는 새로 넣을 때만 (10.30) // 보스 설정은 이번 주부터·이번 주만 (+ 주간은 과거 주부터: 고치기·새로 넣기·바꾸기)
   if(f.type==='D')f.slot=null;else{const c=cur();if(c){const taken=new Set(live(c).map(x=>x.boss));if(f.slot&&!taken.has(f.slot))f.slot=null;
     if(!f.slot){f.targets=f.targets.length?f.targets:[c.id];if(taken.has(f.boss)){const nb=list.find(b=>!taken.has(b.id));if(nb)f.boss=nb.id}}}}const ds=diffsOf(f.boss,f.type);if(!ds.includes(f.diff))f.diff=ds[ds.length>1?1:0];f.targets=f.targets.filter(id=>st.chars.find(c=>c.id===id));if(!f.targets.length&&st.sel)f.targets=[st.sel]}
 // 보스 고르기: 이름 옆에 보스 그림이 보이는 목록 (보스 설정·보상 탭 공용)
@@ -4630,7 +4631,8 @@ function formPanel(){
   // 고친 게 없는지: 값이 지금과 같아도 '이번 주만' 값이 있는 주를 '이번 주부터'로 고르면 계속으로 바뀌니 바꿀 게 있음
   const fSame=editing&&!swapping&&exS&&f.diff===exS.diff&&f.party===exS.party&&sfEq(matesOf(exS),matesOf(f)),fNoop=fSame&&f.span!=='past'&&(f.span==='once'||!(exS._tmp||exS._only));
   const full=f.type==='W'&&!editing?tg.filter(c=>live(c).filter(s=>tOf(s)==='W').length>=12&&!c.slots.find(s=>s.boss===f.boss)):[];
-  const canPast=f.type==='W'&&!VIEW_OFF,fPast=canPast&&f.span==='past';
+  const canPast=(f.type==='W'||(f.type==='M'&&!editing&&pastMons().length>0))&&!VIEW_OFF,fPast=canPast&&f.span==='past',fPastM=fPast&&f.type==='M',dPast=f.type==='D'&&!VIEW_OFF&&f.span==='past';
+  let pNoop=false,gM=null; // 월간 「과거 달부터」(새로 넣을 때만) · 일간 「과거 주부터」 (10.30): 넣을 곳이 없으면 버튼을 끔
   const once=f.span==='once',ex1=tg.length===1?tg[0].slots.find(s=>s.boss===f.boss&&!s.only):null;
   const spanHint=!once?'':swapping?`${PERIOD[f.type]} ${esc(BY[f.slot].name)} 대신 ${esc(jo(b.name+' '+DKO[f.diff],'을'))} 잡아요. ${NEXTP[f.type]}엔 다시 ${esc(jo(BY[f.slot].name,'이에요'))}.`:ex1?`${esc(jo(tg[0].name,'은'))} 원래 ${esc(b.name)} ${jo(DKO[ex1.diff]+(ex1.party>1?` ${ex1.party}인`:''),'이에요')}. ${PERIOD[f.type]} ${jo(DKO[f.diff]+(f.party>1?` ${f.party}인`:''),'로')} 바꾸고 ${NEXTP[f.type]}엔 원래대로 돌아가요.`
     :`${PERIOD[f.type]} 목록에 넣고, ${NEXTP[f.type]} 초기화 때 저절로 빠져요.`;
@@ -4651,7 +4653,7 @@ function formPanel(){
       <div class="fblock"><div class="fhead">결정석 분배<button class="tg-lbl" type="button" id="ceq" aria-pressed="${f.ceq}">균등<span class="tg${f.ceq?' on':''}"></span></button></div>
         <div class="frow"><span class="sel"><span class="t">${esc(nm(cur()))} (나)</span></span><span class="pct"><input id="cshare" type="number" min="1" max="100" value="${f.ceq?Math.round(100/f.party):f.cshare}" ${f.ceq?'disabled':''} aria-label="결정석 내 몫"><span>%</span></span></div></div>
     </div>`:''}
-    ${f.type==='D'?'':`<div class="fsec"><div class="frow${canPast?' pspan p3':''}"><span class="flbl">적용 기간</span><div class="seg seg-in" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${!once&&!fPast}" class="${once||fPast?'':'on'}" data-fspan="keep">${FROMW[f.type]}</button><button type="button" role="radio" aria-checked="${once}" class="${once?'on once':''}" data-fspan="once">${PERIOD[f.type]}</button>${canPast?`<button type="button" role="radio" aria-checked="${fPast}" class="${fPast?'on':''}" data-fspan="past">과거 주부터</button>`:''}</div></div>${fPast?pastWeekSel(swapping?`고른 주부터 이번 주·앞으로까지 ${esc(jo(BY[f.slot].name,'을'))} ${esc(jo(b.name,'로'))} 바꿔요. 그 사이 깬 기록을 옮길지는 적용 전에 골라요.`:editing?'고른 주부터 이번 주·앞으로까지 이 설정으로 맞춰요. 그 사이에 따로 바꾼 주는 덮어써요. 그 사이 깬 주의 금액이 바뀌면 적용 전에 골라요.':`고른 주부터 이번 주·앞으로까지 ${esc(jo(b.name,'을'))} 넣어요. 그 주에 주간 슬롯이 가득 차 있으면 넣을 수 없어요.`,[b.id+'|'+f.diff]):''}</div>`}
+    ${f.type==='D'?(VIEW_OFF?'':`<div class="fsec"><div class="frow pspan"><span class="flbl">적용 기간</span><div class="seg seg-in" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${!dPast}" class="${dPast?'':'on'}" data-fspan="keep">이번 주부터</button><button type="button" role="radio" aria-checked="${dPast}" class="${dPast?'on':''}" data-fspan="past">과거 주부터</button></div></div>${dPast?pastWeekSel(()=>{const g=gapPlan(C,f.boss,f,'D',ui.pfrom);pNoop=!g.n;return gapHint(g,b)},[b.id+'|'+f.diff]):''}</div>`):`<div class="fsec"><div class="frow${canPast?' pspan p3':''}"><span class="flbl">적용 기간</span><div class="seg seg-in" role="radiogroup" aria-label="적용 기간"><button type="button" role="radio" aria-checked="${!once&&!fPast}" class="${once||fPast?'':'on'}" data-fspan="keep">${FROMW[f.type]}</button><button type="button" role="radio" aria-checked="${once}" class="${once?'on once':''}" data-fspan="once">${PERIOD[f.type]}</button>${canPast?`<button type="button" role="radio" aria-checked="${fPast}" class="${fPast?'on':''}" data-fspan="past">${f.type==='M'?'과거 달부터':'과거 주부터'}</button>`:''}</div></div>${fPastM?pastMonSel(()=>{gM=gapPlan(C,f.boss,f,'M',ui.pmon);pNoop=!gM.n;return `고른 달부터 이번 달까지 ${esc(jo(b.name,'이'))} 없던 달에 넣어요. 그 사이 지난 달에도 월간 클리어를 적을 수 있어요.`}):fPast?pastWeekSel(swapping?`고른 주부터 이번 주·앞으로까지 ${esc(jo(BY[f.slot].name,'을'))} ${esc(jo(b.name,'로'))} 바꿔요. 그 사이 깬 기록을 옮길지는 적용 전에 골라요.`:editing?'고른 주부터 이번 주·앞으로까지 이 설정으로 맞춰요. 그 사이에 따로 바꾼 주는 덮어써요. 그 사이 깬 주의 금액이 바뀌면 적용 전에 골라요.':`고른 주부터 이번 주·앞으로까지 ${esc(jo(b.name,'을'))} 넣어요. 그 주에 주간 슬롯이 가득 차 있으면 넣을 수 없어요.`,[b.id+'|'+f.diff]):''}</div>`}
     <div class="fsec"><div class="frow"><span class="flbl">메모</span><input class="inp" id="memo" type="text" placeholder="예) 토요일 21시 고정 파티" value="${esc(f.memo)}" style="flex:1"></div></div>
     ${slotMode?(()=>{const to={boss:f.boss,diff:f.diff,party:f.party},t=f.type,key=pkey(t);
       const hd=f.span==='hist'&&pastP(t)?histDates(C,editing?f.slot:f.boss,t,swapping?f.boss:null):null,hs=hd?hRange(hd,t):'',keepNow=' 이번 '+(t==='W'?'주':'달')+' 설정은 그대로예요.';
@@ -4663,18 +4665,19 @@ function formPanel(){
           :once?`${PERIOD[t]} ${dd} 기록하고 ${NEXTP[t]}엔 원래대로 돌아가요.`:`${FROMW[t]} 계속 ${dd} 잡아요. 지난 기록은 그대로 둬요.${exS._tmp?` (${PERIOD[t].replace('만','')}만 바꿨던 걸 계속으로 바꿔요)`:''}`;
         return chgBox({boss:exS.boss,diff:src.diff,party:src.party},to,(swapping?'':mateNote(matesOf(src),matesOf(f)))+h)}
       const gone=C.slots.find(x=>((x.end===key&&!hasBack(x,key))||(once&&hasSkip(x,key)))&&tOf(x)===t&&x.boss!==f.boss&&!C.slots.some(y=>y.swap===x.boss&&(y.start===key||y.only===key)));
-      if(gone)return chgBox({boss:gone.boss,diff:gone.diff,party:gone.party},to,`${PERIOD[t].replace('만','')}에 뺀 ${esc(BY[gone.boss].name)} 대신 넣은 걸로 기록해요.${once?` ${NEXTP[t]}엔 ${esc(jo(BY[gone.boss].name,'이'))} 돌아와요.`:''}`);
-      return chgBox(null,to,hd?`${hs} 동안 목록에 넣어요.${keepNow}`:once?`${PERIOD[t]} 넣고 ${NEXTP[t]} 초기화 때 저절로 빠져요.`:`${FROMW[t]} 계속 잡아요.`)})()
+      if(gone&&!fPastM)return chgBox({boss:gone.boss,diff:gone.diff,party:gone.party},to,`${PERIOD[t].replace('만','')}에 뺀 ${esc(BY[gone.boss].name)} 대신 넣은 걸로 기록해요.${once?` ${NEXTP[t]}엔 ${esc(jo(BY[gone.boss].name,'이'))} 돌아와요.`:''}`);
+      return chgBox(null,to,fPastM&&gM?gapHint(gM,b):hd?`${hs} 동안 목록에 넣어요.${keepNow}`:once?`${PERIOD[t]} 넣고 ${NEXTP[t]} 초기화 때 저절로 빠져요.`:`${FROMW[t]} 계속 잡아요.`)})()
     :once?`<div class="once-note">${I.info}<span>${spanHint}</span></div>`:''}
     ${full.length?`<div class="warn">${I.info}${esc(full.map(nm).join(', '))}의 주간 슬롯이 가득 찼어요. 하나를 빼 주세요.</div>`:''}
   </div>
   <div class="fbtns">${editing?(exS.swap&&exS._only?(ui.rv&&ui.rv.i===exS._i&&ui.rv.at==='form'?`<button class="btn danger lg" type="button" data-rvok>정말 돌릴까요?</button>`:`<button class="btn out lg" type="button" data-rvask="${exS._i}" data-at="form">원래대로</button>`):ui.rm&&ui.rm.i===exS._i&&ui.rm.at==='form'?`<button class="btn danger lg" type="button" data-rmok>정말 뺄까요?</button>`:`<button class="btn out lg" type="button" data-rmask="${exS._i}" data-at="form">빼기</button>`)+`<button class="btn dark lg" type="button" id="add-slot" ${fNoop?'disabled':''}>${once?`${PERIOD[f.type]} 바꾸기`:'바꾸기'}</button>`
-    :`${f.type==='W'?'<button class="btn out lg" type="button" id="to-preset">프리셋으로 저장</button>':''}<button class="btn dark lg" type="button" id="add-slot" ${full.length===tg.length?'disabled':''}>${f.span==='once'?`${PERIOD[f.type]} 적용`:slotMode?'슬롯에 넣기':'목록에 추가'}</button>`}</div>`;
+    :`${f.type==='W'?'<button class="btn out lg" type="button" id="to-preset">프리셋으로 저장</button>':''}<button class="btn dark lg" type="button" id="add-slot" ${full.length===tg.length||((dPast||fPastM)&&pNoop)?'disabled':''}>${f.span==='once'?`${PERIOD[f.type]} 적용`:slotMode?'슬롯에 넣기':'목록에 추가'}</button>`}</div>`;
 }
 // 과거 주부터: 고를 수 있는 주 = 기록할 수 있는 가장 앞 주 ~ 지난주 (프리셋·보스 설정 창 공용)
 const pastWeeks=lo=>{const out=[];for(let d=wStart(lo&&lo>minDay()?lo:minDay());d<REALW;d=addD(d,7))out.push(d);return out.reverse()}; // lo: 나중에 나온 보스는 출시 주부터
 // ids: 이번에 넣는 보스들 — 출시일(BOSS_OPEN)이 있으면 그 주부터만 고를 수 있음
 function pastWeekSel(hint,ids){const opd=k=>{const [i,d]=k.split('|');return BY[i]?openOf(i,d):''},op=(ids||[]).filter(opd).sort((a,b)=>opd(a)<opd(b)?1:-1)[0],ws=pastWeeks(op&&opd(op));if(!ws.length)return '';if(!ws.includes(ui.pfrom))ui.pfrom=ui.pfrom&&ui.pfrom<ws[ws.length-1]?ws[ws.length-1]:ws[0]; // 출시 전 주를 골라 뒀으면 출시 주로
+  if(typeof hint==='function')hint=hint(); // 일간 「과거 주부터」: 고른 주로 맞춘 뒤 안내(넣을 날 수)를 셈 (10.30)
   if(op){const [i,d]=op.split('|');hint=`${jo(openNm(i,d),'은')} ${openKo(i,d)}에 나와서 그 주부터 고를 수 있어요. `+(hint||'')}
     const lab=d=>{const w=wkNo(d);return `${w.m}월 ${w.n}주차 <small class="num">${md(d)} ~</small>`},open=ui.bdd==='pfrom';if(!open)ui.pfm=null;
     // 수익 관리 기간 달력과 같은 모양: 달마다 주(목~수) 한 줄씩, ‹ › 로 달 넘기기
@@ -4690,6 +4693,70 @@ function pastWeekSel(hint,ids){const opd=k=>{const [i,d]=k.split('|');return BY[
       <button type="button" data-bdd="pfrom" aria-haspopup="dialog" aria-expanded="${open}" style="position:absolute;inset:0" aria-label="시작 주 고르기"></button>
       <span class="t">${lab(ui.pfrom)}</span>${I.caret()}${cal}</div></div>
       <span class="pspan-h">${hint}</span>`}
+/* ── 일간 「과거 주부터」 · 월간 「과거 달부터」 · 지난 주 일간 채우기 (10.30) ──
+   사용자: "과거에 일간 및 월간 기록도 불러올수있는기능이 없는게 불편하네" → 보스 설정 ①② + 보스 현황 ③ 다 (질문 창에서 고름)
+   고른 기간부터 지금까지 이 보스가 없던 날(일간)·달(월간)에만 넣음. 이미 있던 기간은 난이도·종류(주간으로 잡던 보스 등)가 달라도 그대로
+   (주간 「과거 주부터」는 그 사이를 덮어쓰지만, 일간·월간은 빈 곳만 채움) */
+// 과거 달부터: 고를 수 있는 달 = 월간 기록 첫 달(MON_START) ~ 지난달, 최근 달이 먼저
+function pastMons(){const out=[],lo=[MON_START+'.01',minDay().slice(0,8)+'01'].sort()[1],now=REAL.slice(0,8)+'01';for(let d=lo,g=0;d<now&&g<240;d=nextP(d,'M'),g++)out.push(d);return out.reverse()}
+// 기간 한 칸: 일간 = 날, 월간 = 달(1일) · 슬롯 기간 키 · 키 → 그 기간 첫날
+const gStep=(d,t)=>t==='D'?addD(d,1):nextP(d,'M'),gKey=(d,t)=>t==='D'?'D'+d:'M'+d.slice(0,7),gKeyDay=k=>k[0]==='M'?k.slice(1)+'.01':k.slice(1);
+// from ~ to(빼고)에서 이 보스를 넣을 빈 기간: 그 기간에 이 보스가 (어느 종류로든) 없고, 월간은 칸도 비었고, 기록할 수 있는 날이고, 보스가 나온 뒤
+function gapList(c,boss,diff,t,from,to){const out=[];for(let d=t==='M'?from.slice(0,8)+'01':from,g=0;d<to&&g<1500;d=gStep(d,t),g++){
+  if(t==='D'?d<minDay():noMon(d))continue;if(notYet(boss,d,diff))continue;
+  if(atDay(d,()=>{const L=live(c);return L.some(x=>x.boss===boss)||(t==='M'&&L.filter(x=>tOf(x)==='M').length>=SLOTN.M)}))continue;out.push(d)}return out}
+// 빈 기간에 넣기: 이어지는 빈 기간은 슬롯 하나(start~end). 바로 뒤에 같은 설정으로 이어지는 슬롯이 있으면 그 시작을 앞당겨 붙임
+//  open: to까지 닿는 빈 기간은 끝 없이(= 지금부터 계속) — 뒤에 이 보스로 넣어 둔 슬롯(다음 주부터 등)이 있으면 그 앞까지
+function gapPut(c,boss,val,t,gaps,to,open){const v={};SLOTF.forEach(k=>v[k]=val[k]??null);if(!v.lmode)v.lmode='sell';v.party=v.party||1;
+  const ok=s=>s.boss===boss&&!s.only&&tOf(s)===t&&!s.swap&&!(s.prev||[]).length&&SLOTF.every(k=>sfEq(s[k]??null,v[k]??null));
+  const runs=[];gaps.forEach(d=>{const r=runs[runs.length-1];if(r&&gStep(r.z,t)===d)r.z=d;else runs.push({a:d,z:d})});
+  runs.forEach(r=>{const a=gKey(r.a,t),nd=gStep(r.z,t);let nk=gKey(nd,t);
+    if(open&&nd>=to){const fut=c.slots.filter(s=>s.boss===boss&&!s.only&&s.start&&gKeyDay(s.start)>r.z).sort((x,y)=>gKeyDay(x.start)<gKeyDay(y.start)?-1:1)[0];
+      if(!fut){c.slots.push({boss,...v,memo:val.memo||'',start:a});return}
+      nk=gKey(gKeyDay(fut.start),t)}
+    const nx=c.slots.find(s=>ok(s)&&s.start===nk);if(nx){nx.start=a;return}
+    if(nk>a)c.slots.push({boss,...v,memo:val.memo||'',start:a,end:nk})})}
+// 보스 설정 「과거 주부터」(일간) · 「과거 달부터」(월간): 고른 주 목요일(달 1일)부터 지금까지 + 앞으로
+const gapRange=(t,from)=>({f0:t==='D'?wStart(from):from.slice(0,8)+'01',to:t==='D'?addD(REAL,1):nextP(REAL.slice(0,8)+'01','M')});
+function gapPlan(c,boss,val,t,from){const {f0,to}=gapRange(t,from),gaps=gapList(c,boss,val.diff,t,f0,to),L=live(c).find(x=>x.boss===boss);
+  return {t,gaps,n:gaps.length,from:f0,now:L?(L.diff===val.diff&&(L.party||1)===(val.party||1)?'same':'other'):'add',cur:L||null}}
+function pastFill(c,boss,val,t,from){const {f0,to}=gapRange(t,from),gaps=gapList(c,boss,val.diff,t,f0,to);gapPut(c,boss,val,t,gaps,to,true);return gaps.length}
+// 넣는 곳 말: 일간 '09.17부터 42일' · 월간 '8월·9월' / '7월 ~ 12월 중 5달'
+function gapWhere(g){const L=g.gaps,mo=d=>(d.slice(0,4)!==REAL.slice(0,4)?d.slice(2,4)+'년 ':'')+(+d.slice(5,7))+'월';if(!L.length)return '';
+  if(g.t==='D')return `${md(L[0])}부터 ${L.length}일`;return L.length<=3?L.map(mo).join('·'):`${mo(L[0])} ~ ${mo(L[L.length-1])} 중 ${L.length}달`}
+// 안내: 일간은 시작 주 아래(넣을 날 수까지), 월간은 아래 미리 보기 상자
+function gapHint(g,b){const cur=g.cur?`${DKO[g.cur.diff]}${(g.cur.party||1)>1?` ${g.cur.party}인`:''}`:'',nm=esc(b.name);
+  if(g.t==='D'){if(!g.n)return `${md(g.from)}부터 지금까지 ${jo(nm,'이')} 이미 다 있어요.`;
+    return (g.now==='add'?`${md(g.from)}부터 ${jo(nm,'을')} 넣고 앞으로도 계속 잡아요 (없던 ${g.n}일).`:`${md(g.from)}부터 지금까지 ${jo(nm,'이')} 없던 ${g.n}일에 넣어요${g.now==='other'?` (지금은 ${cur} 그대로)`:''}.`)+' 그 사이 지난 날짜에도 일간 클리어를 적을 수 있어요.'}
+  return !g.n?`고른 달부터 이번 달까지 ${jo(nm,'이')} 이미 다 있어요.`
+    :`${gapWhere(g)}에 넣어요.${g.now==='add'?' 앞으로도 계속 잡아요.':g.now==='other'?` 이번 달은 지금 설정(${cur}) 그대로예요.`:''}`}
+// 넣은 뒤 6초 동안 '되돌리기': 그 사이 보스 설정이 안 바뀌었을 때만 넣기 전으로
+function slotUndo(msg,cid,snap,after){toastUndo(msg,()=>{const x=st.chars.find(y=>y.id===cid);if(!x)return;if(JSON.stringify(x.slots)!==after){toast('그 사이 보스 설정이 바뀌어서 되돌리지 못했어요');return}set(()=>{x.slots=JSON.parse(snap)})})}
+// 과거 달부터: 시작 달 고르기 (pastWeekSel과 같은 모양 — 달마다 한 줄, 그 달 결정석 합계)
+function pastMonSel(hint){const ms=pastMons();if(!ms.length)return '';if(!ms.includes(ui.pmon))ui.pmon=ms[0];if(typeof hint==='function')hint=hint();
+  const mo=d=>(d.slice(0,4)!==REAL.slice(0,4)?d.slice(0,4)+'년 ':'')+(+d.slice(5,7))+'월',open=ui.bdd==='pmon';
+  let cal='';if(open){const c=cur(),sum=d=>{let v=0;if(c)Object.values(c.clears||{}).forEach(a=>a.forEach(e=>{if(dOf(e).slice(0,7)===d.slice(0,7))v+=(e&&e.v)||0}));return v};
+    cal=`<div class="cal sx-cal pf-cal" role="dialog" aria-label="시작 달 고르기"><div class="cal-h"><span></span><b>시작 달</b><span></span></div>
+      <div class="sx-wl">${ms.slice().reverse().map(d=>{const v=sum(d);return `<button type="button" class="sx-wrow${d===ui.pmon?' on':''}" data-pmpick="${d}"><b>${mo(d)}</b><span class="num">${md(d)} ~ ${md(addD(nextP(d,'M'),-1))}</span><em class="num">${v?meso(v).replace(/ .*/,''):''}</em></button>`}).join('')}</div>
+      <div class="cal-f"><span>고른 달부터 이번 달까지 비어 있던 달에 넣어요 · 지난달까지 고를 수 있어요</span></div></div>`}
+  return `<div class="frow pspan"><span class="flbl">시작 달</span><div class="sel pfsel${open?' open':''}">
+      <button type="button" data-bdd="pmon" aria-haspopup="dialog" aria-expanded="${open}" style="position:absolute;inset:0" aria-label="시작 달 고르기"></button>
+      <span class="t">${mo(ui.pmon)} <small class="num">${md(ui.pmon)} ~</small></span>${I.caret()}${cal}</div></div>
+      <span class="pspan-h">${hint}</span>`}
+/* 지난 주 일간 채우기 (보스 현황): 보는 주(목~수)에 일간 보스가 하나도 없으면, 그 뒤로 일간이 처음 나오는 날의 목록으로 채움
+   뒤로 이어서 일간이 없는 주도 같이 (일간이 처음 나오는 날 앞까지). 이미 있던 날(주간으로 잡던 보스 등)은 그대로 */
+function fillNeedD(c){if(!VIEW_OFF||WEEK[0]>=REALW)return null;const w0=WEEK[0];
+  const dayD=d=>atDay(d,()=>live(c).some(x=>tOf(x)==='D'&&!isSeason(x.boss)));
+  const empty=w=>{for(let i=0;i<7;i++){const d=addD(w,i);if(d>REAL)break;if(d>=minDay()&&dayD(d))return false}return true};
+  if(!empty(w0)||(c.fillSeen||{})[pkOf(w0,'D')]==='')return null; // '그대로 두기'를 누른 주 (일간이 빈 그대로면 다시 안 물어봄)
+  const also=[];let w=addD(w0,7);while(w<=REALW&&empty(w)){also.push(w);w=addD(w,7)}
+  let src=null;for(let d=w;d<=REAL;d=addD(d,1))if(dayD(d)){src=d;break}
+  if(!src)return null;
+  const list=atDay(src,()=>live(c).filter(x=>tOf(x)==='D'&&!isSeason(x.boss)).map(x=>({boss:x.boss,diff:x.diff,party:x.party||1,mates:matesOf(x),cshare:x.cshare??null,lmode:x.lmode||'sell',lshare:x.lshare??null,memo:x.memo||''})));
+  return list.length?{t:'D',from:w0,also,run:[],src,cap:99,cands:[],rows:list.map(n=>({k:'add',n,pick:'new'}))}:null}
+function fillBarD(c){const p=fillNeedD(c);if(!p)return '';const n=p.also.length+1;
+  return `<div class="fillbar"><span class="fb-t"><b>일간 보스가 없는 주예요</b><small>바로 뒤 주 일간 목록으로 채워요${n>1?` · ${n}주 같이`:''}</small></span><span class="fb-btns"><button class="btn out" type="button" data-fillno="D">그대로 두기</button><button class="btn pri" type="button" data-fill="D">채우기</button></span></div>`}
+function applyFillD(c,p){let k=0;p.rows.forEach(r=>{if(r.pick!=='new')return;const g=gapList(c,r.n.boss,r.n.diff,'D',p.from,p.src);if(!g.length)return;gapPut(c,r.n.boss,r.n,'D',g,p.src,false);k++});return k}
 /* 프리셋 = 주간 보스 목록만 */
 const myPresets=()=>st.presets.filter(p=>p.type==='W');
 // 지금 탭에서 고른 프리셋 (없으면 null)
@@ -4821,7 +4888,7 @@ function bindSettings(){
   v.querySelectorAll('[data-qpick]').forEach(x=>x.onclick=()=>qPick(x.dataset.qpick,x.dataset.qdiff?x.dataset.qdiff.split(','):null,!!x.dataset.qforce));
   {const qi=document.getElementById('q');if(qi)qi.addEventListener('keydown',e=>{if(e.isComposing||st.stab!=='form')return;if(e.key==='Enter'){const fst=document.querySelector('#view [data-qpick]');if(fst){e.preventDefault();qPick(fst.dataset.qpick,fst.dataset.qdiff?fst.dataset.qdiff.split(','):null,!!fst.dataset.qforce)}}else if(e.key==='Escape'&&st.q){e.preventDefault();set(()=>{st.q=''})}})}
   const qc=document.getElementById('q-clear');if(qc)qc.onclick=()=>set(()=>{st.q=''});
-  v.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>set(()=>{if(f.type!==b.dataset.type){f.party=1;f.mates=[];f.ceq=true;f.leq=true} /* 종류를 바꾸면 인원은 솔로부터 (X10) */f.type=b.dataset.type;f.slot=null;fixForm();if(st.sfilter&&st.sfilter!=='all')st.sfilter=f.type}));
+  v.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>set(()=>{if(f.type!==b.dataset.type){f.party=1;f.mates=[];f.ceq=true;f.leq=true;if(f.span==='past')f.span='keep'} /* 종류를 바꾸면 인원은 솔로부터 (X10) */f.type=b.dataset.type;f.slot=null;fixForm();if(st.sfilter&&st.sfilter!=='all')st.sfilter=f.type}));
   v.querySelectorAll('[data-sfilter]').forEach(b=>b.onclick=()=>set(()=>{st.sfilter=b.dataset.sfilter}));
   // 칸을 고칠 때 보스·난이도를 바꾸면 인원은 1인으로 (다른 보스·난이도는 보통 다른 파티)
   const soloF=why=>{if(!f.slot||(f.party||1)<2)return;Object.assign(f,{party:1,mates:[],ceq:true,cshare:100,leq:true,lshare:100});toast(why+' 바뀌어서 인원을 1인으로 돌렸어요')};
@@ -4857,6 +4924,12 @@ function bindSettings(){
       const plan=pastPlan(pp0,T,ui.pfrom,new Set(sc));ui.fsheet=false;
       if(plan.length){ui.modal={kind:'ppast',p:pp0,plan,from:ui.pfrom,scope:sc,targets:T,name:nmP,verb:vb,swapTo:swp?f.boss:null};render();renderLayer();return}
       applyPast(pp0,T,ui.pfrom,{},new Set(sc),nmP,vb);if(swp&&live(cur()).some(x=>x.boss===f.boss)){pickSlot(f.boss);render()}return}
+    if(f.span==='past'&&(f.type==='D'||f.type==='M')&&!VIEW_OFF){ // 일간 과거 주부터 · 월간 과거 달부터 (10.30): 고른 기간부터 지금까지 이 보스가 없던 날(달)에만 넣음 — 있던 날(달)은 그대로
+      const t=f.type,from=t==='D'?ui.pfrom:ui.pmon,c=cur();if(!from||!c)return;
+      const val={diff:f.diff,party:f.party,mates:matesOf(f),cshare:f.party>1&&!f.ceq?f.cshare:null,lmode:f.lmode,lshare:f.party>1&&!f.leq?f.lshare:null,memo:f.memo},g=gapPlan(c,f.boss,val,t,from);
+      if(!g.n){toast(gapHint(g,BY[f.boss]));return}
+      ui.fsheet=false;const snap=JSON.stringify(c.slots);let after='';set(()=>{pastFill(c,f.boss,val,t,from);after=JSON.stringify(c.slots)});
+      slotUndo(`${BY[f.boss].name} ${DKO[f.diff]} · ${gapWhere(g)}에 넣었어요`,c.id,snap,after);return}
     const hist=f.span==='hist'&&pastP(f.type),once=f.span==='once'||hist,key=pkey(f.type);
     const each=(dates,fn)=>dates?dates.forEach(x=>atDay(x,fn)):fn();
     if(!mode&&!hist){const q=formClearQ();if(q){ui.modal={kind:'mvq',...q,once};renderLayer();return}}
@@ -4905,6 +4978,7 @@ function bindSettings(){
     const id='p'+Date.now();ui.newPreset=null;set(()=>{st.presets.push({id,name,type:'W',slots});st.psel=id;st.ptab='my'});toast(`프리셋 "${name}" 저장했어요`)};
   v.querySelectorAll('[data-pspan]').forEach(b=>b.onclick=()=>{ui.pspan=b.dataset.pspan;render()});
   v.querySelectorAll('[data-pfpick]').forEach(b=>b.onclick=e=>{e.stopPropagation();ui.pfrom=b.dataset.pfpick;ui.bdd=null;ui.pfm=null;render()});
+  v.querySelectorAll('[data-pmpick]').forEach(b=>b.onclick=e=>{e.stopPropagation();ui.pmon=b.dataset.pmpick;ui.bdd=null;render()}); // 월간 「과거 달부터」 시작 달 (10.30)
   v.querySelectorAll('[data-pfmon]').forEach(b=>b.onclick=e=>{e.stopPropagation();const w=wkNo(ui.pfm||ui.pfrom),m=w.y*12+w.m-1+ +b.dataset.pfmon,ym=`${Math.floor(m/12)}.${String(m%12+1).padStart(2,'0')}`;ui.pfm=addD(ym+'.15',0);render()});
   const pa=document.getElementById('p-apply');if(pa)pa.onclick=()=>{const p=selPreset();if(!p)return;fixForm();
     if(ui.pspan==='past'&&p.type==='W'&&ui.pfrom){const plan=pastPlan(p,f.targets,ui.pfrom); // 과거 주부터: 그때 목록이 같은 주끼리 묶어서 바뀌는 것을 고르기
@@ -7076,7 +7150,57 @@ const RC2_LAY={ // 글이 왼쪽 정렬이라 큰 도형은 오른쪽·아래 �
   tier:[[180,340,212,8,0,1,.4],[52,148,20,0,0,1,1],[306,580,18,0,0,2,1],[328,132,28,0,0,1,1],[40,590,14,0,0,1,.5]],
   end:[[330,124,92,0,0,1,1],[28,664,130,0,0,2,1],[302,566,16,0,0,3,1],[48,98,14,0,0,2,1],[252,612,14,0,0,3,.5]]};
 function rc2Lay(k,H){let L=RC2_LAY[k]||RC2_LAY.kills,f=false;if(typeof L==='string'){f=L.endsWith('~');L=RC2_LAY[L.replace('~','')]}
-  return L.map(([x,y,s,w,r,ci,a])=>({x:f?360-x:x,y:y>320?y+(H-640):y,s,w,r:(f?-r:r)*Math.PI/180,ci,a}))}
+  return L.map(([x,y,s,w,r,ci,a,fx])=>({x:f?360-x:x,y:y>320?y+(H-640):y,s,w,r:(f?-r:r)*Math.PI/180,ci,a,fix:!!fx}))}
+/* ── 겹침·잘림 막기 (10.30 사용자: "결산 UI들 너무 씹히는 문제도 좀 해결해줘" → 잘리거나 겹쳐요) ──
+   ① rc2Fit: 글이 카드보다 길면(짧은 화면·긴 이름·큰 금액) 몸통을 그만큼 줄임 (최소 72%) — 아래 MEPURI·작은 글과 안 겹치게
+   ② rc2Keep + rc2Avoid: 장에 들어올 때 글자·그림·단추·아래 MEPURI 자리를 재서(들어오는 움직임은 빼고 제자리로),
+      배경 도형마다 그 자리를 피해 가장 가까운 빈자리로 옮김. 큰 도형(띠·해 — 포스터처럼 큰 숫자 뒤에 깔림)은 큰 숫자와는 겹쳐도 됨
+      불투명한 판(등급 배지) 뒤는 가려지니 겹쳐도 됨 · 못 피하면 숨김 · RC2_LAY 8번째 값 1 = 제자리(지금은 안 씀) */
+function rc2Fit(b){if(!b)return;b.style.zoom='';const H=b.clientHeight;if(!H)return;
+  b.style.bottom='auto';const nat=b.offsetHeight;b.style.bottom='';
+  const pb=parseFloat(getComputedStyle(b).paddingBottom)||0,nt=[...b.children].find(e=>e.classList.contains('rc-note')&&getComputedStyle(e).position==='absolute');
+  const need=nat-pb+Math.max(pb,nt&&getComputedStyle(nt).display!=='none'?nt.offsetHeight+16:0);
+  if(need>H+1)b.style.zoom=Math.max(.72,H/need).toFixed(3)}
+// 글자·그림 자리 (360 설계 좌표). enter = 막 넣은 장: 들어오는 움직임을 잠깐 끄고 제자리에서 잼 (같은 순간이라 다시 시작돼도 안 보임)
+function rc2Keep(b,enter){const out=[];if(!b||!RC)return out;const c=RC.card.getBoundingClientRect(),k=360/(c.width||360);
+  if(enter)b.classList.add('r2-meas');
+  const add=(r,m,hero,sh,op)=>{if(r.width<1||r.height<1)return;const y0=(r.top-c.top)*k,y1=(r.bottom-c.top)*k,cut=sh?(y1-y0)*.12:0;
+    out.push({x:(r.left-c.left)*k-m,y:y0+cut-m,r:(r.right-c.left)*k+m,b:y1-cut+m,hero,op})};
+  // 불투명한 판(등급 배지 등): 도형이 그 뒤로 가려지니 판과 판 안의 글자는 겹쳐도 됨
+  const OP=new Set(),alpha=bg=>{const m=/rgba?\(([^)]+)\)/.exec(bg||'');if(!m)return 0;const q=m[1].split(',');return q.length>3?parseFloat(q[3]):1};
+  const all=[...b.querySelectorAll('*')],CS=new Map(all.map(e=>[e,getComputedStyle(e)]));
+  all.forEach(e=>{const s=CS.get(e);if(s.display!=='none'&&(!s.backgroundImage||s.backgroundImage==='none')&&alpha(s.backgroundColor)>=.95)OP.add(e)});
+  const inOp=el=>{for(let e=el;e&&e!==b;e=e.parentElement)if(OP.has(e))return true;return false};
+  const isHero=el=>!!el.closest('.r2-hero'),tw=document.createTreeWalker(b,NodeFilter.SHOW_TEXT);let n;
+  while((n=tw.nextNode())){if(!n.nodeValue.trim())continue;const el=n.parentElement;if(!el||el.closest('.od'))continue;const s=CS.get(el)||getComputedStyle(el);if(s.display==='none'||s.visibility==='hidden')continue;
+    const rg=document.createRange(),op=inOp(el);rg.selectNodeContents(n);[...rg.getClientRects()].forEach(r=>add(r,6,isHero(el)||r.height*k>=46,true,op))}
+  all.forEach(e=>{const s=CS.get(e);if(s.display==='none'||s.visibility==='hidden')return;
+    const media=/^(IMG|SVG|CANVAS|VIDEO)$/i.test(e.tagName)||e.classList.contains('od'),filled=(s.backgroundImage&&s.backgroundImage!=='none')||alpha(s.backgroundColor)>.02||parseFloat(s.borderTopWidth)>0;
+    if(media||filled||e.tagName==='BUTTON')add(e.getBoundingClientRect(),5,isHero(e)&&!/^(IMG|CANVAS)$/i.test(e.tagName),false,inOp(e))});
+  if(RC.ov)RC.ov.querySelectorAll('.rc-foot b,.rc-foot span').forEach(e=>add(e.getBoundingClientRect(),6,false,false,false));
+  if(enter)b.classList.remove('r2-meas');return out}
+const rc2BB=(a,b)=>a.x<b.r&&a.r>b.x&&a.y<b.b&&a.b>b.y;
+const rc2CB=(x,y,R,B)=>{const qx=Math.max(B.x,Math.min(x,B.r)),qy=Math.max(B.y,Math.min(y,B.b));return (qx-x)*(qx-x)+(qy-y)*(qy-y)<R*R};
+const rc2BinC=(x,y,R,B)=>[[B.x,B.y],[B.r,B.y],[B.r,B.b],[B.x,B.b]].every(([px,py])=>(px-x)*(px-x)+(py-y)*(py-y)<=R*R);
+// 볼록 다각형 ↔ 상자 (분리축)
+function rc2PB(P,B){const Q=[[B.x,B.y],[B.r,B.y],[B.r,B.b],[B.x,B.b]];for(const S of [P,Q])for(let i=0;i<S.length;i++){const[a,b]=S[i],[c,d]=S[(i+1)%S.length],nx=b-d,ny=c-a;let p0=1e9,p1=-1e9,q0=1e9,q1=-1e9;
+  P.forEach(([u,v])=>{const t=u*nx+v*ny;p0=Math.min(p0,t);p1=Math.max(p1,t)});Q.forEach(([u,v])=>{const t=u*nx+v*ny;q0=Math.min(q0,t);q1=Math.max(q1,t)});if(p1<=q0||q1<=p0)return false}return true}
+// 도형 하나가 상자 B에 닿나 (rc2Shape와 같은 모양 · 박자에 커지는 만큼은 s·w에 이미 더해서 줌)
+function rc2Hit(T,x,y,s,w,r,B){if(T==='orb'||T==='coin')return rc2CB(x,y,s,B);if(T==='spark')return rc2CB(x,y,s*.62,B);
+  if(T==='ring'){const W=w||6;return rc2CB(x,y,s+W/2+2,B)&&!rc2BinC(x,y,Math.max(0,s-W/2-2),B)}
+  if(T==='dots')return rc2BB({x:x-2*s-3,y:y-s-3,r:x+2*s+3,b:y+s+3},B);
+  const c=Math.cos(r),n=Math.sin(r);let P;if(T==='slash'||T==='ray')P=[[-s/2,-w/2],[s/2,-w/2],[s/2,w/2],[-s/2,w/2]];else if(T==='tile')P=[[-s/2,-s/2],[s/2,-s/2],[s/2,s/2],[-s/2,s/2]];else if(T==='gem')P=[[0,-s],[s*.74,0],[0,s],[-s*.74,0]];else return rc2CB(x,y,s,B);
+  return rc2PB(P.map(([a,b])=>[x+a*c-b*n,y+a*n+b*c]),B)}
+function rc2Avoid(L,set,keep,H){if(!keep||!keep.length)return L;const out=L.map(o=>({...o})),big=i=>(set[i]==='slash'||set[i]==='ray')?out[i].s>=160:out[i].s>=70;
+  const groups=[];out.forEach((o,i)=>{const g=groups.find(g=>Math.abs(out[g[0]].x-o.x)<1&&Math.abs(out[g[0]].y-o.y)<1);if(g)g.push(i);else groups.push([i])}); // 같은 자리 도형(해 + 고리)은 같이
+  const hit=(g,dx,dy)=>g.some(i=>{const o=out[i],T=set[i];if(!T||o.a<=.02)return false;const S=T==='dots'?o.s:o.s*1.045+5,W=(o.w||0)*1.045+4;return keep.some(B=>!B.op&&(!B.hero||!big(i))&&rc2Hit(T,o.x+dx,o.y+dy,S,W,o.r,B))});
+  groups.forEach(g=>{if(g.some(i=>out[i].fix)||!hit(g,0,0))return;const small=!g.some(big),o0=out[g[0]];let best=null;
+    for(let d=8;d<=(small?150:260)&&!best;d+=8){const C=[];for(let a=0;a<16;a++){const t=a*Math.PI/8,dx=Math.round(Math.cos(t)*d),dy=Math.round(Math.sin(t)*d),nx=o0.x+dx,ny=o0.y+dy;
+        if(small&&(nx<14||nx>346||ny<100||ny>H-74))continue; // 작은 도형은 카드 안 · 위 단추 줄과 아래 MEPURI 줄 밖으로는 안 감
+        if(!hit(g,dx,dy))C.push({dx,dy,o:(nx-180)*(nx-180)+(ny-H/2)*(ny-H/2)})}
+      if(C.length)best=C.sort((a,b)=>b.o-a.o)[0]} // 같은 거리면 바깥쪽(가장자리)으로
+    if(best)g.forEach(i=>{out[i].x+=best.dx;out[i].y+=best.dy});else g.forEach(i=>{out[i].a=0})}); // 못 피하면 숨김 (글자 위에 걸치는 것보다 나음)
+  return out}
 const rc2E=p=>1-Math.pow(1-p,3),rc2EIO=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
 function rc2RR(g,x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
 function rc2Shape(g,T,x,y,s,w,r,col,al,p){g.globalAlpha=al;g.fillStyle=col;g.strokeStyle=col;
@@ -7095,7 +7219,7 @@ function rc2Grain(g,light){const c=document.createElement('canvas');c.width=c.he
   const r=()=>(s=(s*1103515245+12345)&0x7fffffff)/0x7fffffff;for(let i=0;i<d.length;i+=4){const v=light?0:255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=r()<.5?Math.round(r()*(light?14:20)):0}
   x.putImageData(im,0,0);try{return g.createPattern(c,'repeat')}catch(e){return null}}
 // 장면 바꾸기: 같은 막이면 도형이 새 자리로 미끄러짐, 막이 바뀌면(와이프 뒤) 바로
-function rc2Scene(k,act,now){const v=RC.v2,L=rc2Lay(k,v.H),set=RC2_SET[act]||RC2_SET.start;now=now||performance.now();
+function rc2Scene(k,act,now){const v=RC.v2,set=RC2_SET[act]||RC2_SET.start,L=rc2Avoid(rc2Lay(k,v.H),set,v.keep,v.H);now=now||performance.now(); // 글자 자리를 피해서 (rc2Avoid)
   if(now===-1||v.A.length!==set.length||v.A.some((a,i)=>a.t!==set[i])){v.A=set.map((t,i)=>({t,from:{...L[i]},to:{...L[i]},cur:{...L[i]},t0:0}));v.dirty=true;return}
   v.A.forEach((a,i)=>{a.from={...a.cur};a.to={...L[i]};a.t0=now});v.dirty=true}
 function rc2Size(){const v=RC&&RC.v2;if(!v)return;const c=RC.card,k=parseFloat(c.style.zoom)||1,H=parseFloat(c.style.height)||640,d=Math.max(1,Math.min(2.5,(window.devicePixelRatio||1)*k));
@@ -7655,7 +7779,7 @@ function rc2Go(i){if(!RC||i<0||i>=RC.cards.length||i===RC.i)return;const v=RC.v2
   rc2A.go(rc2Sec(c),rc2Song(c));
   const np=rc2Pal(c.act,v.pm,c.k==='tier'&&!rm?0:v.tier);
   const put=()=>{v.p=np;v.act=c.act;rc2Paint(RC.card,np,v.pm);RC.ov.style.setProperty('--r2-ovbg',np[0]);
-    const b=document.createElement('div');b.className='rc-body';b.dataset.k=c.k;b.innerHTML=c.html;RC.page.appendChild(b);rc2Enter(b,c)};
+    const b=document.createElement('div');b.className='rc-body';b.dataset.k=c.k;b.innerHTML=c.html;RC.page.appendChild(b);rc2Fit(b);v.keep=rc2Keep(b,true);rc2Enter(b,c)}; // 길면 줄이고(rc2Fit) 글자 자리를 재 둠(도형이 피함)
   if(first||rm||!chg){
     if(!first&&!rm)rc2A.sfx('swish');
     RC.page.querySelectorAll('.rc-body').forEach(o=>{if(first||rm)o.remove();else{o.classList.add('out');setTimeout(()=>o.remove(),240)}});
@@ -7723,10 +7847,10 @@ if(RC_V2){
   rcGo=function(i){return RC&&RC.v2?rc2Go(i):o.go(i)};
   rcTick=function(ts){return RC&&RC.v2?rc2Tick(ts):o.tick(ts)};
   rcCount=function(r,rev){return RC&&RC.v2?rc2Count(r,rev):o.count(r,rev)};
-  rcReveal=function(){const was=!RC||RC.rev;o.reveal();if(RC&&RC.v2&&!was&&RC.rev)rc2OnReveal()};
+  rcReveal=function(){const was=!RC||RC.rev;o.reveal();if(RC&&RC.v2&&!was&&RC.rev){rc2OnReveal();const v=RC.v2,b=RC.page.querySelector('.rc-body:not(.out)'),c=RC.cards[RC.i];if(b&&c){v.keep=rc2Keep(b,false);rc2Scene(c.k,v.act,performance.now())}}}; // 열면서 보이는 글자도 도형이 피함
   rcPause=function(on){o.pause(on);if(RC&&RC.v2){if(RC.paused)rc2A.halt();else if(RC.i>0)rc2A.run()}};
   rcClose=function(){if(RC&&RC.app&&RC.v2)rc2End();o.close()};
-  rcFit=function(){o.fit();if(RC&&RC.v2)rc2Size()};
+  rcFit=function(){o.fit();if(RC&&RC.v2){const H=parseFloat(RC.card.style.height)||640,b=RC.page.querySelector('.rc-body:not(.out)');if(b&&H!==RC.v2.H){rc2Fit(b);RC.v2.keep=rc2Keep(b,false)}rc2Size()}}; // 카드 높이가 바뀌면 다시 맞추고 도형도 다시 피함
   // 공유 창 미리 보기 카드도 v2 색으로 (움직임 없음 · 캔버스 대신 CSS 그림)
   rcShMini=function(c){const h=o.mini(c);if(!RC||!RC.v2||!c)return h;const v=RC.v2,p=rc2Pal(c.act,v.pm,v.tier),[f1,o1]=rc2Fill(p[1],v.pm);
     return h.replace('class="rc rc-still"',`class="rc rc-still v2 pm-${v.pm}"`).replace(/style="--h1:[^"]*"/,`style="--r2-bg:${p[0]};--r2-c1:${p[1]};--r2-c2:${p[2]};--r2-c3:${p[3]};--r2-c4:${p[4]};--r2-hi:${p[5]};--r2-f1:${f1};--r2-on1:${o1}"`)};
@@ -8378,7 +8502,19 @@ function renderLayer0(){
         <div class="fm-foot"><span class="cap">${fw.m}월 ${fw.n}주차부터 적용<br><small class="${over?'pp-over':''}">${over?'12칸이 넘는 주가 있어요 · 하나를 빼 주세요':'모든 주가 12칸 이하예요'}</small></span><button class="btn out" type="button" id="m-cancel">취소</button><button class="btn pri" type="button" id="pp-ok" ${over?'disabled':''}>적용하기</button></div>
       </div></div></div>`;
   }
-  if(m&&m.kind==='fill'){const p=m.p,u=p.t==='W'?'주':'달',when=p.t==='W'?md(p.from)+' 주':(+p.from.slice(5,7))+'월',n=fillCount(p);
+  if(m&&m.kind==='fill'&&m.p.t==='D'){const p=m.p,take=p.rows.filter(r=>r.pick==='new').length,wk=d=>md(d)+' 주'; // 지난 주 일간 채우기 (10.30)
+    const chip=s=>`<span class="fm-b">${frame(s,'s28')}<span class="fm-n"><b>${esc(BY[s.boss].name)}</b>${dk(s.diff)}${s.party>1?`<small>${s.party}인</small>`:''}</span></span>`;
+    h+=`<div class="scrim" id="scrim"><div class="modal fm" role="dialog" aria-modal="true" aria-labelledby="f-title">
+      <div class="m-head"><span id="f-title">${wk(p.from)} 일간 채우기</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
+      <div class="m-body"><div class="info">${I.info}<span>${wk(wStart(p.src))} 일간 목록으로 채워요. 그 사이 이미 있던 날(주간으로 잡던 보스 등)은 그대로 둬요.</span></div>
+        ${p.also.length?`<div class="info">${I.info}<span>${p.also.map(wk).join(', ')}도 비어 있어서 같이 채워져요.</span></div>`:''}
+        <div class="fm-sub">비교</div>
+        <div class="fm-cols"><span>그 주 기록</span><span></span><span>들어올 보스</span><span></span></div>
+        <div class="fm-list">${p.rows.map((r,i)=>{const on=r.pick==='new';return `<div class="fm-row add${on?'':' off'}"><span class="fm-b fm-x">빈 칸</span><span class="fm-sign">→</span>${chip(r.n)}<button type="button" class="fm-tg ${on?'on':'off'}" data-fpick="${i}:${on?'off':'new'}" aria-pressed="${on}">${on?I.check(11,'currentColor')+'넣기':'안 넣기'}</button></div>`}).join('')}</div>
+        <div class="fm-foot"><span class="cap">일간 <b class="num">${take}</b>개</span><button class="btn out" type="button" id="m-cancel">취소</button><button class="btn pri" type="button" id="f-ok" ${take?'':'disabled'}>${take?`${take}개 채우기`:'채울 보스 없음'}</button></div>
+      </div></div></div>`;
+  }
+  if(m&&m.kind==='fill'&&m.p.t!=='D'){const p=m.p,u=p.t==='W'?'주':'달',when=p.t==='W'?md(p.from)+' 주':(+p.from.slice(5,7))+'월',n=fillCount(p);
     const cf=p.rows.filter(r=>r.k==='swap'||r.k==='diff').length,take=p.rows.filter(fillTake).length;
     const rng=g=>{const k0=dnum(p.from),d=g.ps.reduce((a,x)=>Math.abs(dnum(x)-k0)<Math.abs(dnum(a)-k0)?x:a);return pLabel(d,p.t)+(p.t==='W'?' 주':'')}; // 보는 기간과 가장 가까운 기록 하나만
     const ctag=g=>g.next&&g.prev?'앞뒤 기록 같음':g.next?'바로 뒤 기록':g.prev?'바로 앞 기록':'다른 기록';
@@ -8399,7 +8535,7 @@ function renderLayer0(){
         ${sw&&r.pick!=='both'&&full?`<span class="fm-note">칸이 꽉 차서 둘 다는 못 넣어요</span>`:''}</div>`};
     h+=`<div class="scrim" id="scrim"><div class="modal fm" role="dialog" aria-modal="true" aria-labelledby="f-title">
       <div class="m-head"><span id="f-title">${when} 채우기${cf?`<em class="fm-cf">충돌 ${cf}</em>`:''}</span><button type="button" id="m-x" aria-label="닫기">${I.x(16)}</button></div>
-      <div class="m-body"><div class="info">${I.info}<span>기록된 ${u}의 목록을 골라 채워요. 그 ${u}만 넣은 보스는 빼고 봐요. 다른 기록된 ${u}는 바뀌지 않아요.</span></div>
+      <div class="m-body"><div class="info">${I.info}<span>기록된 ${u}의 목록을 골라 채워요. 그 ${u}만 넣은 보스는 빼고 봐요. 다른 기록된 ${jo(u,'은')} 바뀌지 않아요.</span></div>
         ${p.also.length?`<div class="info">${I.info}<span>${p.also.map(d=>pLabel(d,p.t)).join(', ')}${p.t==='W'?' 주':''}도 비어 있어서 같이 채워져요.</span></div>`:''}
         ${p.run.length?`<div class="info">${I.info}<span>${p.run.map(d=>pLabel(d,p.t)).join(', ')}${p.t==='W'?' 주':''}도 지금 목록이 같아서 같이 채워져요.</span></div>`:''}
         <div class="fm-sub">가져올 목록${p.cands.length>1?` <small>${p.cands.length}가지</small>`:''}</div>
@@ -8583,7 +8719,9 @@ function renderLayer0(){
     const dec={};m.rows.forEach(r=>{if(r.wk)r.wk.forEach(w=>{dec[r.cid+'|'+r.boss+'|'+w]={k:r.k,keep:r.keep}});else dec[r.cid+'|'+r.boss]={k:r.k,keep:r.keep}});if(m.scope){applyPast(p,[m.cid],m.from,dec,new Set(m.scope),p.name);return}applyPreset(p,m.once,dec,m.from)};
   L.querySelectorAll('[data-pcall]').forEach(b=>b.onclick=()=>{const k=b.dataset.pcall==='keep';ui.modal.rows.forEach(r=>r.keep=k);renderLayer()});
   L.querySelectorAll('[data-fpick]').forEach(b=>b.onclick=()=>{const [i,v]=b.dataset.fpick.split(':');ui.modal.p.rows[+i].pick=v;renderLayer()});
-  const fok=document.getElementById('f-ok');if(fok)fok.onclick=()=>{const {p,cid}=ui.modal,c=st.chars.find(x=>x.id===cid)||cur();ui.modal=null;renderLayer();let k=0;set(()=>{k=applyFill(c,p)});
+  const fok=document.getElementById('f-ok');if(fok)fok.onclick=()=>{const {p,cid}=ui.modal,c=st.chars.find(x=>x.id===cid)||cur();ui.modal=null;renderLayer();let k=0;
+    if(p.t==='D'){const snap=JSON.stringify(c.slots);let after='';set(()=>{k=applyFillD(c,p);after=JSON.stringify(c.slots)});slotUndo(`${md(p.from)} 주${p.also.length?`부터 ${p.also.length+1}주`:''}에 일간 보스 ${k}개를 채웠어요`,c.id,snap,after);return} // 지난 주 일간 채우기 (되돌리기 6초)
+    set(()=>{k=applyFill(c,p)});
     toast(`${p.t==='W'?md(p.from)+' 주':(+p.from.slice(5,7))+'월'}에 ${k}칸을 채웠어요${p.also.length?` · ${p.also.length}${p.t==='W'?'주':'달'} 더`:''}`)};
   const uo=document.getElementById('u-ok');if(uo)uo.onclick=()=>{const {id,cid}=ui.modal;ui.modal=null;renderLayer();unclear(id,cid)};
   if(uo)setTimeout(()=>{const c=document.getElementById('m-cancel');c&&c.focus()},0);
