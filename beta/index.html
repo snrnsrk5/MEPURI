@@ -2817,7 +2817,7 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 
 .rc.v2 .r2-rank em{width:16px;font-style:normal;font-weight:800;color:var(--muted);--pf-fg:var(--muted)}
 
-.rc.v2 .r2-rank img{width:38px;height:38px;border-radius:10px;object-fit:cover}
+.rc.v2 .r2-rank img:not(.ava){width:38px;height:38px;border-radius:10px;object-fit:cover} /* 보스 그림만 — 파티원 얼굴(.ava.look)은 넥슨 300×300 그림을 자르는 설정(object-fit:none·zoom)을 그대로 써야 작게 안 나옴 */
 
 .rc.v2 .r2-rank span{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -7219,11 +7219,13 @@ const rc2A=(()=>{let C=null,M=null,MU=null,FX=null,CB=null,LP=null,DL=null,NZ=nu
   // 음원 곡들: 섹터(막)마다 곡의 한 부분(map → '곡.부분') · 부분 = {start 처음 들어갈 자리, loopStart~loopEnd 그 부분 반복, gain, key, hit 크게 터지는 자리}
   //  넘김 모양 (사용자: "전반적으로 노래 전환이 좀 부드러운게 나을듯")
   //   · 같은 곡 다른 부분: 다음 마디 첫 박(bar0·bb)에서 한 마디 동안 서로 겹쳐 바뀜(등가 크기 곡선, 필터 없음) — 박이 그대로 이어짐
-  //   · 부분에 cut이 있으면(등급 충격음처럼 '쾅' 들어와야 하는 곳): 다음 박에서 새 부분은 바로, 앞 소리는 먹먹해지며 xp초
+  //   · 부분에 cut이 있으면(등급 충격음처럼 '쾅' 들어와야 하는 곳): 다음 박에서 새 부분은 바로, 앞 소리는 먹먹해지며 xp초(부분에 xp가 있으면 그 값)
+  //     cut:'bar'면 다음 마디 첫 박에서 (등급 → 마무리: 오케스트라 두 부분이 길게 겹치면 뭉개져서 — 사용자: "노래 막 낑기는")
   //   · 다른 곡: 다음 박에서 새 곡은 xi초에 걸쳐 올라오고, 앞 곡은 먹먹해지며(저역 통과 필터) xf초에 걸쳐 빠짐
-  //   · then이 있는 부분(등급 → 마무리: 오케스트라가 원래 끝맺음으로 잦아든 뒤): after초 들은 뒤 then 곡으로 천천히 넘어감
+  //   · then이 있는 부분(마무리: 오케스트라가 원래 끝맺음으로 거의 잦아든 뒤): after초 들은 뒤 then 곡으로 넘어감 (박에 맞게 0.25초 일찍 부름)
+  //     넘어간 뒤 같은 장을 다시 부르면(소리 껐다 켜기 등) 앞 곡을 처음부터 다시 틀지 않고 then 곡 그대로 (TH)
   //  멈췄다 다시 틀면 멈춘 자리부터 · 끊김 없는 반복(AudioBuffer loop) · 메모리: 지금 곡과 다음 곡만 풀어 둠 (폰에서 곡을 다 풀면 100MB 가까이라)
-  let SGbad=false,SC=null,WS='',ERR='';const SG={};
+  let SGbad=false,SC=null,WS='',ERR='',TH=null;const SG={};
   const tell=d=>{try{window.dispatchEvent(new CustomEvent('rc2bgm',{detail:d}))}catch(e){}}; // 곡 상태 알림 (시험판 단추가 받아서 보여 줌 · 배포본엔 받는 쪽 없음)
   const songs=()=>{const S=RC2_BGM.songs||{};return Object.keys(S).length?S:RC2_BGM.src?{main:{src:RC2_BGM.src,vol:RC2_BGM.vol,bpm:RC2_BGM.bpm,beat0:RC2_BGM.beat0,key:RC2_BGM.key,loopStart:RC2_BGM.loopStart,loopEnd:RC2_BGM.loopEnd}}:{}};
   const FM=()=>!SGbad&&Object.keys(songs()).length>0;
@@ -7252,7 +7254,7 @@ const rc2A=(()=>{let C=null,M=null,MU=null,FX=null,CB=null,LP=null,DL=null,NZ=nu
     const me={n,p,src,g,lf,st:T,o,ls:P.loopStart||0,le:P.loopEnd||0,t0:T-o};SC=me;const ch=keyCh(P.key||x.key);if(ch)cur=ch;
     const dl=(T-C.currentTime)*1000;if(dl>25)setTimeout(()=>{if(SC===me)sgSync()},dl);else sgSync();
     // then: 이 부분을 after초 들은 뒤(멈췄다 다시 틀면 남은 만큼) 다음 곡으로 — 그때까지 이 부분이 그대로 나오고 있을 때만
-    if(P.then&&P.after>0){const left=P.after-Math.max(0,o-(P.start||0));if(left>0)setTimeout(()=>{if(SC===me&&on&&WS===n+'.'+p)sgTo(P.then,{xf:P.thenXf,xi:P.thenXi})},dl+left*1000)}
+    if(P.then&&P.after>0){const left=P.after-Math.max(0,o-(P.start||0));if(left>0)setTimeout(()=>{if(SC===me&&on&&WS===n+'.'+p){TH={from:n+'.'+p,to:P.then};sgTo(P.then,{xf:P.thenXf,xi:P.thenXi})}},dl+Math.max(0,left-.25)*1000)}
     tell({ok:true,n,p})}
   // 같은 곡 부분끼리: T부터 D초 동안 등가 곡선으로 빠짐 (필터 없음 — 새 부분과 박이 같아서 섞여도 자연스러움)
   function sgFade(D,T){if(!SC)return;const c=SC,t=Math.max(T||0,C.currentTime);SC=null;const v0=Math.max(.0001,c.g.gain.value||svol(c.n,c.p));
@@ -7268,8 +7270,8 @@ const rc2A=(()=>{let C=null,M=null,MU=null,FX=null,CB=null,LP=null,DL=null,NZ=nu
   // 곡 순서(카드 순서대로) — 다음 곡은 미리 받아 두고, 안 쓰는 곡은 풀어 둔 소리를 버림
   const order=()=>{const o=[],ad=n=>{if(n&&!o.includes(n))o.push(n)};((RC&&RC.cards)||[]).forEach(c=>{const t=tg(rc2Song(c));ad(t.n);const P=t.n&&songs()[t.n]&&part(t.n,t.p);if(P&&P.then)ad(tg(P.then).n)});return o}; // then 곡도 순서에 (미리 받아 둠)
   function sgKeep(n){const o=order(),nx=o[o.indexOf(n)+1];Object.keys(SG).forEach(k=>{if(k!==n&&k!==nx&&SG[k].buf)SG[k].buf=null});if(nx)sgLoad(nx).catch(()=>{})}
-  // 넘길 시각: 같은 곡(cut 아님)은 지금 곡의 다음 마디 첫 박, 그 밖은 다음 박 (lead초 뒤부터)
-  function snapT(n,p,lead){if(!SC)return null;const x=songs()[SC.n]||{},same=SC.n===n&&!part(n,p).cut,q=qs(SC.n),u=same?q*(x.bb||4):q,g=SC.t0+(same?(x.bar0||0):(x.beat0||0));
+  // 넘길 시각: 같은 곡(cut 아님·cut:'bar')은 지금 곡의 다음 마디 첫 박, 그 밖은 다음 박 (lead초 뒤부터)
+  function snapT(n,p,lead){if(!SC)return null;const x=songs()[SC.n]||{},P=part(n,p),bar=SC.n===n&&(!P.cut||P.cut==='bar'),q=qs(SC.n),u=bar?q*(x.bb||4):q,g=SC.t0+(bar?(x.bar0||0):(x.beat0||0));
     return g+Math.ceil((C.currentTime+lead-g)/u)*u}
   // 섹터 바꾸기: '' = 표지(지금 곡을 작게) · 같은 부분 = 크기만 · 다른 부분 = 위 '넘김 모양'대로 · 못 받으면 합성 곡으로
   function sgTo(w,op){WS=w;if(!on||!C)return;const {n,p}=tg(w);op=op||{};
@@ -7278,7 +7280,7 @@ const rc2A=(()=>{let C=null,M=null,MU=null,FX=null,CB=null,LP=null,DL=null,NZ=nu
     sgLoad(n).then(()=>{if(!on||WS!==w||(SC&&SC.n===n&&SC.p===p))return;const st=SG[n],P=part(n,p);let T=C.currentTime+.04,o=null,fi=.35,mode='';
       if(SC){const same=SC.n===n,x=songs()[SC.n]||{};T=snapT(n,p,.06);
         if(same&&!P.cut){const D=Math.min(2.2,qs(SC.n)*(x.bb||4));sgFade(D,T);fi=D;mode='ep'} // 같은 곡: 한 마디 겹침
-        else if(same){sgStop(RC2_BGM.xp||.9,T,false,true);fi=.12}                              // 쾅 들어오는 부분
+        else if(same){sgStop(P.xp||RC2_BGM.xp||.9,T,false,true);fi=.12}                        // 쾅 들어오는 부분 (cut:'bar'는 마디선에서)
         else{sgStop(op.xf||RC2_BGM.xf||2.6,T,false,true);fi=op.xi||RC2_BGM.xi||1.2;mode='ep'}} // 다른 곡
       else if(st.res&&st.res.p===p)o=st.res.pos;
       st.res=null;sgStart(n,p,T,fi,o,mode);sgKeep(n)}).catch(()=>{if(on&&WS===w&&!SC){SGbad=true;on=false;tell({ok:false,n,err:ERR});run()}})}
@@ -7293,20 +7295,22 @@ const rc2A=(()=>{let C=null,M=null,MU=null,FX=null,CB=null,LP=null,DL=null,NZ=nu
   function halt(){if(!C||!on)return;on=false;clearInterval(iv);iv=0;fade(0,.2);if(SC)sgStop(.2,0,true);const c=C;setTimeout(()=>{if(C===c&&!on&&c.state==='running')c.suspend().catch(()=>{})},350)}
   return {
     live:()=>!!(C&&on&&C.state==='running'&&(!FM()||SC)),barOff:()=>FM()?0:boff,
-    prime(){if(rc2SndOn()&&mk()){if(C.state==='suspended')C.resume().catch(()=>{});if(FM()){const o=order();if(o[0])sgLoad(o[0]).catch(()=>{})}}}, // 결산 열기를 누른 순간(사용자 동작) 미리 만들어 둠 · 첫 곡은 미리 받아 둠
-    rewind(){Object.keys(SG).forEach(k=>{if(SG[k])SG[k].res=null})}, // 처음부터 다시 보기: 섹터마다 부분 첫 자리부터 (지금 나오는 곡은 그대로)
-    // 저절로 넘길 때: 다음 장이 다른 부분이면 곡이 실제로 바뀌는 시각(화면 시각 ms) — 그 시각에 맞춰 넘기면 화면과 곡이 같이 바뀜
+    prime(){if(rc2SndOn()&&mk()){if(C.state==='suspended')C.resume().catch(()=>{});if(FM()&&(!RC||RC.i<=0)){const o=order();if(o[0])sgLoad(o[0]).catch(()=>{})}}}, // 결산 열기를 누른 순간(사용자 동작) 미리 만들어 둠 · 첫 곡은 표지에서만 미리 받아 둠 (중간에 소리를 켤 땐 안 받음)
+    rewind(){TH=null;Object.keys(SG).forEach(k=>{if(SG[k])SG[k].res=null})}, // 처음부터 다시 보기: 섹터마다 부분 첫 자리부터 (지금 나오는 곡은 그대로)
+    // 저절로 넘길 때: 다음 장이 다른 부분이면 곡이 바뀌는 시각(화면 시각 ms) — 그 0.11초 전에 넘기면 곡도 그 마디선·박에서 바뀜
+    //  소리 처리 시각(currentTime) 기준: 들리는 시각(출력 지연 포함)으로 재면 폰·블루투스처럼 지연이 큰 기기에서
+    //  넘기는 순간 이미 마디선을 지나 곡이 한 마디(최대 1.9초) 늦게 바뀌었음 → 화면이 출력 지연만큼 먼저 바뀌는 쪽이 나음
     snapAt(w){if(!C||!on||!SC||C.state!=='running'||!FM())return null;const {n,p}=tg(w);if(!n||(SC.n===n&&SC.p===p))return null;const t=snapT(n,p,.25);if(t==null)return null;
-      let pt=null;try{const o=C.getOutputTimestamp&&C.getOutputTimestamp();if(o&&o.performanceTime>0)pt=o.performanceTime+(t-o.contextTime)*1000}catch(e){}
-      if(pt==null||!isFinite(pt))pt=performance.now()+(t-C.currentTime+(C.outputLatency||C.baseLatency||0))*1000;return pt},
+      return performance.now()+(t-C.currentTime)*1000},
     // 지금 부분의 '크게 터지는 자리'까지 남은 시간(ms)과 한 박(ms) — 등급 공개를 곡의 클라이맥스 첫 박에 맞출 때
     hitIn(){if(!C||!on||!SC||C.state!=='running')return null;const P=part(SC.n,SC.p);if(!(P.hit>=0)||P.hit<SC.o)return null;const t=SC.st+(P.hit-SC.o);if(t<C.currentTime)return null;
       let pt=null;try{const o=C.getOutputTimestamp&&C.getOutputTimestamp();if(o&&o.performanceTime>0)pt=o.performanceTime+(t-o.contextTime)*1000}catch(e){}
       if(pt==null||!isFinite(pt))pt=performance.now()+(t-C.currentTime+(C.outputLatency||C.baseLatency||0))*1000;return {ms:pt-performance.now(),beat:qs(SC.n)*1000}},
-    go(s,n){want=s||'';if(FM()){if(on)sgTo(n||'');else{WS=n||'';if(WS)run()}return}if(want||on)run()},run,halt,
+    go(s,n){want=s||'';n=n||'';if(TH){if(n===TH.from)n=TH.to;else if(n!==TH.to)TH=null} // then으로 넘어간 장을 다시 부르면 then 곡 그대로
+      if(FM()){if(on)sgTo(n);else{WS=n;if(WS)run()}return}if(want||on)run()},run,halt,
     duck(d){if(!C)return;const t=C.currentTime;LP.frequency.cancelScheduledValues(t);LP.frequency.setValueAtTime(LP.frequency.value,t);LP.frequency.exponentialRampToValueAtTime(d?650:20000,t+.18);
       MU.gain.cancelScheduledValues(t);MU.gain.setValueAtTime(MU.gain.value,t);MU.gain.linearRampToValueAtTime(d?.5:.8,t+.18)},
-    close(){if(!C)return;const c=C;try{fade(0,.25)}catch(e){}try{if(SC)SC.src.stop(c.currentTime+.3)}catch(e){}SC=null;WS='';SGbad=false;Object.keys(SG).forEach(k=>delete SG[k]);clearInterval(iv);iv=0;on=false;C=null;sec='';want='';setTimeout(()=>{try{c.close()}catch(e){}},400)},
+    close(){if(!C)return;const c=C;try{fade(0,.25)}catch(e){}try{if(SC)SC.src.stop(c.currentTime+.3)}catch(e){}SC=null;WS='';TH=null;SGbad=false;Object.keys(SG).forEach(k=>delete SG[k]);clearInterval(iv);iv=0;on=false;C=null;sec='';want='';setTimeout(()=>{try{c.close()}catch(e){}},400)},
     card(){if(!C)return;const o=CB,t=C.currentTime;try{o.gain.setValueAtTime(o.gain.value,t);o.gain.linearRampToValueAtTime(0,t+.04);setTimeout(()=>{try{o.disconnect()}catch(e){}},200)}catch(e){}CB=C.createGain();CB.connect(FX)}, // 장이 바뀌면 그 장 효과음(틱·뽁)은 끊음
     sfx(n,a){if(!ok()||C.state!=='running')return;const t=C.currentTime+.012,D=CB;try{switch(n){
       // 막이 바뀔 때: 공통 '슉' + 막마다 다른 꼬리 (보스 베기 · 돈 짤랑 · 기록 똑똑 · 물욕 반짝 · 사람 부풂 · 마무리 심벌)
@@ -7349,7 +7353,7 @@ const rc2A=(()=>{let C=null,M=null,MU=null,FX=null,CB=null,LP=null,DL=null,NZ=nu
     // 잔디: 그 주에 잡은 날 수만큼 높은 음 (화음 음계) · 너무 붙은 음은 건너뜀
     grass(cols){if(!ok()||C.state!=='running')return;const S=scale(),t0=C.currentTime;let last=-1;cols.forEach(([ms,n])=>{const t=t0+ms/1000+.02;if(!n||t-last<.06)return;last=t;
       try{pluck(t,S[Math.min(S.length-1,n-1)]+12,R(.18,.26),.45+.08*n,.3,pn(CB,R(-.3,.3)))}catch(e){if(window.__rc2dbg)console.error('rc2 sound',e)}})},
-    _s:()=>({sc:SC&&SC.n,pt:SC&&SC.p,st:SC&&SC.st,t0:SC&&SC.t0,ctx:C&&C.currentTime,ws:WS,on,bad:SGbad,err:ERR,kept:Object.keys(SG).filter(k=>SG[k].buf),bl:RC&&RC.v2&&RC.v2.bl,cur}), // 시험용: 지금 곡 상태
+    _s:()=>({sc:SC&&SC.n,pt:SC&&SC.p,st:SC&&SC.st,t0:SC&&SC.t0,ctx:C&&C.currentTime,ws:WS,th:TH&&TH.to,on,bad:SGbad,err:ERR,kept:Object.keys(SG).filter(k=>SG[k].buf),bl:RC&&RC.v2&&RC.v2.bl,cur}), // 시험용: 지금 곡 상태
     // 시험용: 구간 목록을 차례로 (구간마다 sec초) 오프라인으로 그려 AudioBuffer로 — 소리 크기·잘림 확인
     async _off(list,sec1){const K=[C,M,MU,FX,CB,LP,DL,NZ,PW,PAD,BAS,step,nextT,sec,want,s0,boff,on,cur];const n=list.length*sec1+2,OC=new OfflineAudioContext(2,Math.ceil(44100*n),44100);
       mk(OC);M.gain.value=.6;sec='';want='';step=0;let t=.05;for(let gs=0;t<n-1.5;gs++,t+=S16){want=list[Math.min(list.length-1,Math.floor(t/sec1))]||'';try{play(gs,t)}catch(e){}}
@@ -7630,7 +7634,7 @@ if(RC_V2){
 }
 
 /* 결산 v2 곡 설정 (build_rel.py가 넣음 · 곡 파일은 public/assets — 결산을 열고 넘길 때만 받음) */
-Object.assign(RC2_BGM,{"songs":{"N1":{"bpm":87,"beat0":0.3448,"key":"F#m","vol":0.52,"parts":{"boss":{"start":0.0,"loopStart":2.7586,"loopEnd":46.8966},"money":{"start":48.2759,"loopStart":56.5517,"loopEnd":100.6896,"hit":56.5517}},"qbpm":174,"bar0":0,"src":"/assets/rc2-bgm1.ac9cf49e45.mp3"},"B":{"bpm":122.54,"beat0":0.0,"key":"Bm","vol":0.44,"parts":{"rec":{"start":0.0,"loopStart":0.0,"loopEnd":54.8392},"loot":{"start":56.7978,"loopStart":72.4661,"loopEnd":95.9687,"hit":72.4661}},"bar0":0,"src":"/assets/rc2-bgm2.46c498dfbd.mp3"},"N3":{"bpm":129.32,"beat0":0.0,"key":"D","vol":0.62,"parts":{"ppl":{"start":0.5599,"loopStart":20.4145,"loopEnd":35.2614,"gain":1.3},"tier":{"start":57.5317,"loopStart":61.2434,"loopEnd":76.0903,"cut":true,"gain":1.0,"hit":62.1714},"out":{"start":77.9462,"then":"D.end","thenXf":3.5,"thenXi":2.5,"after":14.8469,"gain":1.0}},"bar0":0,"src":"/assets/rc2-bgm3.98d686491b.mp3"},"D":{"bpm":82,"beat0":0.8,"key":"C","vol":0.5,"parts":{"end":{"start":0,"loopStart":0.8,"loopEnd":94.46}},"bar0":0.8,"src":"/assets/rc2-bgm4.91c335dc85.mp3"}},"map":{"start":"N1.boss","boss":"N1.boss","money":"N1.money","rec":"B.rec","loot":"B.loot","ppl":"N3.ppl","tier":"N3.tier","end":"N3.out","mini":"D.end"},"xf":2.6,"xi":1.2,"xp":0.9});
+Object.assign(RC2_BGM,{"songs":{"N1":{"bpm":87,"beat0":0.3448,"key":"F#m","vol":0.52,"parts":{"boss":{"start":0.0,"loopStart":2.7586,"loopEnd":46.8966},"money":{"start":48.2759,"loopStart":56.5517,"loopEnd":100.6896,"hit":56.5517}},"qbpm":174,"bar0":0,"src":"/assets/rc2-bgm1.ac9cf49e45.mp3"},"B":{"bpm":122.54,"beat0":0.0,"key":"Bm","vol":0.44,"parts":{"rec":{"start":0.0,"loopStart":0.0,"loopEnd":54.8392},"loot":{"start":56.7978,"loopStart":72.4661,"loopEnd":95.9687,"hit":72.4661}},"bar0":0,"src":"/assets/rc2-bgm2.46c498dfbd.mp3"},"N3":{"bpm":129.32,"beat0":0.0,"key":"D","vol":0.62,"parts":{"ppl":{"start":0.5599,"loopStart":20.4145,"loopEnd":35.2614,"gain":1.3},"tier":{"start":57.5317,"loopStart":61.2434,"loopEnd":76.0903,"cut":true,"gain":1.0,"hit":62.1714},"out":{"start":77.9462,"then":"D.end","thenXf":3.0,"thenXi":3.0,"after":27.8379,"gain":1.0,"cut":"bar","xp":0.6}},"bar0":0,"src":"/assets/rc2-bgm3.98d686491b.mp3"},"D":{"bpm":82,"beat0":0.8,"key":"C","vol":0.5,"parts":{"end":{"start":0,"loopStart":0.8,"loopEnd":94.46}},"bar0":0.8,"src":"/assets/rc2-bgm4.91c335dc85.mp3"}},"map":{"start":"N1.boss","boss":"N1.boss","money":"N1.money","rec":"B.rec","loot":"B.loot","ppl":"N3.ppl","tier":"N3.tier","end":"N3.out","mini":"D.end"},"xf":2.6,"xi":1.2,"xp":0.9});
 
 /* ---------- 넥슨 Open API ----------
    테스트 웹: 내 API 키를 이 브라우저(localStorage)에만 저장해서 직접 호출.
