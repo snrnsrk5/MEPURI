@@ -3378,7 +3378,7 @@ function statusView(){
   const c=cur(),k=charStats(c);
   const f=st.filter;
   const L=live(c);
-  const sec=t=>{let list=L.filter(s=>tOf(s)===t);const fb=fillBar(c,t),sb=t==='W'?seasonRow(c):'',n0=list.length;if(!n0&&!fb&&!sb)return '';
+  const sec=t=>{let list=L.filter(s=>tOf(s)===t);const fb=fillBar(c,t)||(list.length?'':addBar(c,t)),sb=t==='W'?seasonRow(c):'',n0=list.length;if(!n0&&!fb&&!sb)return '';
     if(st.hide)list=list.filter(s=>!isDone(c,s));
     const so=st.sort||'set',pv=s=>myPrice(s)||0;
     if(so==='hi')list=list.slice().sort((a,b)=>pv(b)-pv(a));else if(so==='lo')list=list.slice().sort((a,b)=>pv(a)-pv(b));else if(so==='lv')list=list.slice().sort((a,b)=>lvOf(a)-lvOf(b)||pv(a)-pv(b)); // 같은 레벨이면 결정석 싼 순
@@ -3418,7 +3418,7 @@ function statusView(){
       <div class="foot"><span>Data based on NEXON Open API${SAME_API?' · <a class="linkish" href="/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>':''}</span><button class="linkish danger-link" type="button" id="reset">${EMPTY_START?'초기화':'예시 데이터로 초기화'}</button></div>${LEGAL}
     </aside>
     <section class="col-r">
-      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v||(VIEW_OFF&&v!=='all'&&fillBar(c,v))?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
+      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v||(VIEW_OFF&&v!=='all'&&(fillBar(c,v)||addBar(c,v)))?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
         <div class="bar-r vo-w"><button class="vo-btn" type="button" id="vo-btn" aria-haspopup="menu" aria-expanded="${!!ui.vo}">${SORTS[st.sort||'set']}${(st.hide||Object.values(st.hideT||{}).some(Boolean))?'<i class="vo-dot"></i>':''}${I.caret('var(--sub)',9)}</button>
           ${ui.vo?`<div class="vo-menu" role="menu">
             ${Object.entries(SORTS).map(([k,l])=>`<button type="button" role="menuitemradio" aria-checked="${(st.sort||'set')===k}" class="${(st.sort||'set')===k?'on':''}" data-vsort="${k}">${l}</button>`).join('')}
@@ -3648,6 +3648,10 @@ function bindStatus(){
     set(()=>{const sl={boss:id,diff,party:1,cshare:null,lmode:'sell',lshare:null,memo:'',only:key};c.slots.push(sl);
       const a=(c.clears[id]||[]).filter(e=>!inWeek(dOf(e)));a.push({d:TODAY,diff,v:myPrice(sl,TODAY)});a.sort((x,y)=>dOf(x)<dOf(y)?-1:1);c.clears[id]=a});
     toast(`${BY[id].name} ${DKO[diff]} 클리어!${other?` · ${nm(other)}도 이 주에 잡았어요 (메이플ID당 주 1회)`:''}`)});
+  v.querySelectorAll('[data-addno]').forEach(b=>b.onclick=()=>{const c=cur(),t=b.dataset.addno;set(()=>{c.fillSeen=c.fillSeen||{};c.fillSeen['add'+t]=''});toast(`지난 ${t==='D'?'주':'달'}엔 ${TKO[t]} 보스 추가를 다시 안 물어볼게요 · 보스 설정에서 언제든 넣을 수 있어요`)});
+  v.querySelectorAll('[data-addp]').forEach(b=>b.onclick=()=>{const t=b.dataset.addp,w0=WEEK[0],m0=MONTH+'.01';ui.cal=null;VIEW_OFF=0;calcDates();syncWords();
+    set(()=>{const f=st.form;st.tab='settings';st.stab='form';if(f.type!==t){f.party=1;f.mates=[];f.ceq=true;f.leq=true}f.type=t;f.slot=null;fixForm();f.span='past';if(t==='D')ui.pfrom=w0;else ui.pmon=m0;if(st.sfilter&&st.sfilter!=='all')st.sfilter=t});
+    toast(`${TKO[t]} 보스를 고르고 아래 「${t==='D'?'목록에 추가':'슬롯에 넣기'}」를 누르면 ${t==='D'?md(w0)+' 주':(+m0.slice(5,7))+'월'}부터 비어 있는 곳에 넣어요`);try{scrollTo(0,0)}catch(e){}});
   v.querySelectorAll('[data-fillno]').forEach(b=>b.onclick=()=>{const c=cur(),t=b.dataset.fillno,p=fillNeed(c,t);if(!p)return;
     set(()=>{c.fillSeen=c.fillSeen||{};[p.from,...p.also,...p.run].forEach(d=>{c.fillSeen[pkOf(d,t)]=atDay(d,()=>weekSig(c,t))})});
     toast(`${t==='W'?'이 주는':t==='D'?'이 주 일간은':'이 달은'} 지금 목록 그대로 둘게요`)});
@@ -3865,6 +3869,12 @@ function fillNeedD(c){if(!VIEW_OFF||WEEK[0]>=REALW)return null;const w0=WEEK[0];
   if(!src)return null;
   const list=atDay(src,()=>live(c).filter(x=>tOf(x)==='D'&&!isSeason(x.boss)).map(x=>({boss:x.boss,diff:x.diff,party:x.party||1,mates:matesOf(x),cshare:x.cshare??null,lmode:x.lmode||'sell',lshare:x.lshare??null,memo:x.memo||''})));
   return list.length?{t:'D',from:w0,also,run:[],src,cap:99,cands:[],rows:list.map(n=>({k:'add',n,pick:'new'}))}:null}
+// 11.02 지난 주·달에 일간·월간 보스가 하나도 없고 채울 목록(뒤 주 일간)도 없으면: 「추가할까요?」 → 보스 설정 일간 「과거 주부터」(월간 「과거 달부터」) + 보던 주·달
+function addBar(c,t){if(!VIEW_OFF||(t!=='D'&&t!=='M')||(c.fillSeen||{})['add'+t]==='')return '';
+  if(t==='D'){if(WEEK[0]>=REALW||!pastWeeks().includes(WEEK[0]))return ''}else if(noMon(TODAY)||!pastMons().includes(MONTH+'.01'))return '';
+  if(pkOf(t==='D'?WEEK[0]:MONTH+'.01',t) in (c.fillSeen||{}))return `<div style="display:flex;justify-content:center;padding:2px 0 10px"><button class="btn out" type="button" data-addp="${t}">+ ${TKO[t]} 보스 추가</button></div>`; // 이 주(달) 채우기를 「그대로 두기」 했으면 작은 단추만
+  const u=t==='D'?'주':'달';
+  return `<div class="fillbar"><span class="fb-t"><b>이 ${u}엔 ${TKO[t]} 보스가 없어요</b><small>${TKO[t]} 보스를 추가할까요? 이 ${u}부터 비어 있는 ${t==='D'?'날':'달'}에 넣어요</small></span><span class="fb-btns"><button class="btn out" type="button" data-addno="${t}">안 해요</button><button class="btn pri" type="button" data-addp="${t}">추가하기</button></span></div>`}
 function fillBarD(c){const p=fillNeedD(c);if(!p)return '';const n=p.also.length+1;
   return `<div class="fillbar"><span class="fb-t"><b>일간 보스가 없는 주예요</b><small>바로 뒤 주 일간 목록으로 채워요${n>1?` · ${n}주 같이`:''}</small></span><span class="fb-btns"><button class="btn out" type="button" data-fillno="D">그대로 두기</button><button class="btn pri" type="button" data-fill="D">채우기</button></span></div>`}
 function applyFillD(c,p){let k=0;p.rows.forEach(r=>{if(r.pick!=='new')return;const g=gapList(c,r.n.boss,r.n.diff,'D',p.from,p.src);if(!g.length)return;gapPut(c,r.n.boss,r.n,'D',g,p.src,false);k++});return k}

@@ -3099,10 +3099,18 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .rc.v2 .rc-hint{background:rgba(0,0,0,.72);background-color:var(--pf-tc,rgba(0,0,0,.72));background-image:paint(mpt);--pf-t:rgba(0,0,0,.72);color:#FFFFFF;--pf-fg:#FFFFFF}
 
 /* 11.02 진행 막대: 분야(보스·돈 / 기록·물욕 / 사람·등급 / 마무리)가 바뀌는 칸 앞만 조금 더 띄움 */
-.rc.v2 .rc-prog i[data-gs]{margin-left:6px}
+.rc.v2 .rc-prog{gap:4px}
+.rc.v2 .rc-prog i[data-gs]{margin-left:7px}
 
 /* 11.02 굴러가는 숫자 끝 글자 잘림: 칸이 넘치는 부분을 자르는데(overflow:hidden) 굵은 숫자는 글자 폭보다 살짝 삐져나옴 → 양옆에 여유를 두고 그만큼 바깥 여백을 당겨 자리는 그대로 */
 .od{padding:0 .08em;margin:0 -.08em}
+
+/* 11.02 그래프 체감: 막대 칸(.rc-vs·.rc-wd)은 위 숫자·아래 글자와 같은 줄에 있어서, 막대가 높으면 다 같이 줄어 비율이 흐려졌음
+   → 막대는 줄지 않게 하고 높이 = (칸 높이 − 글자 자리) × 값 비율(--p, 가장 큰 값 = 1) */
+.rc.v2 .rc-vs{height:200px}
+.rc.v2 .rc-vs i,.rc.v2 .rc-wd i{flex:0 0 auto;min-height:3px}
+.rc.v2 .rc-vs i{height:calc((100% - 62px) * var(--p,1))}
+.rc.v2 .rc-wd i{height:calc((100% - 50px) * var(--p,1))}
 
 /* 결산 빛 번짐·반짝임: paint가 켜지면(.pfok) 원래 그림 대신 paint(mpg)만 — 반투명 그림이라 겹쳐 그리면 진해져서 */
 :root.pfok{--pf-rgi:paint(mpg)}
@@ -4273,7 +4281,7 @@ function statusView(){
   const c=cur(),k=charStats(c);
   const f=st.filter;
   const L=live(c);
-  const sec=t=>{let list=L.filter(s=>tOf(s)===t);const fb=fillBar(c,t),sb=t==='W'?seasonRow(c):'',n0=list.length;if(!n0&&!fb&&!sb)return '';
+  const sec=t=>{let list=L.filter(s=>tOf(s)===t);const fb=fillBar(c,t)||(list.length?'':addBar(c,t)),sb=t==='W'?seasonRow(c):'',n0=list.length;if(!n0&&!fb&&!sb)return '';
     if(st.hide)list=list.filter(s=>!isDone(c,s));
     const so=st.sort||'set',pv=s=>myPrice(s)||0;
     if(so==='hi')list=list.slice().sort((a,b)=>pv(b)-pv(a));else if(so==='lo')list=list.slice().sort((a,b)=>pv(a)-pv(b));else if(so==='lv')list=list.slice().sort((a,b)=>lvOf(a)-lvOf(b)||pv(a)-pv(b)); // 같은 레벨이면 결정석 싼 순
@@ -4313,7 +4321,7 @@ function statusView(){
       <div class="foot"><span>Data based on NEXON Open API${SAME_API?' · <a class="linkish" href="/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>':''}</span><button class="linkish danger-link" type="button" id="reset">${EMPTY_START?'초기화':'예시 데이터로 초기화'}</button></div>${LEGAL}
     </aside>
     <section class="col-r">
-      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v||(VIEW_OFF&&v!=='all'&&fillBar(c,v))?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
+      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v||(VIEW_OFF&&v!=='all'&&(fillBar(c,v)||addBar(c,v)))?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
         <div class="bar-r vo-w"><button class="vo-btn" type="button" id="vo-btn" aria-haspopup="menu" aria-expanded="${!!ui.vo}">${SORTS[st.sort||'set']}${(st.hide||Object.values(st.hideT||{}).some(Boolean))?'<i class="vo-dot"></i>':''}${I.caret('var(--sub)',9)}</button>
           ${ui.vo?`<div class="vo-menu" role="menu">
             ${Object.entries(SORTS).map(([k,l])=>`<button type="button" role="menuitemradio" aria-checked="${(st.sort||'set')===k}" class="${(st.sort||'set')===k?'on':''}" data-vsort="${k}">${l}</button>`).join('')}
@@ -4543,6 +4551,10 @@ function bindStatus(){
     set(()=>{const sl={boss:id,diff,party:1,cshare:null,lmode:'sell',lshare:null,memo:'',only:key};c.slots.push(sl);
       const a=(c.clears[id]||[]).filter(e=>!inWeek(dOf(e)));a.push({d:TODAY,diff,v:myPrice(sl,TODAY)});a.sort((x,y)=>dOf(x)<dOf(y)?-1:1);c.clears[id]=a});
     toast(`${BY[id].name} ${DKO[diff]} 클리어!${other?` · ${nm(other)}도 이 주에 잡았어요 (메이플ID당 주 1회)`:''}`)});
+  v.querySelectorAll('[data-addno]').forEach(b=>b.onclick=()=>{const c=cur(),t=b.dataset.addno;set(()=>{c.fillSeen=c.fillSeen||{};c.fillSeen['add'+t]=''});toast(`지난 ${t==='D'?'주':'달'}엔 ${TKO[t]} 보스 추가를 다시 안 물어볼게요 · 보스 설정에서 언제든 넣을 수 있어요`)});
+  v.querySelectorAll('[data-addp]').forEach(b=>b.onclick=()=>{const t=b.dataset.addp,w0=WEEK[0],m0=MONTH+'.01';ui.cal=null;VIEW_OFF=0;calcDates();syncWords();
+    set(()=>{const f=st.form;st.tab='settings';st.stab='form';if(f.type!==t){f.party=1;f.mates=[];f.ceq=true;f.leq=true}f.type=t;f.slot=null;fixForm();f.span='past';if(t==='D')ui.pfrom=w0;else ui.pmon=m0;if(st.sfilter&&st.sfilter!=='all')st.sfilter=t});
+    toast(`${TKO[t]} 보스를 고르고 아래 「${t==='D'?'목록에 추가':'슬롯에 넣기'}」를 누르면 ${t==='D'?md(w0)+' 주':(+m0.slice(5,7))+'월'}부터 비어 있는 곳에 넣어요`);try{scrollTo(0,0)}catch(e){}});
   v.querySelectorAll('[data-fillno]').forEach(b=>b.onclick=()=>{const c=cur(),t=b.dataset.fillno,p=fillNeed(c,t);if(!p)return;
     set(()=>{c.fillSeen=c.fillSeen||{};[p.from,...p.also,...p.run].forEach(d=>{c.fillSeen[pkOf(d,t)]=atDay(d,()=>weekSig(c,t))})});
     toast(`${t==='W'?'이 주는':t==='D'?'이 주 일간은':'이 달은'} 지금 목록 그대로 둘게요`)});
@@ -4760,6 +4772,12 @@ function fillNeedD(c){if(!VIEW_OFF||WEEK[0]>=REALW)return null;const w0=WEEK[0];
   if(!src)return null;
   const list=atDay(src,()=>live(c).filter(x=>tOf(x)==='D'&&!isSeason(x.boss)).map(x=>({boss:x.boss,diff:x.diff,party:x.party||1,mates:matesOf(x),cshare:x.cshare??null,lmode:x.lmode||'sell',lshare:x.lshare??null,memo:x.memo||''})));
   return list.length?{t:'D',from:w0,also,run:[],src,cap:99,cands:[],rows:list.map(n=>({k:'add',n,pick:'new'}))}:null}
+// 11.02 지난 주·달에 일간·월간 보스가 하나도 없고 채울 목록(뒤 주 일간)도 없으면: 「추가할까요?」 → 보스 설정 일간 「과거 주부터」(월간 「과거 달부터」) + 보던 주·달
+function addBar(c,t){if(!VIEW_OFF||(t!=='D'&&t!=='M')||(c.fillSeen||{})['add'+t]==='')return '';
+  if(t==='D'){if(WEEK[0]>=REALW||!pastWeeks().includes(WEEK[0]))return ''}else if(noMon(TODAY)||!pastMons().includes(MONTH+'.01'))return '';
+  if(pkOf(t==='D'?WEEK[0]:MONTH+'.01',t) in (c.fillSeen||{}))return `<div style="display:flex;justify-content:center;padding:2px 0 10px"><button class="btn out" type="button" data-addp="${t}">+ ${TKO[t]} 보스 추가</button></div>`; // 이 주(달) 채우기를 「그대로 두기」 했으면 작은 단추만
+  const u=t==='D'?'주':'달';
+  return `<div class="fillbar"><span class="fb-t"><b>이 ${u}엔 ${TKO[t]} 보스가 없어요</b><small>${TKO[t]} 보스를 추가할까요? 이 ${u}부터 비어 있는 ${t==='D'?'날':'달'}에 넣어요</small></span><span class="fb-btns"><button class="btn out" type="button" data-addno="${t}">안 해요</button><button class="btn pri" type="button" data-addp="${t}">추가하기</button></span></div>`}
 function fillBarD(c){const p=fillNeedD(c);if(!p)return '';const n=p.also.length+1;
   return `<div class="fillbar"><span class="fb-t"><b>일간 보스가 없는 주예요</b><small>바로 뒤 주 일간 목록으로 채워요${n>1?` · ${n}주 같이`:''}</small></span><span class="fb-btns"><button class="btn out" type="button" data-fillno="D">그대로 두기</button><button class="btn pri" type="button" data-fill="D">채우기</button></span></div>`}
 function applyFillD(c,p){let k=0;p.rows.forEach(r=>{if(r.pick!=='new')return;const g=gapList(c,r.n.boss,r.n.diff,'D',p.from,p.src);if(!g.length)return;gapPut(c,r.n.boss,r.n,'D',g,p.src,false);k++});return k}
@@ -7668,7 +7686,7 @@ function rc2Cards(X,ro){if(!ro||typeof ro!=='object')ro={noL:!!ro};const V=X&&X.
     <div class="rc-note"${A(5)}>${view?'만든 날 메푸리 시세 기준':'지금 메푸리 시세 기준'} · 재미로 봐 주세요</div>`)}
   // 처음과 지금
   if(V.growth&&!V.short){const g=V.growth,m=Math.max(g.f,g.l);add('growth','money',7000,`<div class="r2-h">${K('처음과 지금, 주 수익이')}</div><div class="r2-hero">${Od(g.up)}<span class="r2-u">% 늘었어요</span></div>
-    <div class="rc-vs"><div><b class="num"${A(2)}>${rcE(g.f)}</b><i style="height:${(g.f/m*100).toFixed(1)}%;--d:1500ms"></i><span>처음 ${g.k}주 평균</span></div><div class="on"><b class="num"${A(3)}>${rcE(g.l)}</b><i style="height:${(g.l/m*100).toFixed(1)}%;--d:1700ms"></i><span>최근 ${g.k}주 평균</span></div></div>
+    <div class="rc-vs"><div><b class="num"${A(2)}>${rcE(g.f)}</b><i style="--p:${(g.f/m).toFixed(3)};--d:1500ms"></i><span>처음 ${g.k}주 평균</span></div><div class="on"><b class="num"${A(3)}>${rcE(g.l)}</b><i style="--p:${(g.l/m).toFixed(3)};--d:1700ms"></i><span>최근 ${g.k}주 평균</span></div></div>
     <div class="rc-note"${A(5)}>다 끝난 주만 셌어요</div>`)}
   // 보스 잡은 날 (잔디: 칸 하나 = 하루 · 세로 = 목~수, 가로 = 주) — 숫자가 멈춘 뒤 왼쪽부터 칸칸이 채워지며 소리
   {const wEnd=sxWeek(V.yrTo),wks=[];for(let w=V.w1;w<=wEnd;w=sxAdd(w,7))wks.push(w);
@@ -7685,7 +7703,7 @@ function rc2Cards(X,ro){if(!ro||typeof ro!=='object')ro={noL:!!ro};const V=X&&X.
   // 나의 보스 요일 (도장)
   if(!V.short&&V.ws>=3){const wl=['목','금','토','일','월','화','수'],wm=Math.max(...V.wd);add('wd','rec',7000,`<div class="r2-h">${K('나의 보스 요일')}</div><div class="r2-stamp"><span>${esc(V.per[0])}</span></div>
     <p class="r2-say"${A(3)}>${esc(V.per[1])}</p><div class="r2-sub"${A(4)}>주간 보스를 <b>${wl[V.wtop]}요일</b>에 제일 많이 잡았어요</div>
-    <div class="rc-wd">${V.wd.map((n,i)=>`<div class="${i===V.wtop?'on':''}"><b class="num">${n}</b><i style="height:${Math.max(3,n/wm*100).toFixed(1)}%;--d:${i*70+900}ms"></i><span>${wl[i]}</span></div>`).join('')}</div>
+    <div class="rc-wd">${V.wd.map((n,i)=>`<div class="${i===V.wtop?'on':''}"><b class="num">${n}</b><i style="--p:${Math.max(.03,n/wm).toFixed(3)};--d:${i*70+900}ms"></i><span>${wl[i]}</span></div>`).join('')}</div>
     <div class="rc-note"${A(6)}>목요일에 초기화돼서 목요일부터 셌어요</div>`)}
   // 연속 기록
   if(V.streak>=2){const s0=sxAdd(V.sEnd,-(V.streak-1)*7),wkH=new Set(V.wkW),N=V.span.length,big=N>20;
