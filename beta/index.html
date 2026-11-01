@@ -3098,6 +3098,12 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 
 .rc.v2 .rc-hint{background:rgba(0,0,0,.72);background-color:var(--pf-tc,rgba(0,0,0,.72));background-image:paint(mpt);--pf-t:rgba(0,0,0,.72);color:#FFFFFF;--pf-fg:#FFFFFF}
 
+/* 11.02 진행 막대: 분야(보스·돈 / 기록·물욕 / 사람·등급 / 마무리)가 바뀌는 칸 앞만 조금 더 띄움 */
+.rc.v2 .rc-prog i[data-gs]{margin-left:6px}
+
+/* 11.02 굴러가는 숫자 끝 글자 잘림: 칸이 넘치는 부분을 자르는데(overflow:hidden) 굵은 숫자는 글자 폭보다 살짝 삐져나옴 → 양옆에 여유를 두고 그만큼 바깥 여백을 당겨 자리는 그대로 */
+.od{padding:0 .08em;margin:0 -.08em}
+
 /* 결산 빛 번짐·반짝임: paint가 켜지면(.pfok) 원래 그림 대신 paint(mpg)만 — 반투명 그림이라 겹쳐 그리면 진해져서 */
 :root.pfok{--pf-rgi:paint(mpg)}
 
@@ -3528,7 +3534,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.25.3", "d": "2026-10-30", "l": ["보스 설정에서 일간·월간 보스도 과거부터 넣을 수 있어요", "보스 현황에서 지난 주 일간 보스를 채울 수 있어요"], "prev": [{"v": "0.25.2", "d": "2026-10-29", "l": ["몇몇 브라우저의 다크 모드에서 버튼·배경 색을 원래 색에 더 가깝게 맞췄어요"]}, {"v": "0.25.1", "d": "2026-10-28", "l": ["몇몇 브라우저의 다크 모드에서 색이 완전히 틀어지던 걸 보정했어요"]}]};
+const NEWS={"v": "0.25.4", "d": "2026-11-02", "l": ["지난 주·달을 볼 때 일간·월간 보스가 없어도 그 칸을 눌러 채울 수 있어요"], "prev": [{"v": "0.25.3", "d": "2026-10-30", "l": ["보스 설정에서 일간·월간 보스도 과거부터 넣을 수 있어요", "보스 현황에서 지난 주 일간 보스를 채울 수 있어요"]}, {"v": "0.25.2", "d": "2026-10-29", "l": ["몇몇 브라우저의 다크 모드에서 버튼·배경 색을 원래 색에 더 가깝게 맞췄어요"]}]};
 const HAD_DATA=(()=>{try{return !!BLS.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 const BETA_FRESH=BETA&&!HAD_DATA&&(()=>{try{return !!BLS.raw.getItem(KEY)}catch(e){return false}})(); // 베타: 베타 칸은 비었고 이 기기에 정식 기록은 있음
 let BETA_NOSAVE=false; // 베타: 이 기기 저장 공간(정식과 같이 씀)이 빠듯하면 베타 기록을 비우고 이번엔 저장 안 함 → 정식 기록이 저장될 자리를 남김
@@ -4307,7 +4313,7 @@ function statusView(){
       <div class="foot"><span>Data based on NEXON Open API${SAME_API?' · <a class="linkish" href="/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>':''}</span><button class="linkish danger-link" type="button" id="reset">${EMPTY_START?'초기화':'예시 데이터로 초기화'}</button></div>${LEGAL}
     </aside>
     <section class="col-r">
-      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
+      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v||(VIEW_OFF&&v!=='all'&&fillBar(c,v))?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
         <div class="bar-r vo-w"><button class="vo-btn" type="button" id="vo-btn" aria-haspopup="menu" aria-expanded="${!!ui.vo}">${SORTS[st.sort||'set']}${(st.hide||Object.values(st.hideT||{}).some(Boolean))?'<i class="vo-dot"></i>':''}${I.caret('var(--sub)',9)}</button>
           ${ui.vo?`<div class="vo-menu" role="menu">
             ${Object.entries(SORTS).map(([k,l])=>`<button type="button" role="menuitemradio" aria-checked="${(st.sort||'set')===k}" class="${(st.sort||'set')===k?'on':''}" data-vsort="${k}">${l}</button>`).join('')}
@@ -6674,8 +6680,8 @@ function rcView(R,o){o=o||{};const app=o.mode!=='share',cs=[],at=new Map(),cut=(
   const chars=R.chars.slice(0,6).map(x=>({ci:ci(x.c),v:x.v})); // 표지 얼굴 6 · 이름 3 · MVP 5
   const first=R.first?{d:R.first.d,id:R.first.id,diff:R.first.diff,ci:ci(R.first.c)}:null;
   const P=R.priciest,priciest=P?{n:P.n,price:P.price,d:P.d,id:P.id,diff:P.diff,ci:ci(P.c)}:null;
-  const mOut=!app&&o.mt!=='show'; // 링크에서 파티원 빼기 → 파티원 카드가 아예 없음 (이름·횟수 모두 안 올라감)
-  const mt=mOut?[]:R.mt.map(([n,k])=>{const e=typeof mlGet==='function'?mlGet(n):null; // (예전 '가린 파티원' an은 그리는 쪽만 남겨 둠)
+  const mOut=!app&&o.mt!=='show'&&o.mt!=='anon',mAn=!app&&o.mt==='anon'; // 11.02 이름 가리기: 이름·코디 없이 '파티원 1·2·3'과 횟수만 // 링크에서 파티원 빼기 → 파티원 카드가 아예 없음 (이름·횟수 모두 안 올라감)
+  const mt=mOut?[]:R.mt.map(([n,k],i)=>{if(mAn)return {n:'파티원 '+(i+1),k,an:1};const e=typeof mlGet==='function'?mlGet(n):null; // (예전 '가린 파티원' an은 그리는 쪽만 남겨 둠)
     return e&&e.ok?{n:app?n:cut(n,16),k,lk:{u:rcOkLook(e.u)?e.u:null,lv:+e.lv||null,j:cut(e.j,20),w:cut(e.w,12)}}:{n:app?n:cut(n,16),k}});
   const it=x=>({n:x.n,kills:x.kills,got:x.got}),dl=R.dex.slice().sort((a,b)=>(b.got>0)-(a.got>0)||b.got-a.got||b.kills-a.kills);
   const dayN={};R.dayN.forEach((n,d)=>{dayN[d]=n});
@@ -6963,8 +6969,8 @@ async function shApi(op,body){let r,j=null;
   try{j=await r.json()}catch(e){}
   if(!r.ok){const e=new Error((j&&j.error&&j.error.message)||`서버 오류예요 (${r.status})`);e.status=r.status;e.code=(j&&j.error&&j.error.name)||'';throw e}
   return j}
-const SH_OPT=[['tn','링크 이름',[['char','대표 캐릭터'],['nick','닉네임'],['none','안 넣기']]],['nm','캐릭터 이름',[['show','보이기'],['hide','가리기']]],['lk','캐릭터 모습',[['show','보이기'],['job','직업 그림']]],['mt','파티원 카드',[['show','넣기'],['hide','빼기']]]];
-const shOptTxt=o=>`이름 ${o&&o.nm==='show'?'보임':'가림'} · 모습 ${o&&o.lk==='show'?'보임':'직업 그림'} · 파티원 ${o&&o.mt==='show'?'넣음':'뺌'}`;
+const SH_OPT=[['tn','링크 이름',[['char','대표 캐릭터'],['nick','닉네임'],['none','안 넣기']]],['nm','캐릭터 이름',[['show','보이기'],['hide','가리기']]],['lk','캐릭터 모습',[['show','보이기'],['job','직업 그림']]],['mt','파티원 카드',[['show','넣기'],['anon','이름 가리기'],['hide','빼기']]]];
+const shOptTxt=o=>`이름 ${o&&o.nm==='show'?'보임':'가림'} · 모습 ${o&&o.lk==='show'?'보임':'직업 그림'} · 파티원 ${o&&o.mt==='show'?'넣음':o&&o.mt==='anon'?'이름 가림':'뺌'}`;
 const shLeft=x=>Math.max(0,Math.ceil((x.exp-Date.now())/864e5));
 // 링크 이름: 닉네임은 12자, 글자·숫자·띄어쓰기와 기호 몇 개만 (서버도 같은 규칙으로 다시 확인하고 제목을 만듦). 한글 채움 문자(빈칸처럼 보임)는 안 됨
 const SH_NICK_K='mepuri-share-nick',SH_NICK_RE=/^[\p{L}\p{N} _\-·~!?♡♥★☆^]{1,12}$/u,SH_FILL=/[\u115F\u1160\u3164\uFFA0]/;
@@ -7004,7 +7010,7 @@ function rcShPaint(){const S=RC&&RC.sh;if(!S)return;const V=rcView(RC.R,{mode:'s
   const sc0=S.el.querySelector('.rc-shp'),top0=sc0?sc0.scrollTop:0,ae=document.activeElement,keep=ae&&ae.matches&&ae.matches('[data-shnk]')&&S.el.contains(ae)?[ae.selectionStart,ae.selectionEnd]:null;
   S.el.innerHTML=`<div class="rc-shp"><div class="rc-shh"><b>결산 공유하기</b><button type="button" class="rc-shx" data-shx aria-label="닫기">${RC_I.x}</button></div>
     <p class="rc-shd">받은 사람은 로그인 없이 카드만 넘겨 볼 수 있어요. 링크는 ${(I&&I.days)||SH_DAYS}일 뒤 저절로 지워져요.</p>
-    <div class="rc-shpv">${rcShMini(C.find(c=>c.k==='cover'))}${RC.R.mt.length?(S.o.mt==='show'?rcShMini(C.find(c=>c.k==='mate')):'<div class="rc-mini rc-mout" aria-hidden="true"><span>파티원 카드는<br>링크에 안 들어가요</span></div>'):''}</div>
+    <div class="rc-shpv">${rcShMini(C.find(c=>c.k==='cover'))}${RC.R.mt.length?(S.o.mt!=='hide'?rcShMini(C.find(c=>c.k==='mate')):'<div class="rc-mini rc-mout" aria-hidden="true"><span>파티원 카드는<br>링크에 안 들어가요</span></div>'):''}</div>
     ${chat}
     <div class="rc-shopts">${opt}</div>
     <button type="button" class="rc-shgo" data-shgo${can?'':' disabled'}>${S.busy?'만드는 중…':'링크 만들기'}</button>${msg?`<p class="rc-shwhy${S.err?' err':''}" role="${S.err?'alert':'status'}">${esc(msg)}</p>`:''}
@@ -7266,7 +7272,7 @@ function rc2Wipe(c1,c2,mid){RC.v2.wipe={t0:performance.now(),du:620,c1,c2,mid,do
    곡: 막마다 4마디 구간 — 보스(가단조 i–VI–III–VII, 힘차게) · 돈(왕도 진행 IV–V–iii–vi, 밝게) · 기록(ii–V–I–vi, 그루브) · 물욕(i–♭II, 신비롭게)
        · 사람(IV–iii–ii–I, 따뜻하게) · 마무리(IV–V–iii–vi + 멜로디 → 8마디 뒤 잔잔한 끝 구간). 표지는 조용히
    구간은 다음 박에서 바뀜 (심벌 한 번). 화면 박자(RC.v2.t0)와 소리 박자를 맞춰서 도형이 박에 맞춰 뜀 */
-const rc2A=(()=>{let C=null,M=null,MU=null,PM=null,FX=null,CB=null,LP=null,DL=null,NZ=null,PW=null,PAD=null,BAS=null,iv=0,step=0,nextT=0,sec='',want='',s0=0,boff=0,on=false,cur=[57,60,64];
+const rc2A=(()=>{let C=null,M=null,MU=null,PM=null,FX=null,CB=null,LP=null,DL=null,NZ=null,PW=null,PAD=null,BAS=null,iv=0,step=0,nextT=0,sec='',want='',s0=0,boff=0,on=false,cur=[57,60,64],upM=0;
   let S16=RC2_B/4/1000;const mtof=m=>440*Math.pow(2,(m-69)/12);
   function mk(oc){if(C&&!oc)return C;const AC=window.AudioContext||window.webkitAudioContext;if(!AC&&!oc)return null;
     if(oc)C=oc;else try{C=new AC({latencyHint:'interactive'})}catch(e){try{C=new AC()}catch(x){return null}}
@@ -7556,7 +7562,7 @@ const rc2A=(()=>{let C=null,M=null,MU=null,PM=null,FX=null,CB=null,LP=null,DL=nu
       case 'open':{const F=B(D0,.85);mduck(t,3,.35);crash(t,1.4,F);vo(P,84,108).slice(0,7).forEach((m,i)=>bellP(t+i*u32*.6,m,R(.8,1),F,1.8,pal));thump(t,P,.55,F,.5,110);break}
       case 'stamp':{const F=B(D0,.85);mduck(t,2,.22);thump(t,P,.7,F,.18,95);nzs(t,.1,'bandpass',R(650,950),1,vca(t,.2,.001,0,.08,F));break}
       // MVP 등급 한 칸씩: 지금 화음 음을 아래부터 한 칸씩 (rc2Cube가 곡 박에 맞춰 부름) — 예전엔 칩튠 펄스 + 화음 밖 음이 많았음
-      case 'up':{const F=B(D0,2.4),L=vo(P,67,98),s=a||0,m=L[Math.min(L.length-1,s)],u=gq(t,4,.09);pluckP(u,m,.85,pn(F,s%2?.2:-.2),.36,pal);bellP(u,m+12,.5,F,.6,pal);break}
+      case 'up':{const F=B(D0,2.4),L=vo(P,67,98),s=a||0,m=s?(L.find(x=>x>upM)??vo(P,upM+1,upM+13)[0]):L[0];upM=m;const u=gq(t,4,.09);pluckP(u,m,.85,pn(F,s%2?.2:-.2),.36,pal);bellP(u,m+12,.5,F,.6,pal);break}
       case 'tier':{const g=a||0,F=B(D0);mduck(t,g>=3?3:1.5,.4);if(g>=3)crash(t,1,F);const L=vo(P,74,100);(g>=3?L.slice(0,7):L.slice(0,3)).forEach((m,i)=>bellP(t+i*u32,m,g>=3?.9:.6,F,1.6,pal));if(g>=2)stabP(t+.02,vo(P,60,76).slice(0,4),.6,F,pal);break}
       // 마무리 축하: 새 곡(로파이) 박에 맞춰 화음 음을 차례로 올라가고 마지막에 화음 — 예전: 다장조 금관 스탭 고정(넘김 중인 MVP 곡과 부딪힘 · 박도 안 맞음)
       case 'fan':{const F=B(D0,1.6),u=gq(t,4,.2);let lo=67;for(let i=0;i<6;i++){const tt=u+i*u16,L=vo(pcsAt(tt),lo,lo+12),m=L[0];bellP(tt,m,.7+.05*i,F,1.4,pal);lo=m+1}const e=u+6*u16;stabP(e,vo(pcsAt(e),55,72).slice(0,4),.9,F,pal);crash(e,.7,F);break}
@@ -7746,7 +7752,7 @@ const rc2Sec=c=>!c||c.k==='cover'?'':c.k==='mini'?'outro':c.k==='ring'?'ppl':c.k
 function rc2Mount(V,ro,R){const app=ro.mode!=='view',cards=rcCards(V,ro),ov=document.createElement('div'),pm=rc2Mode(),snd=rc2SndOn();
   ov.id='rc-ov';ov.className='v2 pm-'+pm;ov.tabIndex=-1;ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label',`${V.Y} 메푸리 결산`);if(!app)ov.classList.add('view');
   ov.innerHTML=`<div class="rc-stage"><button type="button" class="rc-arr" data-rc="prev" aria-label="이전 장">${RC_I.l}</button>
-    <div class="rc v2 pm-${pm}"><canvas class="r2-cv" aria-hidden="true"></canvas><span class="rc-bg" aria-hidden="true"></span><div class="rc-prog" aria-hidden="true">${cards.map(()=>'<i><b></b></i>').join('')}</div>
+    <div class="rc v2 pm-${pm}"><canvas class="r2-cv" aria-hidden="true"></canvas><span class="rc-bg" aria-hidden="true"></span><div class="rc-prog" aria-hidden="true">${cards.map((c,i)=>`<i${i&&rc2Grp(c)!==rc2Grp(cards[i-1])?' data-gs="1"':''}><b></b></i>`).join('')}</div>
       <div class="rc-top"><span>${V.Y} 메푸리 결산</span><span class="rc-ctl"><span class="rc-pz">일시정지</span><button type="button" data-rc2="snd" aria-pressed="${snd}" aria-label="${snd?'소리 끄기':'소리 켜기'}" title="${snd?'소리 끄기':'소리 켜기'} (M)">${snd?RC2_I.on:RC2_I.off}</button>${app&&!V.mini?`<button type="button" data-rc="share" aria-label="공유 링크 만들기">${RC_I.share}</button>`:''}<button type="button" data-rc="pause" aria-label="멈추기">${RC_I.pause}</button>${app?`<button type="button" data-rc="close" aria-label="닫기">${RC_I.x}</button>`:''}</span></div>
       <div class="rc-page"></div><div class="rc-foot"><b>MEPURI</b><span>mepuri.bosslog.workers.dev</span></div><canvas class="r2-fx" aria-hidden="true"></canvas></div>
     <button type="button" class="rc-arr" data-rc="next" aria-label="다음 장">${RC_I.r}</button></div>`;
@@ -7829,6 +7835,8 @@ function rc2Tick(ts){if(!RC)return;const dt=RC.last?Math.min(100,ts-RC.last):0;R
         if(ts>=v.qAt-110)rcGo(RC.i+1)} // 박 0.11초 전에 넘기면 곡도 바로 그 박에서 바뀜
       else rcGo(RC.i+1)}}
   RC.raf=requestAnimationFrame(rcTick)}
+// 진행 막대 묶음 (11.02 사용자: 분야별로 살짝 띄우기) — 보스·돈 / 기록·물욕 / 사람·등급 / 마무리
+const rc2Grp=c=>({start:0,boss:0,money:0,rec:1,loot:1,ppl:2,tier:2,end:3})[c&&c.act]??3;
 function rc2Snd(){const on=!rc2SndOn();rc2SndSet(on);const b=RC&&RC.ov.querySelector('[data-rc2="snd"]');
   if(b){b.innerHTML=on?RC2_I.on:RC2_I.off;b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',on?'소리 끄기':'소리 켜기');b.title=(on?'소리 끄기':'소리 켜기')+' (M)'}
   if(!RC)return;if(on){rc2A.prime();rc2A.go(rc2Sec(RC.cards[RC.i]),rc2Song(RC.cards[RC.i]))}else rc2A.halt()}
@@ -7850,7 +7858,8 @@ if(RC_V2){
   rcReveal=function(){const was=!RC||RC.rev;o.reveal();if(RC&&RC.v2&&!was&&RC.rev){rc2OnReveal();const v=RC.v2,b=RC.page.querySelector('.rc-body:not(.out)'),c=RC.cards[RC.i];if(b&&c){v.keep=rc2Keep(b,false);rc2Scene(c.k,v.act,performance.now())}}}; // 열면서 보이는 글자도 도형이 피함
   rcPause=function(on){o.pause(on);if(RC&&RC.v2){if(RC.paused)rc2A.halt();else if(RC.i>0)rc2A.run()}};
   rcClose=function(){if(RC&&RC.app&&RC.v2)rc2End();o.close()};
-  rcFit=function(){o.fit();if(RC&&RC.v2){const H=parseFloat(RC.card.style.height)||640,b=RC.page.querySelector('.rc-body:not(.out)');if(b&&H!==RC.v2.H){rc2Fit(b);RC.v2.keep=rc2Keep(b,false)}rc2Size()}}; // 카드 높이가 바뀌면 다시 맞추고 도형도 다시 피함
+  rcFit=function(){o.fit();if(RC&&RC.v2&&!RC.ov.classList.contains('ph')){const ov=RC.ov,W=ov.clientWidth,A=ov.clientHeight-48,k=Math.max(.6,Math.min(1.1,A/640,(W-190)/360)),h=Math.floor(Math.max(640,Math.min(720,A/k)));RC.card.style.zoom=k.toFixed(4);RC.card.style.height=h+'px'} // 11.02: PC 9:18 → 창이 낮으면 9:16까지
+  if(RC&&RC.v2){const H=parseFloat(RC.card.style.height)||640,b=RC.page.querySelector('.rc-body:not(.out)');if(b&&H!==RC.v2.H){rc2Fit(b);RC.v2.keep=rc2Keep(b,false)}rc2Size()}}; // 카드 높이가 바뀌면 다시 맞추고 도형도 다시 피함
   // 공유 창 미리 보기 카드도 v2 색으로 (움직임 없음 · 캔버스 대신 CSS 그림)
   rcShMini=function(c){const h=o.mini(c);if(!RC||!RC.v2||!c)return h;const v=RC.v2,p=rc2Pal(c.act,v.pm,v.tier),[f1,o1]=rc2Fill(p[1],v.pm);
     return h.replace('class="rc rc-still"',`class="rc rc-still v2 pm-${v.pm}"`).replace(/style="--h1:[^"]*"/,`style="--r2-bg:${p[0]};--r2-c1:${p[1]};--r2-c2:${p[2]};--r2-c3:${p[3]};--r2-c4:${p[4]};--r2-hi:${p[5]};--r2-f1:${f1};--r2-on1:${o1}"`)};

@@ -832,7 +832,7 @@ const SHARE_ID = /^[A-Za-z0-9]{10}$/, SHARE_MODES = ['off', 'admin', 'all'];
 // 링크 보기 화면 파일 (public/r/) — build_view.py가 만든 파일 이름(내용 해시)으로 바꿔 넣음
 // 링크 미리보기 작은 그림 (정사각 600×600, 연도별) — build_view.py가 만든 파일 이름으로 바꿔 넣음. 없는 해는 사이트 그림(og.png)
 const SHARE_OG = { 2025: '/r/a/og2025.196aeccbe9.jpg', 2026: '/r/a/og2026.fccda8118b.jpg', 2027: '/r/a/og2027.5cc5e51301.jpg', 2028: '/r/a/og2028.1894725dc9.jpg' };
-const SHARE_VIEW = { js: '/r/a/view.0b89028662.js', css: '/r/a/view.2622ffcfca.css' };
+const SHARE_VIEW = { js: '/r/a/view.ce6a1dacdf.js', css: '/r/a/view.2ab18c190f.css' };
 // 본 횟수에서 빼는 것: 링크 미리보기·검색 봇 (카톡·디스코드·슬랙·트위터·텔레그램·페이스북…)
 const SHARE_BOT = /bot|crawl|spider|slurp|facebookexternalhit|kakaotalk-scrap|kakaostory-og|whatsapp|skypeuripreview|embedly|headless|lighthouse|curl|wget|python|axios|node-fetch|undici|go-http|okhttp|java\//i;
 const SHARE_LOOK = /^https:\/\/open\.api\.nexon\.com\/static\/maplestory\/character\/look\/[A-Za-z0-9._~%\/-]+(\?[A-Za-z0-9._~%=&-]*)?$/;
@@ -865,7 +865,7 @@ function shareId() { // 10자 (영문 대소문자·숫자 62가지, 고르게)
 const SHARE_NICK = /^[\p{L}\p{N} _\-·~!?♡♥★☆^]{1,12}$/u, SHARE_FILL = /[\u115F\u1160\u3164\uFFA0]/;
 function shareOpts(o) {
   o = o && typeof o === 'object' ? o : {};
-  const r = { nm: o.nm === 'show' ? 'show' : 'hide', lk: o.lk === 'show' ? 'show' : 'job', mt: o.mt === 'show' ? 'show' : 'hide' };
+  const r = { nm: o.nm === 'show' ? 'show' : 'hide', lk: o.lk === 'show' ? 'show' : 'job', mt: o.mt === 'show' || o.mt === 'anon' ? o.mt : 'hide' }; // mt: 넣기 · 이름 가리기(anon) · 빼기
   r.tn = ['char', 'nick', 'none'].includes(o.tn) ? o.tn : (r.nm === 'show' ? 'char' : 'none');
   if (r.tn === 'char' && r.nm !== 'show') r.tn = 'none';
   if (r.tn === 'nick') {

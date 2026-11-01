@@ -799,7 +799,7 @@ async function loadShare(){if(SH.busy)return;SH.busy=true;SH.err='';render();
 function renderShare(demo){const app=$('#app'),D=SH.data;
   if(!D&&!SH.busy&&!SH.err){loadShare();return}
   const left=x=>Math.max(0,Math.ceil((x.exp-Date.now())/864e5)),when=t=>{const d=new Date(t+9*3600000);return `${d.getUTCMonth()+1}.${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`};
-  const ot=o=>`이름 ${o&&o.nm==='show'?'보임':'가림'} · 모습 ${o&&o.lk==='show'?'보임':'직업 그림'} · 파티원 ${o&&o.mt==='show'?'넣음':'뺌'}`;
+  const ot=o=>`이름 ${o&&o.nm==='show'?'보임':'가림'} · 모습 ${o&&o.lk==='show'?'보임':'직업 그림'} · 파티원 ${o&&o.mt==='show'?'넣음':o&&o.mt==='anon'?'이름 가림':'뺌'}`;
   const kc=(l,v,sub)=>`<div class="kc"><span class="l">${l}</span><b class="num">${v}</b><small>${sub}</small></div>`;
   const seg=`<div class="seg" role="group" aria-label="새 링크 만들기">${['off','admin','all'].map(m=>`<button class="${D&&D.mode===m?'on'+(m==='off'?' off':''):''}" data-shm="${m}" ${SH.busy||!D?'disabled':''} aria-pressed="${!!D&&D.mode===m}">${SHM[m][0]}</button>`).join('')}</div>`;
   const rows=D?D.links.map(x=>`<div class="shr"><span class="t"><b title="${esc(x.title)}">${esc(x.title)}</b><small>${x.owner?esc(x.owner):'로그인 안 함 (기기 주인)'}</small></span>

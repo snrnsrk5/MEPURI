@@ -2644,7 +2644,7 @@ function sample(){
 }
 /* ---------- state ---------- */
 const KEY='mepuri-test-v1';
-const NEWS={"v": "0.25.3", "d": "2026-10-30", "l": ["보스 설정에서 일간·월간 보스도 과거부터 넣을 수 있어요", "보스 현황에서 지난 주 일간 보스를 채울 수 있어요"], "prev": [{"v": "0.25.2", "d": "2026-10-29", "l": ["몇몇 브라우저의 다크 모드에서 버튼·배경 색을 원래 색에 더 가깝게 맞췄어요"]}, {"v": "0.25.1", "d": "2026-10-28", "l": ["몇몇 브라우저의 다크 모드에서 색이 완전히 틀어지던 걸 보정했어요"]}]};
+const NEWS={"v": "0.25.4", "d": "2026-11-02", "l": ["지난 주·달을 볼 때 일간·월간 보스가 없어도 그 칸을 눌러 채울 수 있어요"], "prev": [{"v": "0.25.3", "d": "2026-10-30", "l": ["보스 설정에서 일간·월간 보스도 과거부터 넣을 수 있어요", "보스 현황에서 지난 주 일간 보스를 채울 수 있어요"]}, {"v": "0.25.2", "d": "2026-10-29", "l": ["몇몇 브라우저의 다크 모드에서 버튼·배경 색을 원래 색에 더 가깝게 맞췄어요"]}]};
 const HAD_DATA=(()=>{try{return !!localStorage.getItem(KEY)}catch(e){return false}})(); // 이 기기에 전에 쓰던 기록이 있었나 (패치 노트는 쓰던 사람에게만)
 let st,LOAD_LOST=false; // LOAD_LOST: 이 기기 기록을 읽지 못해 새로 시작함 → 계정 기록을 덮어쓰지 않게 동기화 상태도 지움
 try{const raw=localStorage.getItem(KEY);st=raw?JSON.parse(raw):null;}catch(e){st=null;LOAD_LOST=true}
@@ -3418,7 +3418,7 @@ function statusView(){
       <div class="foot"><span>Data based on NEXON Open API${SAME_API?' · <a class="linkish" href="/privacy.html" target="_blank" rel="noopener">개인정보처리방침</a>':''}</span><button class="linkish danger-link" type="button" id="reset">${EMPTY_START?'초기화':'예시 데이터로 초기화'}</button></div>${LEGAL}
     </aside>
     <section class="col-r">
-      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
+      <div class="bar"><div class="dots" role="tablist">${[['all','전체'],['D','일간'],['W','주간'],['M','월간']].map(([v,l])=>`<button class="dot${f===v?' on':''}${counts[v]?'':' zero'}" type="button" role="tab" aria-selected="${f===v}"${counts[v]||f===v||(VIEW_OFF&&v!=='all'&&fillBar(c,v))?'':' disabled'} data-filter="${v}">${l} <span class="num">${counts[v]}</span></button>`).join('')}</div>
         <div class="bar-r vo-w"><button class="vo-btn" type="button" id="vo-btn" aria-haspopup="menu" aria-expanded="${!!ui.vo}">${SORTS[st.sort||'set']}${(st.hide||Object.values(st.hideT||{}).some(Boolean))?'<i class="vo-dot"></i>':''}${I.caret('var(--sub)',9)}</button>
           ${ui.vo?`<div class="vo-menu" role="menu">
             ${Object.entries(SORTS).map(([k,l])=>`<button type="button" role="menuitemradio" aria-checked="${(st.sort||'set')===k}" class="${(st.sort||'set')===k?'on':''}" data-vsort="${k}">${l}</button>`).join('')}
