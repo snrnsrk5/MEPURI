@@ -2368,7 +2368,7 @@ const PRICE_HIST=[
  {from:{D:'2026.10.22',W:'2026.10.22',M:'2026.11.01'},label:{D:'26.10.22 ~',W:'26.10.22 ~',M:'26.11.01 ~'},price:null} // null = BOSSES에 적힌 최신 값 (익카·하유 조정, 익스트림 림보·발드릭스 추가)
 ];
 // 월간 보스는 첫 월간 가격표가 시작된 달(7월)부터만 기록 — 그 전 달 월간은 입력도 저장도 안 함
-const MON_START=PRICE_HIST[0].from.M.slice(0,7);
+const MON_START=[PRICE_HIST[0].from.M,PRICE_HIST[0].from.W].sort()[0].slice(0,7); // 11.02 사용자: 6월에도 월간
 // 보스(또는 난이도)가 나온 날: 그 전 날짜엔 클리어·물욕을 기록할 수 없음 (가격표가 그 날보다 앞서 시작해도)
 //  키: '보스' 또는 '보스|난이도' — 둘 다 있으면 늦은 날
 const BOSS_OPEN={belona:'2026.08.20','limbo|extreme':'2026.10.22','baldrix|extreme':'2026.10.22'};

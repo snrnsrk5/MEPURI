@@ -3099,8 +3099,8 @@ button.sx-trg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .rc.v2 .rc-hint{background:rgba(0,0,0,.72);background-color:var(--pf-tc,rgba(0,0,0,.72));background-image:paint(mpt);--pf-t:rgba(0,0,0,.72);color:#FFFFFF;--pf-fg:#FFFFFF}
 
 /* 11.02 진행 막대: 분야(보스·돈 / 기록·물욕 / 사람·등급 / 마무리)가 바뀌는 칸 앞만 조금 더 띄움 */
-.rc.v2 .rc-prog{gap:4px}
-.rc.v2 .rc-prog i[data-gs]{margin-left:7px}
+.rc.v2 .rc-prog{gap:2.5px}
+.rc.v2 .rc-prog i[data-gs]{margin-left:3.5px} /* 칸 사이 2.5 · 막 사이 6 (사용자 그림 비율: 칸 20 · 사이 5 · 막 사이 11) */
 
 /* 11.02 굴러가는 숫자 끝 글자 잘림: 칸이 넘치는 부분을 자르는데(overflow:hidden) 굵은 숫자는 글자 폭보다 살짝 삐져나옴 → 양옆에 여유를 두고 그만큼 바깥 여백을 당겨 자리는 그대로 */
 .od{padding:0 .08em;margin:0 -.08em}
@@ -3266,7 +3266,7 @@ const PRICE_HIST=[
  {from:{D:'2026.10.22',W:'2026.10.22',M:'2026.11.01'},label:{D:'26.10.22 ~',W:'26.10.22 ~',M:'26.11.01 ~'},price:null} // null = BOSSES에 적힌 최신 값 (익카·하유 조정, 익스트림 림보·발드릭스 추가)
 ];
 // 월간 보스는 첫 월간 가격표가 시작된 달(7월)부터만 기록 — 그 전 달 월간은 입력도 저장도 안 함
-const MON_START=PRICE_HIST[0].from.M.slice(0,7);
+const MON_START=[PRICE_HIST[0].from.M,PRICE_HIST[0].from.W].sort()[0].slice(0,7); // 11.02 사용자: 6월에도 월간
 // 보스(또는 난이도)가 나온 날: 그 전 날짜엔 클리어·물욕을 기록할 수 없음 (가격표가 그 날보다 앞서 시작해도)
 //  키: '보스' 또는 '보스|난이도' — 둘 다 있으면 늦은 날
 const BOSS_OPEN={belona:'2026.08.20','limbo|extreme':'2026.10.22','baldrix|extreme':'2026.10.22'};
@@ -7853,8 +7853,8 @@ function rc2Tick(ts){if(!RC)return;const dt=RC.last?Math.min(100,ts-RC.last):0;R
         if(ts>=v.qAt-110)rcGo(RC.i+1)} // 박 0.11초 전에 넘기면 곡도 바로 그 박에서 바뀜
       else rcGo(RC.i+1)}}
   RC.raf=requestAnimationFrame(rcTick)}
-// 진행 막대 묶음 (11.02 사용자: 분야별로 살짝 띄우기) — 보스·돈 / 기록·물욕 / 사람·등급 / 마무리
-const rc2Grp=c=>({start:0,boss:0,money:0,rec:1,loot:1,ppl:2,tier:2,end:3})[c&&c.act]??3;
+// 진행 막대 묶음 (11.02 사용자 그림: 막마다 띄우기) — 표지 / 보스 / 돈 / 기록 / 물욕 / 사람 / 등급 / 마무리
+const rc2Grp=c=>(c&&c.act)||'end';
 function rc2Snd(){const on=!rc2SndOn();rc2SndSet(on);const b=RC&&RC.ov.querySelector('[data-rc2="snd"]');
   if(b){b.innerHTML=on?RC2_I.on:RC2_I.off;b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',on?'소리 끄기':'소리 켜기');b.title=(on?'소리 끄기':'소리 켜기')+' (M)'}
   if(!RC)return;if(on){rc2A.prime();rc2A.go(rc2Sec(RC.cards[RC.i]),rc2Song(RC.cards[RC.i]))}else rc2A.halt()}
